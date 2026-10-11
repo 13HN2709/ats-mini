@@ -128,9 +128,9 @@ void drawBandAndMode(const char *band, const char *mode, int x, int y)
 }
 
 //
-// Draw radio text (Scrolling RDS Text an alter S/SNR Position)
+// Draw radio text (Scrolling RDS Text an alter S/SNR Position, kompatibel mit 1 oder 2 Parametern)
 //
-void drawRadioText(int y)
+void drawRadioText(int y, int ymax)
 {
   const char *rt = getRadioText();
   
