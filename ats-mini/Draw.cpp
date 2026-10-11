@@ -128,33 +128,57 @@ void drawBandAndMode(const char *band, const char *mode, int x, int y)
 }
 
 //
-// Draw radio text (RDS und Signalwerte in grosser Schrift Font 4)
+// Draw radio text (Scrolling RDS Text an exakt alter S/SNR Position, Größe Font 4)
 //
-void drawRadioText(int y, int ymax)
+void drawRadioText(int y)
 {
   const char *rt = getRadioText();
   
-  spr.setTextColor(0x07E0);   // Neongrün
-  spr.setTextSize(1.0);       // Standard-Skalierung für saubere Pixel
+  // X-Startposition und Breite definieren (entspricht der alten SNR-Position)
+  int startX = 90;
+  int maxWidth = 220; // Reicht bis an den rechten Rand
 
-  // Fall 1: RDS-Text vorhanden -> Zentriert mit Font 4 gross zeichnen
+  spr.setTextSize(1.0);
+  spr.setTextColor(0x07E0); // Neongrün
+
   if (rt && *rt) 
   {
-    spr.setTextDatum(TC_DATUM);
-    spr.drawString(rt, 160, y, 4);
-  } 
-  // Fall 2: Kein RDS -> Signalwerte in Font 4 (kompakt formatiert für 2-stellige Werte)
-  else 
+    // Textbreite in Font 4 ermitteln
+    int textWidth = spr.textWidth(rt, 4);
+
+    if (textWidth <= maxWidth) {
+      // Wenn der Text kurz genug ist: Einfach linksbündig an alter Position anzeigen
+      spr.setTextDatum(TL_DATUM);
+      spr.drawString(rt, startX, y - 6, 4);
+    } 
+    else 
+    {
+      // Wenn der Text zu lang ist: Automatischer Scrolling-Ticker
+      static int scrollOffset = 0;
+      static uint32_t lastScrollTime = 0;
+      uint32_t now = millis();
+
+      // Alle 120ms einen Pixel nach links schieben (flüssiges Tempo)
+      if (now - lastScrollTime > 120) {
+        scrollOffset += 3;
+        // Wenn komplett durchgelaufen + kleine Pause am Ende, wieder von vorne
+        if (scrollOffset > textWidth + 40) {
+          scrollOffset = -maxWidth; 
+        }
+        lastScrollTime = now;
+      }
+
+      // Clipping-Bereich für den Ticker definieren, damit er sauber läuft
+      spr.setViewport(startX, y - 6, maxWidth, 24);
+      spr.setTextDatum(TL_DATUM);
+      spr.drawString(rt, startX - scrollOffset, y - 6, 4);
+      spr.resetViewport(); // Wichtig: Viewport danach wieder zurücksetzen!
+    }
+  }
+  else
   {
     spr.setTextDatum(TL_DATUM);
-
-    char sigBuf[32];
-    // Straffes Format, damit selbst bei S:99 | SNR:30 dB nichts rechts abgeschnitten wird
-    snprintf(sigBuf, sizeof(sigBuf), "S:%d | SNR:%d dB", rx.getCurrentRSSI(), rx.getCurrentSNR());
-    
-    // Font 4 verwenden (groß & gut lesbar)
-    // X = 90 schiebt den Text passgenau rechts neben die gelbe Box
-    spr.drawString(sigBuf, 90, y - 6, 4);
+    spr.drawString("", startX, y - 6, 4);
   }
 }
 
