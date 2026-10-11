@@ -142,8 +142,8 @@ void drawRadioText(int y)
 
   if (rt && *rt) 
   {
-    // Textbreite über LovyanGFX ermitteln
-    int textWidth = spr.textWidth(rt);
+    // Textbreite über Font-Index 4 ermitteln (LovyanGFX kompatibel)
+    int textWidth = spr.textWidth(rt, &fonts::Font4);
 
     if (textWidth <= maxWidth) {
       spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
