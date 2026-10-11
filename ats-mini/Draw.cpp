@@ -124,59 +124,58 @@ void drawBandAndMode(const char *band, const char *mode, int x, int y)
 
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0xFCA0);
-  uint16_t mode_width = spr.drawString(mode, x + band_width / 2 + 10, y);
+  spr.drawString(mode, x + band_width / 2 + 10, y);
 }
 
 //
-// Draw radio text (Scrolling RDS Text an exakt alter S/SNR Position, Größe Font 4)
+// Draw radio text (Scrolling RDS Text an alter S/SNR Position)
 //
 void drawRadioText(int y)
 {
   const char *rt = getRadioText();
   
-  // X-Startposition und Breite definieren (entspricht der alten SNR-Position)
   int startX = 90;
-  int maxWidth = 220; // Reicht bis an den rechten Rand
+  int maxWidth = 220; 
 
   spr.setTextSize(1.0);
   spr.setTextColor(0x07E0); // Neongrün
 
   if (rt && *rt) 
   {
-    // Textbreite in Font 4 ermitteln
-    int textWidth = spr.textWidth(rt, 4);
+    // Textbreite über LovyanGFX ermitteln
+    int textWidth = spr.textWidth(rt);
 
     if (textWidth <= maxWidth) {
-      // Wenn der Text kurz genug ist: Einfach linksbündig an alter Position anzeigen
+      spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
       spr.setTextDatum(TL_DATUM);
       spr.drawString(rt, startX, y - 6, 4);
     } 
     else 
     {
-      // Wenn der Text zu lang ist: Automatischer Scrolling-Ticker
+      // Automatischer Scrolling-Ticker
       static int scrollOffset = 0;
       static uint32_t lastScrollTime = 0;
       uint32_t now = millis();
 
-      // Alle 120ms einen Pixel nach links schieben (flüssiges Tempo)
       if (now - lastScrollTime > 120) {
         scrollOffset += 3;
-        // Wenn komplett durchgelaufen + kleine Pause am Ende, wieder von vorne
         if (scrollOffset > textWidth + 40) {
           scrollOffset = -maxWidth; 
         }
         lastScrollTime = now;
       }
 
-      // Clipping-Bereich für den Ticker definieren, damit er sauber läuft
-      spr.setViewport(startX, y - 6, maxWidth, 24);
+      // Hintergrund-Bereich sauber freiwischen
+      spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
+
+      // Text versetzt zeichnen
       spr.setTextDatum(TL_DATUM);
       spr.drawString(rt, startX - scrollOffset, y - 6, 4);
-      spr.resetViewport(); // Wichtig: Viewport danach wieder zurücksetzen!
     }
   }
   else
   {
+    spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
     spr.setTextDatum(TL_DATUM);
     spr.drawString("", startX, y - 6, 4);
   }
