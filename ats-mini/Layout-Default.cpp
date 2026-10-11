@@ -45,23 +45,23 @@ void drawLayoutDefault()
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // Show station or channel name, if present (perfekt positioniert zwischen Frequenz und S/SNR-Zeile)
+  // Show station or channel name, if present
   const char *stationName = getStationName();
   if(*stationName == 0xFF)
     drawLongStationName(stationName + 1, MENU_OFFSET_X + 1 + 76 + MENU_DELTA_X + 2, RDS_OFFSET_Y - 7);
   else if(*stationName)
     drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 7);
 
-
   // Draw left-side menu/info bar
-  // @@@ FIXME: Frequency display (above) intersects the side bar!
   drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
 
-  // Draw S-meter mit direktem Signalwert vom RX
-  drawSMeter(rx.getCurrentRSSI(), METER_OFFSET_X, METER_OFFSET_Y);
+  // =========================================================================
+  // NEU: S-Meter oben rechts positionieren (z.B. X=180, Y=10)
+  // =========================================================================
+  drawSMeter(rx.getCurrentRSSI(), 180, 10); 
 
   // Indicate FM pilot detection, unless the audio is pinned to mono
-  drawStereoIndicator(METER_OFFSET_X, METER_OFFSET_Y,
+  drawStereoIndicator(180, 10,
     (currentMode==FM) && (fmStereoIdx!=FM_STEREO_MONO) && rx.getCurrentPilot());
 
   if(currentCmd == CMD_SCAN)
@@ -70,21 +70,11 @@ void drawLayoutDefault()
   }
   else if(!drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y))
   {
-    const char *rt = getRadioText();
-    const char *pi = getProgramInfo();
-
-    // 1. Wenn RDS oder ProgramInfo vorhanden ist:
-    // RDS-Text groß anzeigen & Röhrenskala ausblenden
-    if((rt && *rt) || (pi && *pi))
-    {
-      drawRadioText(130, 150);
-    }
-    // 2. Wenn KEIN RDS vorhanden ist:
-    // Signalwerte über der Röhrenskala anzeigen und Skala unten rendern
-    else
-    {
-      drawRadioText(118, 138);
-      drawScale(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
-    }
+    // =========================================================================
+    // RDS-Ticker läuft jetzt immer an alter S/SNR-Position (Y=118)
+    // Die Röhrenskala bleibt unten permanent erhalten!
+    // =========================================================================
+    drawRadioText(118);
+    drawScale(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
   }
 }
