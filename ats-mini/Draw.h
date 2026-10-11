@@ -47,7 +47,7 @@ void drawStationName(const char *name, int x, int y);
 void drawSMeter(int strength, int x, int y);
 void drawStereoIndicator(int x, int y, bool stereo = true);
 bool drawStatus(int x, int y);
-void drawRadioText(int y, int ymax);
+void drawRadioText(int y);
 void drawScale(uint32_t freq);
 
 void drawLayoutDefault();
