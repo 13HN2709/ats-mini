@@ -52,23 +52,19 @@ void drawLayoutDefault()
   else if(*stationName)
     drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 7);
 
-  // =========================================================================
-  // ANGEPASST: Linke Menü-Box mit "13HN2709" in Orange überschreiben
-  // =========================================================================
+  // Linke Menü-Box zeichnen
   drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
 
-  // Titel-Box oben links mit dem Rufzeichen in Orange (0xFD20) füllen
-  spr.fillRect(MENU_OFFSET_X, MENU_OFFSET_Y, 76, 16, TH.bg); // Alten Text/Hintergrund abdecken
+  // Kopfbereich des Kasten sauber freiwischen und "13HN2709" in Orange (0xFD20) einsetzen
+  spr.fillRect(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 1, 74, 14, TH.bg);
   spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(0xFD20); // Orange wie beim H.J. Berndt Design
-  spr.drawString("13HN2709", MENU_OFFSET_X + 38, MENU_OFFSET_Y + 1, FONT_SMALL);
+  spr.setTextColor(0xFD20); // Orange
+  spr.drawString("13HN2709", MENU_OFFSET_X + 38, MENU_OFFSET_Y + 2, FONT_SMALL);
 
-  // =========================================================================
-  // S-Meter oben rechts im H.J. Berndt Stil
-  // =========================================================================
+  // H.J. Berndt S-Meter oben rechts (exakt wie auf dem Referenzbild)
   drawSMeter(rx.getCurrentRSSI(), 180, 10); 
 
-  // Indicate FM pilot detection, unless the audio is pinned to mono
+  // FM Stereo Indikator
   drawStereoIndicator(180, 10,
     (currentMode==FM) && (fmStereoIdx!=FM_STEREO_MONO) && rx.getCurrentPilot());
 
