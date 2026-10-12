@@ -2060,6 +2060,7 @@ static void drawInfo(int x, int y, int sx)
 }
 
 
+
 //
 // Draw side bar (menu or information)
 //
