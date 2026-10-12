@@ -52,6 +52,7 @@ void drawScale(uint32_t freq);
 
 void drawLayoutDefault();
 void drawLayoutSmeter();
+void drawLayoutNewUI();
 
 void drawAbout();
 void drawAboutHelp(uint8_t arrow);
