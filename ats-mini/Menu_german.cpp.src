@@ -1974,39 +1974,40 @@ static void drawInfo(int x, int y, int sx)
   char text[16];
 
   // Info box Hintergrund und Rahmen
-  spr.setTextDatum(ML_DATUM);
-  spr.setTextColor(0x07E0);
   spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.box_bg);
-  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, 0xFCA0);
+  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.0xFCA0); // Beibehalten nach Theme
 
-  // Saubere Trennlinie passend zum Rufzeichen-Header in Layout-Default.cpp (bei y + 17)
+  // Trennlinie für den Rufzeichen-Header bei y + 17
   spr.drawLine(1+x, y + 17, 76+sx+x, y + 17, 0xFFFF);
 
-  // Startposition für die Info-Zeilen unterhalb des Rufzeichen-Abteils (ab y + 24)
-  int rowY = y + 24;
-  int rowStep = 16;
+  // Auf TL_DATUM (Top-Left) umschalten, damit rowY die exakte Oberkante ist
+  spr.setTextDatum(TL_DATUM);
+  spr.setTextColor(0x07E0);
+
+  int rowY = y + 21; // Startet direkt unter der Trennlinie (y + 17 + 4 Pixel Puffer)
+  int rowStep = 15;  // Stabiler Zeilenabstand ohne Überlappung
 
   // 1. Step
   spr.drawString("Step:", 6+x, rowY);
-  spr.drawString(getCurrentStep()->desc, 48+x, rowY);
+  spr.drawString(getCurrentStep()->desc, 44+x, rowY);
   rowY += rowStep;
 
   // 2. BW (Bandbreite)
   spr.drawString("BW:", 6+x, rowY);
-  spr.drawString(getCurrentBandwidth()->desc, 48+x, rowY);
+  spr.drawString(getCurrentBandwidth()->desc, 44+x, rowY);
   rowY += rowStep;
 
   // 3. AGC / Attenuation
   if(!agcNdx && !agcIdx)
   {
     spr.drawString("AGC:", 6+x, rowY);
-    spr.drawString("On", 48+x, rowY);
+    spr.drawString("On", 44+x, rowY);
   }
   else
   {
     sprintf(text, "%2.2d", agcNdx);
     spr.drawString("Att:", 6+x, rowY);
-    spr.drawString(text, 48+x, rowY);
+    spr.drawString(text, 44+x, rowY);
   }
   rowY += rowStep;
 
@@ -2016,13 +2017,13 @@ static void drawInfo(int x, int y, int sx)
   {
     spr.setTextColor(0xF800);
     sprintf(text, muteOn(MUTE_MAIN) ? "Muted" : "%d/sq", volume);
-    spr.drawString(text, 48+x, rowY);
+    spr.drawString(text, 44+x, rowY);
     spr.setTextColor(0x07E0);
   }
   else
   {
     spr.setTextColor(0x07E0);
-    spr.drawNumber(volume, 48+x, rowY);
+    spr.drawNumber(volume, 44+x, rowY);
   }
   rowY += rowStep;
 
@@ -2032,7 +2033,7 @@ static void drawInfo(int x, int y, int sx)
   {
     sprintf(text, "%04X", piCode);
     spr.drawString("PI:", 6+x, rowY);
-    spr.drawString(text, 48+x, rowY);
+    spr.drawString(text, 44+x, rowY);
     rowY += rowStep;
   }
 
@@ -2055,7 +2056,7 @@ static void drawInfo(int x, int y, int sx)
     }
 
     spr.drawString(label, 6+x, rowY);
-    spr.drawString(clock, 48+x, rowY);
+    spr.drawString(clock, 44+x, rowY);
   }
 }
 
