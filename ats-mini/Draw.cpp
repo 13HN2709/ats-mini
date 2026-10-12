@@ -101,7 +101,7 @@ void drawZoomedMenu(const char *text, bool force)
 {
   if (!zoomMenu && !force) return;
 
-  spr.fillSmoothRoundRect(RDS_OFFSET_X - 72 + 1, RDS_OFFSET_Y - 3 + 1, 152, 26, 4, 0x0000);
+  spr.fillSmoothRoundRect(RDS_OFFSET_X - 72 + 1, RDS_OFFSET_Y - 3 + 1, 152, 26, 4, TH.menu_bg);
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(TH.menu_item);
   spr.drawString(text, RDS_OFFSET_X + 5, RDS_OFFSET_Y, FONT_LARGE);
@@ -151,7 +151,7 @@ void drawRadioText(int y, int ymax)
     int textWidth = spr.textWidth(rt, &fonts::Font4);
 
     if (textWidth <= maxWidth) {
-      spr.fillRect(startX, y - 6, maxWidth, 24, 0x0000);
+      spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
       spr.setTextDatum(TL_DATUM);
       spr.drawString(rt, startX, y - 6, 4);
     } 
@@ -169,14 +169,14 @@ void drawRadioText(int y, int ymax)
         lastScrollTime = now;
       }
 
-      spr.fillRect(startX, y - 6, maxWidth, 24, 0x0000);
+      spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
       spr.setTextDatum(TL_DATUM);
       spr.drawString(rt, startX - scrollOffset, y - 6, 4);
     }
   }
   else
   {
-    spr.fillRect(startX, y - 6, maxWidth, 24, 0x0000);
+    spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
     spr.setTextDatum(TL_DATUM);
     spr.drawString("", startX, y - 6, 4);
   }
@@ -464,8 +464,7 @@ void drawScreen()
 {
   if(sleepOn()) return;
 
-  // Erzwinge immer echtes Schwarz (0x0000) als Hintergrund für alle Layouts
-  spr.fillSprite(0x0000);
+  spr.fillSprite(TH.bg);
 
   if(currentCmd==CMD_ABOUT)
   {
