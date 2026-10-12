@@ -332,6 +332,7 @@ void drawScale(uint32_t freq)
     }
   }
 }
+
 //
 // Draw S-Meter im echten H.J. Berndt Design (oben rechts unter der Akku-Anzeige)
 //
@@ -358,6 +359,7 @@ void drawSMeter(int strength, int x, int y)
     spr.fillRect(smeterX + 6 + (i * 7), smeterY + 10, 5, 4, color);
   }
 }
+
 //
 // Draw stereo indicator
 //
@@ -466,8 +468,14 @@ void drawScreen()
 
   switch(uiLayoutIdx)
   {
-    case UI_SMETER:
+    case 1:
       drawLayoutSmeter();
+      break;
+    case 2:
+      drawLayoutDefault(); // Platzhalter für 3. Layout (Experimente)
+      break;
+    case 3:
+      drawLayoutNewUI();   // Dein neues Decoder-Layout (4. Layout)
       break;
     default:
       drawLayoutDefault();
