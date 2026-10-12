@@ -8,6 +8,8 @@ extern uint32_t lastTuneTime;
 
 void drawLayoutNewUI()
 {
+  // Bildschirm mit der aktuellen Hintergrundfarbe des Themes füllen
+  spr.fillSprite(TH.bg);
   // Preferences write request icon
   drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
 
