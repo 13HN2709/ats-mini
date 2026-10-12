@@ -20,14 +20,11 @@ void drawLayoutDefault()
   // Draw WiFi icon
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // Set font we are going to use
-  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
-
-  // Band und Modulationsart ("VHF FM") oben Mitte
+  // Band und Modulationsart ("VHF FM") sitzt gut
   drawBandAndMode(
     getCurrentBand()->bandName,
     bandModeDesc[currentMode],
-    BAND_OFFSET_X, BAND_OFFSET_Y
+    120, BAND_OFFSET_Y
   );
 
   if(switchThemeEditor())
@@ -36,6 +33,8 @@ void drawLayoutDefault()
     spr.setTextColor(TH.text_warn);
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
+
+  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
 
   // Draw frequency, units, and optionally highlight a digit
   drawFrequency(
@@ -55,14 +54,19 @@ void drawLayoutDefault()
   // Linke Menü-Box zeichnen
   drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
 
-  // Kasten-Kopf komplett freiwischen (18px hoch) und Rufzeichen zentriert in Orange (0xFD20) einsetzen
-  spr.fillRect(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 1, 74, 18, TH.bg);
+  // Oben im Kasten: Rufzeichen "13HN2709" in Orange & saubere Trennlinie als eigenes Abteil
+  spr.fillRect(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 1, 74, 16, TH.bg);
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFD20); // Orange
-  spr.drawString("13HN2709", MENU_OFFSET_X + 38, MENU_OFFSET_Y + 3, FONT_SMALL);
+  spr.drawString("13HN2709", MENU_OFFSET_X + 38, MENU_OFFSET_Y + 2, FONT_SMALL);
+  spr.drawFastHLine(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 17, 74, 0xFFFF); // Trennlinie
 
-  // H.J. Berndt S-Meter unter der MHz-Anzeige bei X=205, Y=40 platziert
-  drawSMeter(rx.getCurrentRSSI(), 205, 40); 
+  // Kompaktes H.J. Berndt S-Meter: Neben der Frequenz & unter MHz (X=195, Y=42)
+  drawSMeter(rx.getCurrentRSSI(), 195, 42); 
+
+  // FM Stereo Indikator
+  drawStereoIndicator(195, 42,
+    (currentMode==FM) && (fmStereoIdx!=FM_STEREO_MONO) && rx.getCurrentPilot());
 
   if(currentCmd == CMD_SCAN)
   {
