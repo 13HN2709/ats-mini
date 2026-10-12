@@ -332,43 +332,32 @@ void drawScale(uint32_t freq)
     }
   }
 }
-
 //
 // Draw S-Meter im echten H.J. Berndt Design (oben rechts unter der Akku-Anzeige)
 //
 void drawSMeter(int strength, int x, int y)
 {
-  int smeterX = 180;
-  int smeterY = 21;
+  int smeterX = x;
+  int smeterY = y;
 
-  // 1. Umrandungskasten mit Pfeilen ( ◄   ► )
-  spr.drawRoundRect(smeterX, smeterY, 110, 20, 4, 0xFFFF);
-  spr.fillTriangle(smeterX + 6, smeterY + 10, smeterX + 14, smeterY + 4, smeterX + 14, smeterY + 16, 0xFFFF);
-  spr.fillTriangle(smeterX + 104, smeterY + 10, smeterX + 96, smeterY + 4, smeterX + 96, smeterY + 16, 0xFFFF);
+  // 1. Kompakter Umrandungskasten
+  spr.drawRoundRect(smeterX, smeterY, 86, 16, 2, 0xFFFF);
 
-  // 2. Beschriftung "SIGNAL RSSI/SNR"
+  // 2. Kurze Beschriftung "SIG RSSI/SNR"
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFFFF);
   char sigText[16];
-  sprintf(sigText, "SIGNAL %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
-  spr.drawString(sigText, smeterX + 55, smeterY + 22, FONT_SMALL);
+  sprintf(sigText, "SIG %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
+  spr.drawString(sigText, smeterX + 43, smeterY + 1, FONT_SMALL);
 
-  // 3. Grüne Signalbalken-Reihe
-  int bars = map(strength, 0, 60, 0, 16);
-  bars = constrain(bars, 0, 16);
-  for (int i = 0; i < 16; i++) {
-    uint16_t color = (i < bars) ? 0x07E0 : TH.smeter_bar_empty; // Neongrün
-    spr.fillRect(smeterX + 15 + (i * 5), smeterY + 32, 3, 7, color);
+  // 3. Kompakte Signalbalken (10 Stück)
+  int bars = map(strength, 0, 60, 0, 10);
+  bars = constrain(bars, 0, 10);
+  for (int i = 0; i < 10; i++) {
+    uint16_t color = (i < bars) ? 0x07E0 : TH.smeter_bar_empty;
+    spr.fillRect(smeterX + 6 + (i * 7), smeterY + 10, 5, 4, color);
   }
-
-  // 4. Abstimm-Pfeile darunter (◄──●──►)
-  spr.setTextColor(0x07E0);
-  spr.drawString("◄", smeterX + 20, smeterY + 41, FONT_SMALL);
-  spr.drawString("►", smeterX + 88, smeterY + 41, FONT_SMALL);
-  spr.fillCircle(smeterX + 55, smeterY + 45, 3, 0x07E0);
-  spr.drawFastHLine(smeterX + 30, smeterY + 45, 50, 0x07E0);
 }
-
 //
 // Draw stereo indicator
 //
