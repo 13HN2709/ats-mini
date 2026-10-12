@@ -2008,7 +2008,6 @@ static void drawInfo(int x, int y, int sx)
     spr.drawNumber(volume, 48+x, 64+y+(0*16), FONT_SMALL);
   }
 
-  // Draw RDS PI code, if present
   uint16_t piCode = getRdsPiCode();
   if(piCode && currentMode == FM)
   {
@@ -2019,20 +2018,13 @@ static void drawInfo(int x, int y, int sx)
   else
   {
     spr.drawString("AVC:", 6+x, 64+y + (1*16), FONT_SMALL);
-
-    if(currentMode==FM)
-      sprintf(text, "n/a");
-    else if(isSSB() && ssbAvcHold)
-      sprintf(text, "Hold");
-    else if(isSSB())
-      sprintf(text, "%2.2ddB", SsbAvcIdx);
-    else
-      sprintf(text, "%2.2ddB", AmAvcIdx);
-
+    if(currentMode==FM) sprintf(text, "n/a");
+    else if(isSSB() && ssbAvcHold) sprintf(text, "Hold");
+    else if(isSSB()) sprintf(text, "%2.2ddB", SsbAvcIdx);
+    else sprintf(text, "%2.2ddB", AmAvcIdx);
     spr.drawString(text, 48+x, 64+y + (1*16), FONT_SMALL);
   }
 
-  // Draw current time
   const char *clock = clockGet();
   if(clock)
   {
@@ -2040,14 +2032,12 @@ static void drawInfo(int x, int y, int sx)
     uint8_t month, day, weekday;
     char date[6];
     const char *label = "Time:";
-
     if(clockGetDate(&year, &month, &day, &weekday))
     {
       if(month > 12 || day > 31) return;
       sprintf(date, "%02d.%02d", month, day);
       label = date;
     }
-
     spr.drawString(label, 6+x, 64+y+(2*16), FONT_SMALL);
     spr.drawString(clock, 48+x, 64+y+(2*16), FONT_SMALL);
   }
@@ -2092,7 +2082,7 @@ void drawSideBar(uint16_t cmd, int x, int y, int sx)
     case CMD_UPDATEFW:   drawUpdateFW(x, y, sx);   break;
     case CMD_ZOOM:       drawZoom(x, y, sx);       break;
     case CMD_SCROLL:     drawScrollDir(x, y, sx);  break;
-    case CMD_UTCOFFSET:  drawUTCOffset(x, y, sx);  break;
+    case CMD_UTCOffset:  drawUTCOffset(x, y, sx);  break;
     case CMD_DATETIME:   drawDateTime(x, y, sx);   break;
     case CMD_SQUELCH:    drawSquelch(x, y, sx);    break;
     default:             drawInfo(x, y, sx);       break;
