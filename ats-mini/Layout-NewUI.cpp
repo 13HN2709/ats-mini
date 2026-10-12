@@ -51,16 +51,6 @@ void drawLayoutDefault()
   else if(*stationName)
     drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 7);
 
-  // Linke Menü-Box zeichnen
-  drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
-
-  // Oben im Kasten: Rufzeichen "13HN2709" in Orange & saubere Trennlinie als eigenes Abteil
-  spr.fillRect(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 1, 74, 16, TH.bg);
-  spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(0xFD20); // Orange
-  spr.drawString("13HN2709", MENU_OFFSET_X + 38, MENU_OFFSET_Y + 2, FONT_SMALL);
-  spr.drawFastHLine(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 17, 74, 0xFFFF); // Trennlinie
-
   // Kompaktes H.J. Berndt S-Meter: Neben der Frequenz & unter MHz (X=195, Y=42)
   drawSMeter(rx.getCurrentRSSI(), 195, 42); 
 
