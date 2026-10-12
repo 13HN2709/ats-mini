@@ -55,13 +55,13 @@ void drawLayoutDefault()
   // Linke Menü-Box zeichnen
   drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
 
-  // Kasten-Kopf komplett schwarz wischen (20px hoch) und Rufzeichen zentriert einsetzen
+  // Kasten-Kopf komplett freiwischen (18px hoch) und Rufzeichen zentriert in Orange (0xFD20) einsetzen
   spr.fillRect(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 1, 74, 18, TH.bg);
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFD20); // Orange
   spr.drawString("13HN2709", MENU_OFFSET_X + 38, MENU_OFFSET_Y + 3, FONT_SMALL);
 
-  // H.J. Berndt S-Meter unter der MHz-Anzeige (X=205, Y=40 schiebt es aus dem VHF-FM-Bereich raus)
+  // H.J. Berndt S-Meter unter der MHz-Anzeige bei X=205, Y=40 platziert
   drawSMeter(rx.getCurrentRSSI(), 205, 40); 
 
   if(currentCmd == CMD_SCAN)
