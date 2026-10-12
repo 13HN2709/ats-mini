@@ -1979,10 +1979,10 @@ static void drawInfo(int x, int y, int sx)
   spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.box_bg);
   spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, 0xFCA0);
 
-  // Saubere Trennlinie unter dem oberen Rufzeichen-Kasten (Separierung als eigenes Abteil)
-  spr.drawLine(1+x, y + 18, 76+sx+x, y + 18, 0xFCA0);
+  // Saubere Trennlinie passend zum Rufzeichen-Header in Layout-Default.cpp (bei y + 17)
+  spr.drawLine(1+x, y + 17, 76+sx+x, y + 17, 0xFFFF);
 
-  // Startposition für die Info-Zeilen unterhalb der Trennlinie
+  // Startposition für die Info-Zeilen unterhalb des Rufzeichen-Abteils (ab y + 24)
   int rowY = y + 24;
   int rowStep = 16;
 
