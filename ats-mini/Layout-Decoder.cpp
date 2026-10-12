@@ -6,7 +6,7 @@
 
 extern uint32_t lastTuneTime;
 
-void drawLayoutDefault()
+void drawLayoutDecoder()
 {
   // Draw preferences write request icon
   drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
