@@ -23,7 +23,7 @@ void drawLayoutDefault()
   // Set font we are going to use
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
 
-  // Band und Modulationsart ("VHF FM") wieder aktiv
+  // Band und Modulationsart ("VHF FM") oben Mitte
   drawBandAndMode(
     getCurrentBand()->bandName,
     bandModeDesc[currentMode],
@@ -55,18 +55,14 @@ void drawLayoutDefault()
   // Linke Menü-Box zeichnen
   drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
 
-  // Oben im Kasten den Titel "AMNVOLT" sauber überdecken und durch "13HN2709" in Orange (0xFD20) ersetzen
-  spr.fillRect(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 1, 74, 14, TH.bg);
+  // Kasten-Kopf komplett schwarz wischen (20px hoch) und Rufzeichen zentriert einsetzen
+  spr.fillRect(MENU_OFFSET_X + 1, MENU_OFFSET_Y + 1, 74, 18, TH.bg);
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFD20); // Orange
-  spr.drawString("13HN2709", MENU_OFFSET_X + 38, MENU_OFFSET_Y + 2, FONT_SMALL);
+  spr.drawString("13HN2709", MENU_OFFSET_X + 38, MENU_OFFSET_Y + 3, FONT_SMALL);
 
-  // H.J. Berndt S-Meter oben rechts
-  drawSMeter(rx.getCurrentRSSI(), 180, 21); 
-
-  // FM Stereo Indikator
-  drawStereoIndicator(180, 21,
-    (currentMode==FM) && (fmStereoIdx!=FM_STEREO_MONO) && rx.getCurrentPilot());
+  // H.J. Berndt S-Meter unter der MHz-Anzeige (X=205, Y=40 schiebt es aus dem VHF-FM-Bereich raus)
+  drawSMeter(rx.getCurrentRSSI(), 205, 40); 
 
   if(currentCmd == CMD_SCAN)
   {
@@ -74,7 +70,7 @@ void drawLayoutDefault()
   }
   else if(!drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y))
   {
-    // RDS-Ticker an alter Position & Röhrenskala unten
+    // RDS-Ticker & Röhrenskala unten
     drawRadioText(118);
     drawScale(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
   }
