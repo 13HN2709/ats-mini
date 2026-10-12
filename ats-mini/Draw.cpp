@@ -6,6 +6,12 @@
 #include "BleMode.h"
 #include "Draw.h"
 
+// Funktionsprototypen für die Layouts
+void drawLayoutSmeter();
+void drawLayoutNewUI();
+void drawLayoutDecoder();
+void drawLayoutDefault();
+
 uint32_t lastTuneTime = 0;
 
 //
