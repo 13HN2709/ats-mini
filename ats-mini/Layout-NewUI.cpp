@@ -63,9 +63,5 @@ void drawLayoutDefault()
     drawScanGraphs(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
   }
   else if(!drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y))
-  {
-    // RDS-Ticker & Röhrenskala unten
-    drawRadioText(118);
-    drawScale(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
   }
 }
