@@ -1970,71 +1970,69 @@ static void drawInfo(int x, int y, int sx)
 {
   char text[16];
 
-  // Info box Hintergrund und Rahmen
-  spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.box_bg);
-  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, 0xFCA0); // Beibehalten nach Theme
-
-  // Trennlinie für den Rufzeichen-Header bei y + 17
-  spr.drawLine(1+x, y + 17, 76+sx+x, y + 17, 0xFFFF);
-
-  // Auf TL_DATUM (Top-Left) umschalten, damit rowY die exakte Oberkante ist
-  spr.setTextDatum(TL_DATUM);
+  // Info box
+  spr.setTextDatum(ML_DATUM);
   spr.setTextColor(0x07E0);
+  spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.box_bg);
+  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, 0xFCA0);
 
-  int rowY = y + 21; // Startet direkt unter der Trennlinie (y + 17 + 4 Pixel Puffer)
-  int rowStep = 15;  // Stabiler Zeilenabstand ohne Überlappung
+  spr.drawString("Step:", 6+x, 64+y+(-3*16), FONT_SMALL);
+  spr.drawString(getCurrentStep()->desc, 48+x, 64+y+(-3*16), FONT_SMALL);
 
-  // 1. Step
-  spr.drawString("Step:", 6+x, rowY);
-  spr.drawString(getCurrentStep()->desc, 44+x, rowY);
-  rowY += rowStep;
+  spr.drawString("BW:", 6+x, 64+y+(-2*16), FONT_SMALL);
+  spr.drawString(getCurrentBandwidth()->desc, 48+x, 64+y+(-2*16), FONT_SMALL);
 
-  // 2. BW (Bandbreite)
-  spr.drawString("BW:", 6+x, rowY);
-  spr.drawString(getCurrentBandwidth()->desc, 44+x, rowY);
-  rowY += rowStep;
-
-  // 3. AGC / Attenuation
   if(!agcNdx && !agcIdx)
   {
-    spr.drawString("AGC:", 6+x, rowY);
-    spr.drawString("On", 44+x, rowY);
+    spr.drawString("AGC:", 6+x, 64+y+(-1*16), FONT_SMALL);
+    spr.drawString("On", 48+x, 64+y+(-1*16), FONT_SMALL);
   }
   else
   {
     sprintf(text, "%2.2d", agcNdx);
-    spr.drawString("Att:", 6+x, rowY);
-    spr.drawString(text, 44+x, rowY);
+    spr.drawString("Att:", 6+x, 64+y+(-1*16), FONT_SMALL);
+    spr.drawString(text, 48+x, 64+y+(-1*16), FONT_SMALL);
   }
-  rowY += rowStep;
 
-  // 4. Volume (Lautstärke)
-  spr.drawString("Vol:", 6+x, rowY);
+  spr.drawString("Vol:", 6+x, 64+y+(0*16), FONT_SMALL);
   if(muteOn(MUTE_MAIN) || muteOn(MUTE_SQUELCH))
   {
     spr.setTextColor(0xF800);
     sprintf(text, muteOn(MUTE_MAIN) ? "Muted" : "%d/sq", volume);
-    spr.drawString(text, 44+x, rowY);
+    spr.drawString(text, 48+x, 64+y+(0*16), FONT_SMALL);
     spr.setTextColor(0x07E0);
   }
   else
   {
     spr.setTextColor(0x07E0);
-    spr.drawNumber(volume, 44+x, rowY);
+    spr.drawNumber(volume, 48+x, 64+y+(0*16), FONT_SMALL);
   }
-  rowY += rowStep;
 
-  // 5. RDS PI Code (falls vorhanden im FM-Modus)
+  // Draw RDS PI code, if present
   uint16_t piCode = getRdsPiCode();
   if(piCode && currentMode == FM)
   {
     sprintf(text, "%04X", piCode);
-    spr.drawString("PI:", 6+x, rowY);
-    spr.drawString(text, 44+x, rowY);
-    rowY += rowStep;
+    spr.drawString("PI:", 6+x, 64+y + (1*16), FONT_SMALL);
+    spr.drawString(text, 48+x, 64+y + (1*16), FONT_SMALL);
+  }
+  else
+  {
+    spr.drawString("AVC:", 6+x, 64+y + (1*16), FONT_SMALL);
+
+    if(currentMode==FM)
+      sprintf(text, "n/a");
+    else if(isSSB() && ssbAvcHold)
+      sprintf(text, "Hold");
+    else if(isSSB())
+      sprintf(text, "%2.2ddB", SsbAvcIdx);
+    else
+      sprintf(text, "%2.2ddB", AmAvcIdx);
+
+    spr.drawString(text, 48+x, 64+y + (1*16), FONT_SMALL);
   }
 
-  // 6. Aktuelle Uhrzeit / Datum
+  // Draw current time
   const char *clock = clockGet();
   if(clock)
   {
@@ -2045,17 +2043,16 @@ static void drawInfo(int x, int y, int sx)
 
     if(clockGetDate(&year, &month, &day, &weekday))
     {
-      if(month <= 12 && day <= 31)
-      {
-        sprintf(date, "%02d.%02d", month, day);
-        label = date;
-      }
+      if(month > 12 || day > 31) return;
+      sprintf(date, "%02d.%02d", month, day);
+      label = date;
     }
 
-    spr.drawString(label, 6+x, rowY);
-    spr.drawString(clock, 44+x, rowY);
+    spr.drawString(label, 6+x, 64+y+(2*16), FONT_SMALL);
+    spr.drawString(clock, 48+x, 64+y+(2*16), FONT_SMALL);
   }
 }
+
 
 
 
