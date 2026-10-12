@@ -472,10 +472,10 @@ void drawScreen()
       drawLayoutSmeter();
       break;
     case 2:
-      drawLayoutDefault(); // Platzhalter für 3. Layout (Experimente)
+      drawLayoutNewUI(); // Platzhalter für 3. Layout (Experimente)
       break;
     case 3:
-      drawLayoutNewUI();   // Dein neues Decoder-Layout (4. Layout)
+      drawLayoutDecoder();   // Dein neues Decoder-Layout (4. Layout)
       break;
     default:
       drawLayoutDefault();
