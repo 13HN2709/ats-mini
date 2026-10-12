@@ -2082,7 +2082,7 @@ void drawSideBar(uint16_t cmd, int x, int y, int sx)
     case CMD_UPDATEFW:   drawUpdateFW(x, y, sx);   break;
     case CMD_ZOOM:       drawZoom(x, y, sx);       break;
     case CMD_SCROLL:     drawScrollDir(x, y, sx);  break;
-    case CMD_UTCOffset:  drawUTCOffset(x, y, sx);  break;
+    case CMD_UTCOFFSET:  drawUTCOffset(x, y, sx);  break;
     case CMD_DATETIME:   drawDateTime(x, y, sx);   break;
     case CMD_SQUELCH:    drawSquelch(x, y, sx);    break;
     default:             drawInfo(x, y, sx);       break;
