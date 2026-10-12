@@ -1975,7 +1975,7 @@ static void drawInfo(int x, int y, int sx)
 
   // Info box Hintergrund und Rahmen
   spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.box_bg);
-  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.0xFCA0); // Beibehalten nach Theme
+  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, 0xFCA0); // Beibehalten nach Theme
 
   // Trennlinie für den Rufzeichen-Header bei y + 17
   spr.drawLine(1+x, y + 17, 76+sx+x, y + 17, 0xFFFF);
