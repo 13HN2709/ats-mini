@@ -52,24 +52,49 @@ void drawLayoutNewUI()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. Schönes langes S-Meter ganz unten über die volle Breite
+  // 4. Equalizer-Style S-Meter: Baut sich von außen (links & rechts) zur Mitte hin auf
   int strength = rx.getCurrentRSSI();
   int smeterX = 20;
   int smeterY = 125;
   int smeterWidth = 280;
+  int centerX = smeterX + (smeterWidth / 2);
   
-  // Rahmen für das lange S-Meter
+  // Rahmen für das S-Meter
   spr.drawRoundRect(smeterX, smeterY, smeterWidth, 14, 3, 0xFFFF);
   
-  // Balken berechnen und zeichnen
-  int maxBars = 40; 
-  int activeBars = map(strength, 0, 60, 0, maxBars);
-  activeBars = constrain(activeBars, 0, maxBars);
-  
-  int segmentWidth = (smeterWidth - 8) / maxBars;
-  for (int i = 0; i < maxBars; i++) {
-    uint16_t color = (i < activeBars) ? 0x07E0 : TH.smeter_bar_empty;
-    spr.fillRect(smeterX + 4 + (i * segmentWidth), smeterY + 3, segmentWidth - 1, 8, color);
+  // Anzahl der Kästchen pro Seite (insgesamt z.B. 20 Paare)
+  int pairsPerSide = 18;
+  int totalWidthOfBoxes = smeterWidth - 10;
+  int boxWidth = 5;
+  int spacing = 2;
+
+  // Signalstärke auf die Anzahl der Paare mappen
+  int activePairs = map(strength, 0, 60, 0, pairsPerSide);
+  activePairs = constrain(activePairs, 0, pairsPerSide);
+
+  // Von der Mitte aus nach links und rechts die bunten Kästchen zeichnen
+  for (int i = 0; i < pairsPerSide; i++) {
+    // Farbverlauf von Grün (Mitte/Start) über Gelb zu Rot (außen)
+    uint16_t color;
+    if (i < pairsPerSide / 3) color = 0x07E0;      // Grün
+    else if (i < (pairsPerSide * 2) / 3) color = 0xFFE0; // Gelb
+    else color = 0xF800;                           // Rot
+
+    // Linke Seite (wandert von der Mitte nach links)
+    int leftX = (centerX - 3) - (i * (boxWidth + spacing));
+    if (i < activePairs) {
+      spr.fillRect(leftX, smeterY + 3, boxWidth, 8, color);
+    } else {
+      spr.fillRect(leftX, smeterY + 3, boxWidth, 8, TH.smeter_bar_empty);
+    }
+
+    // Rechte Seite (wandert von der Mitte nach rechts)
+    int rightX = (centerX + 2) + (i * (boxWidth + spacing));
+    if (i < activePairs) {
+      spr.fillRect(rightX, smeterY + 3, boxWidth, 8, color);
+    } else {
+      spr.fillRect(rightX, smeterY + 3, boxWidth, 8, TH.smeter_bar_empty);
+    }
   }
 
   if(currentCmd == CMD_SCAN)
@@ -81,7 +106,6 @@ void drawLayoutNewUI()
     const char *rt = getRadioText();
     const char *pi = getProgramInfo();
 
-    // Falls RDS-Lauftext vorhanden ist, wird er unten eingeblendet
     if((rt && *rt) || (pi && *pi))
     {
       spr.setTextColor(0x07E0);
