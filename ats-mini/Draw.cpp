@@ -114,16 +114,16 @@ void drawMessage(const char *msg)
 }
 
 //
-// Draw band and mode indicators
+// Draw band and mode indicators (Farbe auf Weiß 0xFFFF angepasst)
 //
 void drawBandAndMode(const char *band, const char *mode, int x, int y)
 {
   spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(0xFCA0);
+  spr.setTextColor(0xFFFF);
   uint16_t band_width = spr.drawString(band, x, y);
 
   spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(0xFCA0);
+  spr.setTextColor(0xFFFF);
   spr.drawString(mode, x + band_width / 2 + 10, y);
 }
 
@@ -310,7 +310,7 @@ void drawScale(uint32_t freq)
 }
 
 //
-// Exakt dein altes S-Meter mit Peak-Hold und Dreiecks-Antenne (für Default, Decoder & S-Meter Layout)[span_1](start_span)[span_1](end_span)
+// Standard S-Meter
 //
 void drawSMeter(int strength, int x, int y)
 {
@@ -359,33 +359,33 @@ void drawSMeter(int strength, int x, int y)
 }
 
 //
-// Kompaktes S-Meter im H.J. Berndt Design (exklusiv für das NewUI-Layout)
+// Kompaktes S-Meter im H.J. Berndt Design (Exakt für NewUI rechtsbündig unter dem Akku)[span_0](start_span)[span_0](end_span)[span_1](start_span)[span_1](end_span)
 //
 void drawCompactSMeter(int strength, int x, int y)
 {
   int smeterX = x;
   int smeterY = y;
 
-  // 1. Oberer Kasten mit den Tuning-Pfeilen (wie im H.J. Berndt Design)
-  spr.drawRoundRect(smeterX, smeterY, 100, 22, 4, 0xFFFF);
-  // Linker Pfeil
-  spr.fillTriangle(smeterX + 12, smeterY + 11, smeterX + 22, smeterY + 5, smeterX + 22, smeterY + 17, 0xFFFF);
-  // Rechter Pfeil
-  spr.fillTriangle(smeterX + 88, smeterY + 11, smeterX + 78, smeterY + 5, smeterX + 78, smeterY + 17, 0xFFFF);
+  // Horizontaler Kasten oben rechts
+  spr.drawRoundRect(smeterX, smeterY, 96, 22, 2, 0xFFFF);
+  
+  // Tuning-Pfeile links und rechts im Kasten
+  spr.fillTriangle(smeterX + 6, smeterY + 11, smeterX + 12, smeterY + 6, smeterX + 12, smeterY + 16, 0xFFFF);
+  spr.fillTriangle(smeterX + 90, smeterY + 11, smeterX + 84, smeterY + 6, smeterX + 84, smeterY + 16, 0xFFFF);
 
-  // 2. Textzeile "SIGNAL 00/00" direkt darunter
+  // Text "SIG XX/XX" in der Mitte des Kastens
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFFFF);
-  char sigText[20];
-  sprintf(sigText, "SIGNAL %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
-  spr.drawString(sigText, smeterX + 50, smeterY + 25, FONT_SMALL);
+  char sigText[16];
+  sprintf(sigText, "SIG %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
+  spr.drawString(sigText, smeterX + 48, smeterY + 3, FONT_SMALL);
 
-  // 3. Empfangsbalken darunter
-  int bars = map(strength, 0, 60, 0, 16);
-  bars = constrain(bars, 0, 16);
-  for (int i = 0; i < 16; i++) {
+  // Empfangsbalken unten im Kasten
+  int bars = map(strength, 0, 60, 0, 10);
+  bars = constrain(bars, 0, 10);
+  for (int i = 0; i < 10; i++) {
     uint16_t color = (i < bars) ? 0x07E0 : TH.smeter_bar_empty;
-    spr.fillRect(smeterX + 2 + (i * 6), smeterY + 38, 4, 6, color);
+    spr.fillRect(smeterX + 16 + (i * 6), smeterY + 14, 4, 6, color);
   }
 }
 
