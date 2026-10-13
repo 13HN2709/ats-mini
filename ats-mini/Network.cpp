@@ -830,7 +830,7 @@ static const String webMemoryPage()
       {
         const Memory mem = getMemory(j);
         const char *band = mem.freq && mem.band<getTotalBands()? bands[mem.band].bandName : "";
-        char slot[4];
+        char slot[16];
         snprintf(slot, sizeof(slot), "%02d", j+1);
         pageAppend(out, pageMemoryRow, {
           {"index", String(j)}, {"slot", slot}, {"name", mem.name}, {"frequency", String(mem.freq)},
