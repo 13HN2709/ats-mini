@@ -29,26 +29,22 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenz zentriert: Wir nutzen einen stabilen Mittelpunkt, 
-  // damit lange Frequenzen nicht mehr links abgeschnitten werden.
-  int freqX = 135; 
-  int unitX = 225;
-
+  // 2. Frequenz korrigiert: Ziffern wieder weiter nach rechts gerückt (X = 185), Einheit bei X = 190
   drawFrequency(
     currentFrequency,
-    freqX, 55,  // Frequenz-Ziffern
-    unitX, 55,  // Einheit MHz / kHz
+    185, 60,  // Frequenz-Ziffern
+    190, 60,  // Einheit MHz / kHz
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // 3. Sendername / RDS direkt darunter zentriert (leicht nach oben gezogen auf Y = 95)
+  // 3. Sendername / RDS direkt darunter zentriert
   const char *stationName = getStationName();
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x07E0);
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, 160, 95);
+    drawLongStationName(stationName + 1, 160, 102);
   else if(*stationName)
-    drawStationName(stationName, 160, 95);
+    drawStationName(stationName, 160, 102);
 
   // Menü / Sidebar bei Tastendruck
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
