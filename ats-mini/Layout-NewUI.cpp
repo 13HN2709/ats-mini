@@ -14,7 +14,7 @@ void drawLayoutNewUI()
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // 1. Band und Modus (leicht nach links versetzt auf X = 145 statt 160)
+  // 1. Band und Modus (leicht nach links versetzt)
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFFFF);
@@ -29,15 +29,15 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenz & Einheit: Nach links verschoben (Original-Offsets minus Korrektur)
+  // 2. Frequenz & Einheit: Nach links verschoben
   drawFrequency(
     currentFrequency,
-    FREQ_OFFSET_X - 15, FREQ_OFFSET_Y,  // Frequenz-Ziffern weiter nach links
-    FUNIT_OFFSET_X - 15, FUNIT_OFFSET_Y, // Einheit MHz / kHz zieht mit
+    FREQ_OFFSET_X - 15, FREQ_OFFSET_Y,  // Frequenz-Ziffern
+    FUNIT_OFFSET_X - 15, FUNIT_OFFSET_Y, // Einheit MHz / kHz
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // 3. Sendername / RDS direkt darunter zentriert (ebenfalls leicht nach links angepasst)
+  // 3. Sendername / RDS direkt darunter zentriert
   const char *stationName = getStationName();
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x07E0);
@@ -52,17 +52,17 @@ void drawLayoutNewUI()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. S-Meter: Weiter nach links gezogen (Start bei X = 8, Breite = 304)
+  // 4. S-Meter: Perfekt angepasst, breiter und mit Sicherheitsabstand zu den Ecken
   int strength = rx.getCurrentRSSI();
-  int smeterWidth = 304;   // Noch breiter, zieht sich weiter nach links und rechts
-  int smeterX = 8;         // Weiter links platziert (wie von dir markiert)
+  int smeterWidth = 296;
+  int smeterX = (320 - smeterWidth) / 2; // Exakt zentriert (Start bei 12)
   int smeterY = 132;
-  int smeterHeight = 24;
-  int centerX = smeterX + (smeterWidth / 2);
+  int smeterHeight = 22;                  // Etwas flacher, damit nichts den Rahmen berührt
+  int centerX = smeterX + (smeterWidth / 2); // Exakt 160
   
   spr.drawRoundRect(smeterX, smeterY, smeterWidth, smeterHeight, 4, 0xFFFF);
   
-  int pairsPerSide = 22;   // Etwas mehr Segmente für die größere Breite
+  int pairsPerSide = 19;                  // Etwas weniger Paare, damit sie nicht in den Radius laufen
   int activePairs = map(strength, 0, 60, 0, pairsPerSide);
   activePairs = constrain(activePairs, 0, pairsPerSide);
 
@@ -78,17 +78,17 @@ void drawLayoutNewUI()
     // Linke Seite
     int leftX = (centerX - 3) - (i * (boxWidth + spacing));
     if (i < activePairs) {
-      spr.fillRect(leftX, smeterY + 4, boxWidth, smeterHeight - 8, color);
+      spr.fillRect(leftX, smeterY + 3, boxWidth, smeterHeight - 6, color);
     } else {
-      spr.fillRect(leftX, smeterY + 4, boxWidth, smeterHeight - 8, TH.smeter_bar_empty);
+      spr.fillRect(leftX, smeterY + 3, boxWidth, smeterHeight - 6, TH.smeter_bar_empty);
     }
 
     // Rechte Seite
     int rightX = (centerX + 2) + (i * (boxWidth + spacing));
     if (i < activePairs) {
-      spr.fillRect(rightX, smeterY + 4, boxWidth, smeterHeight - 8, color);
+      spr.fillRect(rightX, smeterY + 3, boxWidth, smeterHeight - 6, color);
     } else {
-      spr.fillRect(rightX, smeterY + 4, boxWidth, smeterHeight - 8, TH.smeter_bar_empty);
+      spr.fillRect(rightX, smeterY + 3, boxWidth, smeterHeight - 6, TH.smeter_bar_empty);
     }
   }
 
