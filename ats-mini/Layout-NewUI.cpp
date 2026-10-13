@@ -53,6 +53,9 @@ void drawLayoutNewUI()
   else if(*stationName)
     drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 7);
 
+  // Seitenleiste / Menü für NewUI zeichnen, damit es nicht mehr unsichtbar bleibt
+  drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
+
   // Kompaktes S-Meter
   drawSMeter(rx.getCurrentRSSI(), 195, 42); 
 
