@@ -8,25 +8,17 @@ extern uint32_t lastTuneTime;
 
 void drawLayoutNewUI()
 {
-  // Draw preferences write request icon
   drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
-
-  // Draw BLE icon
   drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
-
-  // Draw battery indicator & voltage
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
-
-  // Draw WiFi icon
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // H.J. Berndt S-Meter oben rechts unter der Akkuanzeige
-  drawCompactSMeter(rx.getCurrentRSSI(), 220, 35);
+  // H.J. Berndt S-Meter oben rechts
+  drawCompactSMeter(rx.getCurrentRSSI(), 210, 30);
 
-  // Set font we are going to use
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
 
-  // Band und Modus linksbündig
+  // Band und Modus linksbündig oben
   drawBandAndMode(
     getCurrentBand()->bandName,
     bandModeDesc[currentMode],
@@ -40,15 +32,15 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // Frequenz und Einheiten linksbündig
+  // Frequenz weiter rechts (da MR_DATUM von rechts nach links zeichnet)
   drawFrequency(
     currentFrequency,
-    140, 60,
-    240, 60,
+    215, 60,  // X-Koordinate korrigiert, damit nichts abgeschnitten wird
+    220, 60,  // Einheit MHz etwas versetzt
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // Sendername / RDS linksbündig unter der Frequenz
+  // Sendername / RDS linksbündig
   const char *stationName = getStationName();
   if(*stationName == 0xFF)
     drawLongStationName(stationName + 1, 15, 110);
@@ -61,10 +53,9 @@ void drawLayoutNewUI()
   }
   else if(!drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y))
   {
-    const char *rt = getRadioText();
+    const char *rt = getRadioTest();
     const char *pi = getProgramInfo();
 
-    // Nur RDS-Lauftext anzeigen, wenn vorhanden. Andernfalls bleibt der Bereich komplett leer.
     if((rt && *rt) || (pi && *pi))
     {
       spr.setTextColor(0x07E0);
@@ -72,6 +63,5 @@ void drawLayoutNewUI()
       spr.setTextDatum(TL_DATUM);
       spr.drawString(rt ? rt : pi, 15, 130, 4);
     }
-    // Kein Skalen-Fallback mehr – Bereich bleibt bei fehlendem RDS leer
   }
 }
