@@ -20,13 +20,13 @@ void drawLayoutNewUI()
   // Draw WiFi icon
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // H.J. Berndt S-Meter oben rechtsbündig unter der Akkuanzeige (X = 220)
-  drawCompactSMeter(rx.getCurrentRSSI(), 220, 25);
+  // H.J. Berndt S-Meter oben rechts (Y = 18, frei von der Frequenz-Einheit)
+  drawCompactSMeter(rx.getCurrentRSSI(), 215, 18);
 
   // Set font we are going to use
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
 
-  // Band und Modus linksbündig oben (nutzt nun die weiße Schrift aus Draw.cpp)
+  // Band und Modus linksbündig oben
   drawBandAndMode(
     getCurrentBand()->bandName,
     bandModeDesc[currentMode],
@@ -40,20 +40,20 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // Frequenz und Einheit sauber platziert, damit nichts überlappt oder abgeschnitten wird
+  // Frequenz und Einheit sauber platziert
   drawFrequency(
     currentFrequency,
-    170, 70,  // Frequenz-Ziffern
-    175, 70,  // Einheit MHz/kHz
+    155, 65,  // Frequenz-Ziffern
+    160, 65,  // Einheit MHz/kHz
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // Sendername / RDS unter der Frequenz
+  // Sendername (z.B. JVE) sitzt jetzt sauber bündig unter der Frequenz bei Y = 110
   const char *stationName = getStationName();
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, 15, 120);
+    drawLongStationName(stationName + 1, 15, 110);
   else if(*stationName)
-    drawStationName(stationName, 15, 120);
+    drawStationName(stationName, 15, 110);
 
   // Menü / Sidebar einblenden, wenn die Menütaste gedrückt wird
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
@@ -70,12 +70,13 @@ void drawLayoutNewUI()
     const char *rt = getRadioText();
     const char *pi = getProgramInfo();
 
+    // Langer Radiotext / Programminfo wandert nach unten (Y = 135), getrennt vom Sendername
     if((rt && *rt) || (pi && *pi))
     {
       spr.setTextColor(0x07E0);
       spr.setTextSize(1.0);
       spr.setTextDatum(TL_DATUM);
-      spr.drawString(rt ? rt : pi, 15, 130, 4);
+      spr.drawString(rt ? rt : pi, 15, 135, 4);
     }
   }
 }
