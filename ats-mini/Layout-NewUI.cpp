@@ -29,11 +29,15 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenz mittig ausgerichtet
+  // 2. Frequenz exakt zentriert (unabhängig davon, ob FM oder SSB/KW)
+  // Bei FM nutzen wir eine mittige X-Position, bei SSB/KW rückt sie durch die Unterteilung ebenfalls perfekt ein
+  int freqX = (currentMode == FM) ? 160 : 150;
+  int unitX = (currentMode == FM) ? 230 : 210;
+
   drawFrequency(
     currentFrequency,
-    185, 45,  // Frequenz-Ziffern
-    190, 45,  // Einheit MHz / kHz
+    freqX, 60,  // Frequenz-Ziffern zentriert
+    unitX, 60,  // Einheit MHz / kHz
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
@@ -42,9 +46,9 @@ void drawLayoutNewUI()
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x07E0);
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, 160, 92);
+    drawLongStationName(stationName + 1, 160, 102);
   else if(*stationName)
-    drawStationName(stationName, 160, 92);
+    drawStationName(stationName, 160, 102);
 
   // Menü / Sidebar bei Tastendruck
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
@@ -52,48 +56,43 @@ void drawLayoutNewUI()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. Equalizer-Style S-Meter: Baut sich von außen (links & rechts) zur Mitte hin auf
+  // 4. Dickes, breites S-Meter im Equalizer-Look unten
   int strength = rx.getCurrentRSSI();
-  int smeterX = 20;
+  int smeterX = 10;
   int smeterY = 125;
-  int smeterWidth = 280;
+  int smeterWidth = 300;
+  int smeterHeight = 24;
   int centerX = smeterX + (smeterWidth / 2);
   
-  // Rahmen für das S-Meter
-  spr.drawRoundRect(smeterX, smeterY, smeterWidth, 14, 3, 0xFFFF);
+  spr.drawRoundRect(smeterX, smeterY, smeterWidth, smeterHeight, 4, 0xFFFF);
   
-  // Anzahl der Kästchen pro Seite (insgesamt z.B. 20 Paare)
-  int pairsPerSide = 18;
-  int totalWidthOfBoxes = smeterWidth - 10;
-  int boxWidth = 5;
-  int spacing = 2;
-
-  // Signalstärke auf die Anzahl der Paare mappen
+  int pairsPerSide = 22;
   int activePairs = map(strength, 0, 60, 0, pairsPerSide);
   activePairs = constrain(activePairs, 0, pairsPerSide);
 
-  // Von der Mitte aus nach links und rechts die bunten Kästchen zeichnen
+  int boxWidth = 5;
+  int spacing = 2;
+
   for (int i = 0; i < pairsPerSide; i++) {
-    // Farbverlauf von Grün (Mitte/Start) über Gelb zu Rot (außen)
     uint16_t color;
     if (i < pairsPerSide / 3) color = 0x07E0;      // Grün
     else if (i < (pairsPerSide * 2) / 3) color = 0xFFE0; // Gelb
     else color = 0xF800;                           // Rot
 
-    // Linke Seite (wandert von der Mitte nach links)
+    // Linke Seite
     int leftX = (centerX - 3) - (i * (boxWidth + spacing));
     if (i < activePairs) {
-      spr.fillRect(leftX, smeterY + 3, boxWidth, 8, color);
+      spr.fillRect(leftX, smeterY + 4, boxWidth, smeterHeight - 8, color);
     } else {
-      spr.fillRect(leftX, smeterY + 3, boxWidth, 8, TH.smeter_bar_empty);
+      spr.fillRect(leftX, smeterY + 4, boxWidth, smeterHeight - 8, TH.smeter_bar_empty);
     }
 
-    // Rechte Seite (wandert von der Mitte nach rechts)
+    // Rechte Seite
     int rightX = (centerX + 2) + (i * (boxWidth + spacing));
     if (i < activePairs) {
-      spr.fillRect(rightX, smeterY + 3, boxWidth, 8, color);
+      spr.fillRect(rightX, smeterY + 4, boxWidth, smeterHeight - 8, color);
     } else {
-      spr.fillRect(rightX, smeterY + 3, boxWidth, 8, TH.smeter_bar_empty);
+      spr.fillRect(rightX, smeterY + 4, boxWidth, smeterHeight - 8, TH.smeter_bar_empty);
     }
   }
 
@@ -111,7 +110,7 @@ void drawLayoutNewUI()
       spr.setTextColor(0x07E0);
       spr.setTextSize(1.0);
       spr.setTextDatum(TC_DATUM);
-      spr.drawString(rt ? rt : pi, 160, 145, 4);
+      spr.drawString(rt ? rt : pi, 160, 150, 4);
     }
   }
 }
