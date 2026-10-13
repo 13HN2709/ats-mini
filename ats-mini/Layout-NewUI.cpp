@@ -29,11 +29,11 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenz korrigiert: Ziffern wieder weiter nach rechts gerückt (X = 185), Einheit bei X = 190
+  // 2. Frequenz & Einheit: So platziert, dass .000 perfekt unter der kHz-Einheit steht
   drawFrequency(
     currentFrequency,
-    185, 60,  // Frequenz-Ziffern
-    190, 60,  // Einheit MHz / kHz
+    185, 56,  // Frequenz-Ziffern
+    220, 52,  // Einheit MHz / kHz (leicht versetzt, damit die Nachkommastellen darunter wandern)
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
@@ -52,17 +52,17 @@ void drawLayoutNewUI()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. Dickes, breites S-Meter im Equalizer-Look unten (Höhe = 24, Breite = 300)
+  // 4. S-Meter: Weiter unten (Y = 132) und an den Seiten etwas kürzer (Breite = 280)
   int strength = rx.getCurrentRSSI();
-  int smeterX = 10;
-  int smeterY = 125;
-  int smeterWidth = 300;
+  int smeterX = 20;
+  int smeterY = 132;
+  int smeterWidth = 280;
   int smeterHeight = 24;
   int centerX = smeterX + (smeterWidth / 2);
   
   spr.drawRoundRect(smeterX, smeterY, smeterWidth, smeterHeight, 4, 0xFFFF);
   
-  int pairsPerSide = 22;
+  int pairsPerSide = 20;
   int activePairs = map(strength, 0, 60, 0, pairsPerSide);
   activePairs = constrain(activePairs, 0, pairsPerSide);
 
