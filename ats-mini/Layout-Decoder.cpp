@@ -45,15 +45,14 @@ void drawLayoutDecoder()
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-    // Show station or channel name, if present (etwas höher platziert, damit es nicht mit S:/SNR kollidiert)
+  // Show station or channel name, if present (hier ebenfalls mit -4 Offset angepasst)
   const char *stationName = getStationName();
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, MENU_OFFSET_X + 1 + 76 + MENU_DELTA_X + 2, RDS_OFFSET_Y - 18);
+    drawLongStationName(stationName + 1, MENU_OFFSET_X + 1 + 76 + MENU_DELTA_X + 2, RDS_OFFSET_Y - 4);
   else if(*stationName)
-    drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 18);
+    drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 4);
 
   // Draw left-side menu/info bar
-  // @@@ FIXME: Frequency display (above) intersects the side bar!
   drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
 
   // Draw S-meter mit direktem Signalwert vom RX
@@ -72,14 +71,11 @@ void drawLayoutDecoder()
     const char *rt = getRadioText();
     const char *pi = getProgramInfo();
 
-    // 1. Wenn RDS oder ProgramInfo vorhanden ist:
-    // RDS-Text groß anzeigen & Röhrenskala ausblenden
+    // Decoder-spezifische RDS- / Programminfo-Ausgabe
     if((rt && *rt) || (pi && *pi))
     {
       drawRadioText(130, 150);
     }
-    // 2. Wenn KEIN RDS vorhanden ist:
-    // Signalwerte über der Röhrenskala anzeigen und Skala unten rendern
     else
     {
       drawRadioText(118, 138);
