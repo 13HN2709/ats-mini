@@ -366,19 +366,26 @@ void drawCompactSMeter(int strength, int x, int y)
   int smeterX = x;
   int smeterY = y;
 
-  spr.drawRoundRect(smeterX, smeterY, 86, 16, 2, 0xFFFF);
+  // 1. Oberer Kasten mit den Tuning-Pfeilen (wie im H.J. Berndt Design)
+  spr.drawRoundRect(smeterX, smeterY, 100, 22, 4, 0xFFFF);
+  // Linker Pfeil
+  spr.fillTriangle(smeterX + 12, smeterY + 11, smeterX + 22, smeterY + 5, smeterX + 22, smeterY + 17, 0xFFFF);
+  // Rechter Pfeil
+  spr.fillTriangle(smeterX + 88, smeterY + 11, smeterX + 78, smeterY + 5, smeterX + 78, smeterY + 17, 0xFFFF);
 
+  // 2. Textzeile "SIGNAL 00/00" direkt darunter
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFFFF);
-  char sigText[16];
-  sprintf(sigText, "SIG %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
-  spr.drawString(sigText, smeterX + 43, smeterY + 1, FONT_SMALL);
+  char sigText[20];
+  sprintf(sigText, "SIGNAL %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
+  spr.drawString(sigText, smeterX + 50, smeterY + 25, FONT_SMALL);
 
-  int bars = map(strength, 0, 60, 0, 10);
-  bars = constrain(bars, 0, 10);
-  for (int i = 0; i < 10; i++) {
+  // 3. Empfangsbalken darunter
+  int bars = map(strength, 0, 60, 0, 16);
+  bars = constrain(bars, 0, 16);
+  for (int i = 0; i < 16; i++) {
     uint16_t color = (i < bars) ? 0x07E0 : TH.smeter_bar_empty;
-    spr.fillRect(smeterX + 6 + (i * 7), smeterY + 10, 5, 4, color);
+    spr.fillRect(smeterX + 2 + (i * 6), smeterY + 38, 4, 6, color);
   }
 }
 
