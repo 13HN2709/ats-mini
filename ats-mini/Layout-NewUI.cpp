@@ -8,29 +8,21 @@ extern uint32_t lastTuneTime;
 
 void drawLayoutNewUI()
 {
-  // Draw preferences write request icon
+  // Icons oben rechts
   drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
-
-  // Draw BLE icon
   drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
-
-  // Draw battery indicator & voltage
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
-
-  // Draw WiFi icon
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // H.J. Berndt S-Meter oben rechts (Y = 18, frei von der Frequenz-Einheit)
-  drawCompactSMeter(rx.getCurrentRSSI(), 215, 18);
+  // H.J. Berndt S-Meter oben rechts (Y = 8, damit es perfekt unter der Akkuzeile sitzt)
+  drawCompactSMeter(rx.getCurrentRSSI(), 215, 8);
 
-  // Set font we are going to use
+  // Band und Modus links oben
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
-
-  // Band und Modus linksbündig oben
   drawBandAndMode(
     getCurrentBand()->bandName,
     bandModeDesc[currentMode],
-    55, 15
+    15, 12
   );
 
   if(switchThemeEditor())
@@ -40,22 +32,22 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // Frequenz und Einheit sauber platziert
+  // Frequenz und Einheit
   drawFrequency(
     currentFrequency,
-    155, 65,  // Frequenz-Ziffern
-    160, 65,  // Einheit MHz/kHz
+    150, 55,  // Frequenz-Ziffern
+    155, 55,  // Einheit MHz/kHz
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // Sendername (z.B. JVE) sitzt jetzt sauber bündig unter der Frequenz bei Y = 110
+  // Sendername (z.B. 1Live / JVE) sauber bündig unter der Frequenz links platziert (X = 15, Y = 105)
   const char *stationName = getStationName();
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, 15, 110);
+    drawLongStationName(stationName + 1, 15, 105);
   else if(*stationName)
-    drawStationName(stationName, 15, 110);
+    drawStationName(stationName, 55, 105);
 
-  // Menü / Sidebar einblenden, wenn die Menütaste gedrückt wird
+  // Menü / Sidebar bei Tastendruck
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
   {
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
@@ -70,7 +62,7 @@ void drawLayoutNewUI()
     const char *rt = getRadioText();
     const char *pi = getProgramInfo();
 
-    // Langer Radiotext / Programminfo wandert nach unten (Y = 135), getrennt vom Sendername
+    // Radiotext getrennt ganz unten
     if((rt && *rt) || (pi && *pi))
     {
       spr.setTextColor(0x07E0);
