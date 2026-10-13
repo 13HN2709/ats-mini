@@ -8,25 +8,29 @@ extern uint32_t lastTuneTime;
 
 void drawLayoutNewUI()
 {
-  // Bildschirm mit der aktuellen Hintergrundfarbe des Themes füllen
-  spr.fillSprite(TH.bg);
-  // Preferences write request icon
+  // Draw preferences write request icon
   drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
 
-  // BLE icon
+  // Draw BLE icon
   drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
 
-  // Battery indicator & voltage
+  // Draw battery indicator & voltage
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
 
-  // WiFi icon
+  // Draw WiFi icon
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // Band und Modulationsart ("VHF FM")
+  // H.J. Berndt S-Meter oben rechts unter der Akkuanzeige
+  drawCompactSMeter(rx.getCurrentRSSI(), 220, 35);
+
+  // Set font we are going to use
+  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
+
+  // Band und Modus linksbündig
   drawBandAndMode(
     getCurrentBand()->bandName,
     bandModeDesc[currentMode],
-    120, BAND_OFFSET_Y
+    15, 20
   );
 
   if(switchThemeEditor())
@@ -36,30 +40,38 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
-
-  // Frequenz, Einheiten und Ziffern-Highlight
+  // Frequenz und Einheiten linksbündig
   drawFrequency(
     currentFrequency,
-    FREQ_OFFSET_X, FREQ_OFFSET_Y,
-    FUNIT_OFFSET_X, FUNIT_OFFSET_Y,
+    140, 60,
+    240, 60,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // Stations- oder Kanalname (RDS), falls vorhanden
+  // Sendername / RDS linksbündig unter der Frequenz
   const char *stationName = getStationName();
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, MENU_OFFSET_X + 1 + 76 + MENU_DELTA_X + 2, RDS_OFFSET_Y - 7);
+    drawLongStationName(stationName + 1, 15, 110);
   else if(*stationName)
-    drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 7);
+    drawStationName(stationName, 15, 110);
 
-  // Seitenleiste / Menü für NewUI zeichnen, damit es nicht mehr unsichtbar bleibt
-  drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
+  if(currentCmd == CMD_SCAN)
+  {
+    drawScanGraphs(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
+  }
+  else if(!drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y))
+  {
+    const char *rt = getRadioText();
+    const char *pi = getProgramInfo();
 
-  // Kompaktes S-Meter
-  drawSMeter(rx.getCurrentRSSI(), 195, 42); 
-
-  // FM Stereo Indikator
-  drawStereoIndicator(195, 42,
-    (currentMode==FM) && (fmStereoIdx!=FM_STEREO_MONO) && rx.getCurrentPilot());
+    // Nur RDS-Lauftext anzeigen, wenn vorhanden. Andernfalls bleibt der Bereich komplett leer.
+    if((rt && *rt) || (pi && *pi))
+    {
+      spr.setTextColor(0x07E0);
+      spr.setTextSize(1.0);
+      spr.setTextDatum(TL_DATUM);
+      spr.drawString(rt ? rt : pi, 15, 130, 4);
+    }
+    // Kein Skalen-Fallback mehr – Bereich bleibt bei fehlendem RDS leer
+  }
 }
