@@ -8,22 +8,19 @@ extern uint32_t lastTuneTime;
 
 void drawLayoutNewUI()
 {
-  // Icons oben rechts
+  // Icons oben rechts (Akku, WiFi, BLE, Save)
   drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
   drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // H.J. Berndt S-Meter oben rechts (Y = 8, damit es perfekt unter der Akkuzeile sitzt)
-  drawCompactSMeter(rx.getCurrentRSSI(), 215, 8);
-
-  // Band und Modus links oben
+  // 1. Band und Modus mittig oben (in Weiß)
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
-  drawBandAndMode(
-    getCurrentBand()->bandName,
-    bandModeDesc[currentMode],
-    15, 12
-  );
+  spr.setTextDatum(TC_DATUM);
+  spr.setTextColor(0xFFFF);
+  char bandModeBuf[32];
+  snprintf(bandModeBuf, sizeof(bandModeBuf), "%s %s", getCurrentBand()->bandName, bandModeDesc[currentMode]);
+  spr.drawString(bandModeBuf, 160, 8);
 
   if(switchThemeEditor())
   {
@@ -32,25 +29,47 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // Frequenz und Einheit
+  // 2. Frequenz mittig ausgerichtet
   drawFrequency(
     currentFrequency,
-    150, 55,  // Frequenz-Ziffern
-    155, 55,  // Einheit MHz/kHz
+    185, 45,  // Frequenz-Ziffern
+    190, 45,  // Einheit MHz / kHz
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // Sendername (z.B. 1Live / JVE) sauber bündig unter der Frequenz links platziert (X = 15, Y = 105)
+  // 3. Sendername / RDS direkt darunter zentriert
   const char *stationName = getStationName();
+  spr.setTextDatum(TC_DATUM);
+  spr.setTextColor(0x07E0);
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, 15, 105);
+    drawLongStationName(stationName + 1, 160, 92);
   else if(*stationName)
-    drawStationName(stationName, 55, 105);
+    drawStationName(stationName, 160, 92);
 
   // Menü / Sidebar bei Tastendruck
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
   {
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
+  }
+
+  // 4. Schönes langes S-Meter ganz unten über die volle Breite
+  int strength = rx.getCurrentRSSI();
+  int smeterX = 20;
+  int smeterY = 125;
+  int smeterWidth = 280;
+  
+  // Rahmen für das lange S-Meter
+  spr.drawRoundRect(smeterX, smeterY, smeterWidth, 14, 3, 0xFFFF);
+  
+  // Balken berechnen und zeichnen
+  int maxBars = 40; 
+  int activeBars = map(strength, 0, 60, 0, maxBars);
+  activeBars = constrain(activeBars, 0, maxBars);
+  
+  int segmentWidth = (smeterWidth - 8) / maxBars;
+  for (int i = 0; i < maxBars; i++) {
+    uint16_t color = (i < activeBars) ? 0x07E0 : TH.smeter_bar_empty;
+    spr.fillRect(smeterX + 4 + (i * segmentWidth), smeterY + 3, segmentWidth - 1, 8, color);
   }
 
   if(currentCmd == CMD_SCAN)
@@ -62,13 +81,13 @@ void drawLayoutNewUI()
     const char *rt = getRadioText();
     const char *pi = getProgramInfo();
 
-    // Radiotext getrennt ganz unten
+    // Falls RDS-Lauftext vorhanden ist, wird er unten eingeblendet
     if((rt && *rt) || (pi && *pi))
     {
       spr.setTextColor(0x07E0);
       spr.setTextSize(1.0);
-      spr.setTextDatum(TL_DATUM);
-      spr.drawString(rt ? rt : pi, 15, 135, 4);
+      spr.setTextDatum(TC_DATUM);
+      spr.drawString(rt ? rt : pi, 160, 145, 4);
     }
   }
 }
