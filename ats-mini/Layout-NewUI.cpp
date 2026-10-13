@@ -29,11 +29,11 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenz & Einheit: Perfekt aufeinander abgestimmt, damit .000 unter kHz landet
+  // 2. Frequenz und Einheiten exakt mit den Original-Offsets aus dem Default-Layout
   drawFrequency(
     currentFrequency,
-    175, 56,  // Frequenz-Ziffern
-    230, 52,  // Einheit MHz / kHz
+    FREQ_OFFSET_X, FREQ_OFFSET_Y,
+    FUNIT_OFFSET_X, FUNIT_OFFSET_Y,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
@@ -52,17 +52,17 @@ void drawLayoutNewUI()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. S-Meter: Exakt zentriert (Breite 280, Start = 20, Mitte = 160), Höhe = 24
+  // 4. S-Meter: Perfekt zentriert (Breite 294, Start = 13), etwas tiefer (Y = 132), Dicke = 24
   int strength = rx.getCurrentRSSI();
-  int smeterWidth = 280;
-  int smeterX = (320 - smeterWidth) / 2; // Automatisch exakt zentriert (20)
+  int smeterWidth = 294;
+  int smeterX = (320 - smeterWidth) / 2; // Exakt zentriert (Start bei 13)
   int smeterY = 132;
   int smeterHeight = 24;
   int centerX = smeterX + (smeterWidth / 2); // Exakt 160
   
   spr.drawRoundRect(smeterX, smeterY, smeterWidth, smeterHeight, 4, 0xFFFF);
   
-  int pairsPerSide = 20;
+  int pairsPerSide = 21;
   int activePairs = map(strength, 0, 60, 0, pairsPerSide);
   activePairs = constrain(activePairs, 0, pairsPerSide);
 
