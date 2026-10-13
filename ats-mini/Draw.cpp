@@ -6,7 +6,7 @@
 #include "BleMode.h"
 #include "Draw.h"
 
-// Funktionsprototypen für die Layouts
+// Layout-Prototypen
 void drawLayoutSmeter();
 void drawLayoutNewUI();
 void drawLayoutDecoder();
@@ -21,7 +21,6 @@ void drawSaveIndicator(int x, int y)
 {
   if(prefsAreWritten() || switchThemeEditor())
   {
-    // Draw preferences write request icon
     spr.fillRect(x+3, y+2, 3, 5, TH.save_icon);
     spr.fillTriangle(x+1, y+7, x+7, y+7, x+4, y+10, TH.save_icon);
     spr.drawLine(x, y+12, x, y+13, TH.save_icon);
@@ -37,12 +36,10 @@ void drawBleIndicator(int x, int y)
 {
   int8_t status = getBleStatus();
 
-  // If need to draw BLE icon...
   if(status || switchThemeEditor())
   {
     uint16_t color = (status>0) ? TH.rf_icon_conn : TH.rf_icon;
 
-    // For the editor, alternate between BLE states every ~8 seconds
     if(switchThemeEditor())
       color = millis()&0x2000? TH.rf_icon_conn : TH.rf_icon;
 
@@ -61,12 +58,10 @@ void drawWiFiIndicator(int x, int y)
 {
   int8_t status = getWiFiStatus();
 
-  // If need to draw WiFi icon...
   if(status || switchThemeEditor())
   {
     uint16_t color = (status>0) ? TH.rf_icon_conn : TH.rf_icon;
 
-    // For the editor, alternate between WiFi states every ~8 seconds
     if(switchThemeEditor())
       color = millis()&0x2000? TH.rf_icon_conn : TH.rf_icon;
 
@@ -83,7 +78,6 @@ bool drawStatus(int x, int y)
 {
   if(statusLines[0][0] || statusLines[1][0])
   {
-    // Draw two lines of operation status
     spr.setTextDatum(TC_DATUM);
     spr.setTextColor(0x07E0);
     spr.drawString(statusLines[0], x, y, FONT_SMALL);
@@ -134,51 +128,27 @@ void drawBandAndMode(const char *band, const char *mode, int x, int y)
 }
 
 //
-// Draw radio text (Scrolling RDS Text)
+// Draw radio text
 //
 void drawRadioText(int y, int ymax)
 {
   const char *rt = getRadioText();
   
-  int startX = 90;
-  int maxWidth = 220; 
-
+  spr.setTextColor(0x07E0);
   spr.setTextSize(1.0);
-  spr.setTextColor(0x07E0); // Neongrün
 
   if (rt && *rt) 
   {
-    int textWidth = spr.textWidth(rt, &fonts::Font4);
-
-    if (textWidth <= maxWidth) {
-      spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
-      spr.setTextDatum(TL_DATUM);
-      spr.drawString(rt, startX, y - 6, 4);
-    } 
-    else 
-    {
-      static int scrollOffset = 0;
-      static uint32_t lastScrollTime = 0;
-      uint32_t now = millis();
-
-      if (now - lastScrollTime > 120) {
-        scrollOffset += 3;
-        if (scrollOffset > textWidth + 40) {
-          scrollOffset = -maxWidth; 
-        }
-        lastScrollTime = now;
-      }
-
-      spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
-      spr.setTextDatum(TL_DATUM);
-      spr.drawString(rt, startX - scrollOffset, y - 6, 4);
-    }
-  }
-  else
+    spr.setTextDatum(TC_DATUM);
+    spr.drawString(rt, 160, y, 4);
+  } 
+  else 
   {
-    spr.fillRect(startX, y - 6, maxWidth, 24, TH.bg);
     spr.setTextDatum(TL_DATUM);
-    spr.drawString("", startX, y - 6, 4);
+
+    char sigBuf[32];
+    snprintf(sigBuf, sizeof(sigBuf), "S:%d | SNR:%d dB", rx.getCurrentRSSI(), rx.getCurrentSNR());
+    spr.drawString(sigBuf, 90, y - 6, 4);
   }
 }
 
@@ -340,38 +310,56 @@ void drawScale(uint32_t freq)
 }
 
 //
-// 1. Klassisches Stock S-Meter (Antennensymbol + Signalbalken für Default, Decoder & S-Meter)
+// Exakt dein altes S-Meter mit Peak-Hold und Dreiecks-Antenne (für Default, Decoder & S-Meter Layout)[span_1](start_span)[span_1](end_span)
 //
 void drawSMeter(int strength, int x, int y)
 {
-  int smeterX = x;
-  int smeterY = y;
+  static int peakBar = 0;
+  static uint32_t lastPeakTime = 0;
+  static uint32_t lastDecayTime = 0;
 
-  // Antennensymbol auf der linken Seite zeichnen
-  spr.drawFastVLine(smeterX + 2, smeterY + 3, 9, 0xFCA0);
-  spr.drawFastHLine(smeterX, smeterY + 11, 5, 0xFCA0);
-  spr.drawLine(smeterX, smeterY + 1, smeterX + 2, smeterY - 1, 0xFCA0);
-  spr.drawLine(smeterX + 4, smeterY + 1, smeterX + 2, smeterY - 1, 0xFCA0);
-  spr.drawPixel(smeterX + 2, smeterY - 2, 0xFCA0);
+  uint32_t now = millis();
 
-  // Signalbalken rechts neben der Antenne
-  int bars = map(strength, 0, 60, 0, 10);
-  bars = constrain(bars, 0, 10);
-
-  int startBarX = smeterX + 10;
-  for (int i = 0; i < 10; i++) {
-    uint16_t color = TH.smeter_bar_empty;
-    if (i < bars) {
-      if (i < 6)      color = 0xFFE0; // Gelb
-      else if (i < 8) color = 0xFD20; // Orange
-      else            color = 0xF800; // Rot
+  if (strength >= peakBar) {
+    peakBar = strength;
+    lastPeakTime = now;
+    lastDecayTime = now;
+  } 
+  else if (now - lastPeakTime > 1200) {
+    if (now - lastDecayTime > 150) {
+      if (peakBar > 0) peakBar--;
+      lastDecayTime = now;
     }
-    spr.fillRect(startBarX + (i * 5), smeterY + 2, 3, 9, color);
+  }
+
+  spr.drawTriangle(x + 1, y + 1, x + 11, y + 1, x + 6, y + 6, 0xFCA0);
+  spr.drawLine(x + 6, y + 1, x + 6, y + 14, 0xFCA0);
+
+  for(int i = 0; i < 17; i++)
+  {
+    int barX = 15 + x + (i * 4);
+
+    if (i == peakBar && peakBar > 0)
+    {
+      spr.fillRect(barX, 2 + y, 2, 12, 0xF800);
+    }
+    else if (i < 10 && i < strength)
+    {
+      spr.fillRect(barX, 2 + y, 2, 12, 0xFCA0);
+    }
+    else if (i < strength)
+    {
+      spr.fillRect(barX, 2 + y, 2, 12, TH.smeter_bar_plus);
+    }
+    else
+    {
+      spr.fillRect(barX, 2 + y, 2, 12, TH.smeter_bar_empty);
+    }
   }
 }
 
 //
-// 2. Kompaktes S-Meter im H.J. Berndt Design (exklusiv für das NewUI-Layout)
+// Kompaktes S-Meter im H.J. Berndt Design (exklusiv für das NewUI-Layout)
 //
 void drawCompactSMeter(int strength, int x, int y)
 {
@@ -401,12 +389,12 @@ void drawStereoIndicator(int x, int y, bool stereo)
 {
   if(stereo)
   {
-    // Platzhalter für Stereo
+    spr.fillRect(15 + x, 7 + y, 4 * 17 - 2, 2, TH.bg);
   }
 }
 
 //
-// Draw RDS station name (also CB channel, etc)
+// Draw RDS station name
 //
 void drawStationName(const char *name, int x, int y)
 {
