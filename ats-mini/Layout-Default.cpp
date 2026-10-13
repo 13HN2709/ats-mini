@@ -45,12 +45,12 @@ void drawLayoutDefault()
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // Show station or channel name, if present (etwas höher platziert mit -10 Offset)
+  // Show station or channel name, if present (mit -4 Offset für den perfekten Zwischenraum)
   const char *stationName = getStationName();
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, MENU_OFFSET_X + 1 + 76 + MENU_DELTA_X + 2, RDS_OFFSET_Y - 10);
+    drawLongStationName(stationName + 1, MENU_OFFSET_X + 1 + 76 + MENU_DELTA_X + 2, RDS_OFFSET_Y - 4);
   else if(*stationName)
-    drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 10);
+    drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 4);
 
   // Draw left-side menu/info bar
   drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
