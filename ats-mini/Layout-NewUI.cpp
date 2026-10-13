@@ -29,9 +29,8 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenz exakt zentriert (unabhängig davon, ob FM oder SSB/KW)
-  // Bei FM nutzen wir eine mittige X-Position, bei SSB/KW rückt sie durch die Unterteilung ebenfalls perfekt ein
-  int freqX = (currentMode == FM) ? 160 : 150;
+  // 2. Frequenz absolut mittig ausgerichtet (dynamisch für FM und KW/SSB)
+  int freqX = (currentMode == FM) ? 160 : 145;
   int unitX = (currentMode == FM) ? 230 : 210;
 
   drawFrequency(
@@ -56,7 +55,7 @@ void drawLayoutNewUI()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. Dickes, breites S-Meter im Equalizer-Look unten
+  // 4. Dickes, breites S-Meter im Equalizer-Look unten (Höhe = 24, Breite = 300)
   int strength = rx.getCurrentRSSI();
   int smeterX = 10;
   int smeterY = 125;
