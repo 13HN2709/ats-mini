@@ -120,7 +120,7 @@ void drawMessage(const char *msg)
 }
 
 //
-// Draw band and mode indicators (Ohne altes Header-S-Meter)
+// Draw band and mode indicators
 //
 void drawBandAndMode(const char *band, const char *mode, int x, int y)
 {
@@ -340,24 +340,52 @@ void drawScale(uint32_t freq)
 }
 
 //
-// Draw S-Meter im echten H.J. Berndt Design (oben rechts unter der Akku-Anzeige)
+// 1. Klassisches Stock S-Meter (Antennensymbol + Signalbalken für Default, Decoder & S-Meter)
 //
 void drawSMeter(int strength, int x, int y)
 {
   int smeterX = x;
   int smeterY = y;
 
-  // 1. Kompakter Umrandungskasten
+  // Antennensymbol auf der linken Seite zeichnen
+  spr.drawFastVLine(smeterX + 2, smeterY + 3, 9, 0xFCA0);
+  spr.drawFastHLine(smeterX, smeterY + 11, 5, 0xFCA0);
+  spr.drawLine(smeterX, smeterY + 1, smeterX + 2, smeterY - 1, 0xFCA0);
+  spr.drawLine(smeterX + 4, smeterY + 1, smeterX + 2, smeterY - 1, 0xFCA0);
+  spr.drawPixel(smeterX + 2, smeterY - 2, 0xFCA0);
+
+  // Signalbalken rechts neben der Antenne
+  int bars = map(strength, 0, 60, 0, 10);
+  bars = constrain(bars, 0, 10);
+
+  int startBarX = smeterX + 10;
+  for (int i = 0; i < 10; i++) {
+    uint16_t color = TH.smeter_bar_empty;
+    if (i < bars) {
+      if (i < 6)      color = 0xFFE0; // Gelb
+      else if (i < 8) color = 0xFD20; // Orange
+      else            color = 0xF800; // Rot
+    }
+    spr.fillRect(startBarX + (i * 5), smeterY + 2, 3, 9, color);
+  }
+}
+
+//
+// 2. Kompaktes S-Meter im H.J. Berndt Design (exklusiv für das NewUI-Layout)
+//
+void drawCompactSMeter(int strength, int x, int y)
+{
+  int smeterX = x;
+  int smeterY = y;
+
   spr.drawRoundRect(smeterX, smeterY, 86, 16, 2, 0xFFFF);
 
-  // 2. Kurze Beschriftung "SIG RSSI/SNR"
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFFFF);
   char sigText[16];
   sprintf(sigText, "SIG %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
   spr.drawString(sigText, smeterX + 43, smeterY + 1, FONT_SMALL);
 
-  // 3. Kompakte Signalbalken (10 Stück)
   int bars = map(strength, 0, 60, 0, 10);
   bars = constrain(bars, 0, 10);
   for (int i = 0; i < 10; i++) {
