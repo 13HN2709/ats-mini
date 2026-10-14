@@ -1,12 +1,12 @@
-
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
 #include "Menu.h"
+#include "Memories.h"
 #include "Draw.h"
 #include "FreqKeypad.h"
 
-// Erweitertes Tastenfeld: 0-9, BS (Löschen), OK (Übernehmen), MODE (Modus umschalten)
+// Tastenfeld: Ziffern 0-9, Löschen (BS), Übernehmen (OK)
 static const char* keypadLayout[12] = {
   "1", "2", "3",
   "4", "5", "6",
@@ -14,7 +14,6 @@ static const char* keypadLayout[12] = {
   "BS", "0", "OK"
 };
 
-// Zusätzliche Variable für die temporäre Modus-Auswahl während der Eingabe
 static uint8_t tempMode = FM;
 static int8_t keypadIndex = 4; // Startet auf '5'
 static char inputFreqStr[12] = "";
@@ -25,53 +24,77 @@ void freqKeypadReset()
   memset(inputFreqStr, 0, sizeof(inputFreqStr));
   inputLen = 0;
   keypadIndex = 4;
-  tempMode = currentMode; // Aktuellen Systemmodus als Startwert übernehmen
+  tempMode = currentMode;
 }
 
-// Navigation per Encoder (0-11 für das Tastenfeld + 1 extra Schritt für den Modus-Button oben)
+// Navigation auf dem Keypad & Modus-Button per Encoder
 bool doFreqKeypad(int16_t enc)
 {
   keypadIndex += enc;
-  if (keypadIndex < 0) keypadIndex = 12;  // 0-11 = Grid, 12 = Modus-Feld oben
+  if (keypadIndex < 0) keypadIndex = 12;  // 0-11 = Grid, 12 = Modus-Auswahlfeld oben
   if (keypadIndex > 12) keypadIndex = 0;
   return true;
+}
+
+// Automatische Band-Auswahl basierend auf Frequenz und Modus
+static void switchToMatchingBand(uint32_t freq, uint8_t mode)
+{
+  int bestMatch = -1;
+
+  // Durchsuche alle Bänder nach einem passenden Bereich
+  for (int i = 0; i < getTotalBands(); i++) {
+    const Band *b = &bands[i];
+    if (freq >= b->minimumFreq && freq <= b->maximumFreq) {
+      if (b->bandMode == mode) {
+        bestMatch = i;
+        break; // Exakter Treffer (Frequenz + Modus)
+      } else if (bestMatch == -1) {
+        bestMatch = i; // Fallback: Frequenz passt im Band
+      }
+    }
+  }
+
+  if (bestMatch != -1) {
+    selectBand(bestMatch, false);
+  }
 }
 
 // Klick-Verarbeitung
 bool clickFreqKeypad(bool shortPress)
 {
   if (!shortPress) {
-    // Langer Druck -> Abbrechen
-    currentCmd = CMD_NONE;
+    currentCmd = CMD_NONE; // Langer Druck -> Abbrechen
     return true;
   }
 
-  // Wenn der Modus-Button ganz oben ausgewählt wurde (Index 12)
+  // Modus-Feld oben angewählt (Index 12)
   if (keypadIndex == 12) {
-    // Modus zyklisch durchschalten (FM -> AM -> USB -> LSB -> zurück zu FM)
-    tempMode = (tempMode + 1) % 4; // Angenommen 4 Modi stehen zur Verfügung
+    tempMode = (tempMode + 1) % 4; // Durchschalten: FM, AM, LSB, USB
     return true;
   }
 
   const char* selectedKey = keypadLayout[keypadIndex];
 
   if (strcmp(selectedKey, "OK") == 0) {
-    // Frequenz und Modus übernehmen
     if (inputLen > 0) {
-      uint32_t newFreq = atol(inputFreqStr);
-      
-      // Modus setzen
+      uint32_t rawVal = atol(inputFreqStr);
+      uint32_t targetFreq = rawVal;
+
+      // Konvertierung je nach Modus (FM in 10kHz Schritten / AM-SSB in kHz)
+      if (tempMode == FM) {
+        if (rawVal < 200) targetFreq = rawVal * 100; // z.B. "1079" -> 10790 (107.90 MHz)
+      }
+
+      // 1. Passendes Band automatisch suchen und aktivieren
+      switchToMatchingBand(targetFreq, tempMode);
+
+      // 2. Modus setzen
       currentMode = tempMode;
 
-      // Frequenz anwenden (abhängig von FM in MHz oder AM/SSB in kHz)
-      if (currentMode == FM) {
-        if (newFreq < 1000) newFreq *= 100; // z.B. 1079 -> 10790 (107.90 MHz)
-      }
-      
-      updateFrequency(newFreq, false);
-      // Wenn SSB, BFO zurücksetzen
+      // 3. Exakte Frequenz anwenden
+      updateFrequency(targetFreq, false);
       if (isSSB()) updateBFO(0, true);
-      
+
       prefsRequestSave(SAVE_CUR_BAND);
     }
     currentCmd = CMD_NONE;
@@ -91,7 +114,7 @@ bool clickFreqKeypad(bool shortPress)
   return true;
 }
 
-// Zeichnen des erweiteten Keypads mit Modus-Anzeige
+// Zeichnen des Keypads
 void drawFreqKeypad()
 {
   int boxX = 30;
@@ -107,14 +130,14 @@ void drawFreqKeypad()
   spr.setTextColor(TH.text);
   spr.drawString("FREQUENZ & MODUS EINGABE", boxX + boxW / 2, boxY + 8, FONT_SMALL);
 
-  // 1. Eingabe-Anzeige für Frequenz
+  // Frequenz-Anzeigefeld
   spr.fillRect(boxX + 15, boxY + 26, boxW - 110, 24, TH.bg);
   spr.drawRoundRect(boxX + 15, boxY + 26, boxW - 110, 24, 3, TH.menu_border);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.freq_text);
   spr.drawString(inputLen > 0 ? inputFreqStr : "---", boxX + 15 + (boxW - 110) / 2, boxY + 38);
 
-  // 2. Modus-Anzeige / Auswahltaste (rechts neben der Frequenz)
+  // Modus-Auswahltaste rechts daneben
   int modeX = boxX + boxW - 85;
   int modeY = boxY + 26;
   int modeW = 70;
