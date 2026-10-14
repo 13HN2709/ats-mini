@@ -70,7 +70,7 @@ static void switchToMatchingBand(uint32_t freq, uint8_t mode)
   }
 }
 
-// Klick-Verarbeitung
+// Klick-Verarbeitung mit universeller FM- und AM/SSB-Skalierung
 bool clickFreqKeypad(bool shortPress)
 {
   if (!shortPress) {
@@ -93,26 +93,17 @@ bool clickFreqKeypad(bool shortPress)
     if (inputLen > 0) {
       uint32_t targetFreq = 0;
 
-      // Prüfen, ob ein Punkt enthalten ist (z.B. für UKW wie "107.9")
-      char *dotPtr = strchr(inputFreqStr, '.');
-      if (dotPtr != NULL) {
-        *dotPtr = '\0'; // String vor dem Punkt
-        uint32_t mhzPart = atol(inputFreqStr);
-        uint32_t khzPart = atol(dotPtr + 1);
-        
-        // Nachkommastellen auffüllen (z.B. "9" -> 900 kHz)
-        int len = strlen(dotPtr + 1);
-        if (len == 1) khzPart *= 100;
-        else if (len == 2) khzPart *= 10;
-
-        targetFreq = (mhzPart * 1000) + khzPart;
-      } else {
-        uint32_t rawVal = atol(inputFreqStr);
-        targetFreq = rawVal;
-        // Fallback falls jemand FM ohne Punkt als MHz eingibt (z.B. 107 -> 10700 kHz oder ähnlich)
-        if (tempMode == FM && rawVal < 200) {
-          targetFreq = rawVal * 1000; 
+      if (tempMode == FM) {
+        // FM: Wandelt z.B. "107.9" in das interne Format um
+        float fVal = atof(inputFreqStr);
+        if (fVal < 200.0f) {
+          targetFreq = (uint32_t)(fVal * 100.0f);
+        } else {
+          targetFreq = (uint32_t)(fVal / 10.0f);
         }
+      } else {
+        // AM / SSB: Direkt in kHz
+        targetFreq = atol(inputFreqStr);
       }
 
       switchToMatchingBand(targetFreq, tempMode);
@@ -137,7 +128,7 @@ bool clickFreqKeypad(bool shortPress)
   return true;
 }
 
-// Zeichnen des Keypads im 4x4 Layout
+// Zeichnen des Keypads im 4x4 Layout mit sauberen Borders
 void drawFreqKeypad()
 {
   int boxX = 6;
@@ -183,12 +174,11 @@ void drawFreqKeypad()
   int startX = boxX + 8;
   int startY = boxY + 39;
   int btnW = 68;
-  int btnH = 28; // Etwas kompakter für 4 Reihen auf 170px Höhe
+  int btnH = 28;
   int gapX = 5;
   int gapY = 2;
 
   for (int i = 0; i < 16; i++) {
-    // Leere Platzhalter in der letzten Reihe optisch ausblenden
     if (i >= 13 && i <= 15) continue;
 
     int col = i % 4;
