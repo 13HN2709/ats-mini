@@ -34,7 +34,7 @@ int bandIdx = 0;
 Band bands[] =
 {
   {"VHF",  FM_BAND_TYPE, FM,   6400, 10800, 10390, 2, 0, 0, 0},
-  {"ALLE",  SW_BAND_TYPE, AM,    100, 30000, 15000, 1, 4, 0, 0},
+  {"ALL",  SW_BAND_TYPE, AM,    100, 30000, 15000, 1, 4, 0, 0},
   {"MW1",  MW_BAND_TYPE, AM,    100,  1800,   810, 3, 4, 0, 0},
   {"MW2",  MW_BAND_TYPE, AM,    495,  1701,   783, 2, 4, 0, 0},
   {"MW3",  MW_BAND_TYPE, AM,   1700,  3500,  2500, 1, 4, 0, 0},
@@ -81,17 +81,18 @@ Band *getCurrentBand() { return(&bands[bandIdx]); }
 #define MENU_BAND         1
 #define MENU_KEYPAD       2
 #define MENU_FREQ_INPUT   3
-#define MENU_VOLUME       4
-#define MENU_STEP         5
-#define MENU_SEEK         6
-#define MENU_SCAN         7
-#define MENU_MEMORY       8
-#define MENU_SQUELCH      9
-#define MENU_BW          10
-#define MENU_AGC_ATT     11
-#define MENU_AVC         12
-#define MENU_SOFTMUTE    13
-#define MENU_SETTINGS    14
+#define MENU_BFO.         4
+#define MENU_VOLUME       5
+#define MENU_STEP         6
+#define MENU_SEEK         7
+#define MENU_SCAN         8
+#define MENU_MEMORY       9
+#define MENU_SQUELCH     10
+#define MENU_BW          11
+#define MENU_AGC_ATT     12
+#define MENU_AVC         13
+#define MENU_SOFTMUTE    14
+#define MENU_SETTINGS    15
 
 int8_t menuIdx = MENU_KEYPAD;
 
@@ -101,6 +102,7 @@ static const char *menu[] =
   "Bands",
   "Keypad",
   "Frequency",
+  "BFO",
   "Volume",
   "Steps",
   "Seek",
@@ -1071,6 +1073,7 @@ static void clickMenu(int cmd, bool shortPress)
     case MENU_SETTINGS: currentCmd = CMD_SETTINGS;  break;
     case MENU_KEYPAD:   currentCmd = CMD_FREQ_KEYPAD; freqKeypadReset(); break;
     case MENU_FREQ_INPUT: currentCmd = CMD_FREQ; resetFreqInputPos(); break;
+    case MENU_BFO:      currentCmd = CMD_BFO;       break;
     case MENU_SQUELCH:  currentCmd = CMD_SQUELCH;   break;
     case MENU_VOLUME:   currentCmd = CMD_VOLUME;    break;
 
@@ -1165,6 +1168,7 @@ bool doSideBar(uint16_t cmd, int16_t enc, int16_t enca)
     case CMD_AGC:        doAgc(enc);break;
     case CMD_BANDWIDTH:  doBandwidth(scrollDirection * enc);break;
     case CMD_VOLUME:     doVolume(enca);break;
+    case CMD_BFO:        doBfo(enc); break;
     case CMD_SOFTMUTE:   doSoftMute(enc);break;
     case CMD_BAND:       doBand(scrollDirection * enc);break;
     case CMD_AVC:        doAvc(enc);break;
@@ -2087,6 +2091,7 @@ void drawSideBar(uint16_t cmd, int x, int y, int sx)
     case CMD_THEME:      drawTheme(x, y, sx);      break;
     case CMD_UI:         drawUILayout(x, y, sx);   break;
     case CMD_VOLUME:     drawVolume(x, y, sx);     break;
+    case CMD_BFO:        drawBfo(x, y, sx);        break;
     case CMD_AGC:        drawAgc(x, y, sx);        break;
     case CMD_SOFTMUTE:   drawSoftMuteMaxAtt(x, y, sx);break;
     case CMD_CAL:        drawCal(x, y, sx);        break;
