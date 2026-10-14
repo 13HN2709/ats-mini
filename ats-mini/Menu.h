@@ -48,6 +48,8 @@
 #define CMD_DSP_PATCHES 0x3400 // |
 #define CMD_ABOUT      0x3500 //-+
 #define CMD_FREQ_KEYPAD 0x3600 // |
+#define CMD_BFO         0x3700 // |
+
 
 
 // UI Layouts
