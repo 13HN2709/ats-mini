@@ -436,6 +436,10 @@ int getFreqInputStep()
 
 static uint8_t getMinFreqInputPos()
 {
+  // Im AM-Modus erlauben wir das Wandern hinter das Komma (bis Position 0 für 1-Hz-Schritte)
+  if (currentMode == AM) {
+    return 0; 
+  }
   return getDefaultFreqInputPos(currentMode, steps[currentMode][0].step);
 }
 
