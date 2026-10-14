@@ -931,9 +931,15 @@ void loop()
       }
       else if(currentCmd == CMD_FREQ_KEYPAD)
       {
-        clickFreqKeypad(pb1st.wasShortPressed);
-        needRedraw = true;
+        if (encCount) {
+          doFreqKeypad(encCount);
+          needRedraw = true;
+        } else {
+          clickFreqKeypad(pb1st.wasShortPressed);
+          needRedraw = true;
+        }
       }
+
                 
       else if(clickHandler(currentCmd, pb1st.wasShortPressed))
       {
