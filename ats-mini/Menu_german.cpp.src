@@ -88,7 +88,9 @@ Band *getCurrentBand() { return(&bands[bandIdx]); }
 #define MENU_AGC_ATT      9
 #define MENU_AVC         10
 #define MENU_SOFTMUTE    11
-#define MENU_SETTINGS    12
+#define MENU_FREQ_INPUT  12
+#define MENU_SETTINGS    13
+
 
 int8_t menuIdx = MENU_VOLUME;
 
@@ -106,6 +108,7 @@ static const char *menu[] =
   "AGC/ATTN",
   "AVC",
   "SOFT-MUTE",
+  "FREQUENZ",
   "EINSTELL.",
 };
 
@@ -1060,6 +1063,7 @@ static void clickMenu(int cmd, bool shortPress)
     case MENU_AGC_ATT:  currentCmd = CMD_AGC;       break;
     case MENU_BAND:     currentCmd = CMD_BAND;      break;
     case MENU_SETTINGS: currentCmd = CMD_SETTINGS;  break;
+    case MENU_FREQ_INPUT: currentCmd = CMD_FREQ; resetFreqInputPos(); break;
     case MENU_SQUELCH:  currentCmd = CMD_SQUELCH;   break;
     case MENU_VOLUME:   currentCmd = CMD_VOLUME;    break;
 
