@@ -835,8 +835,8 @@ void loop()
       switch(currentCmd)
       {
         case CMD_NONE:
-          // Activate frequency input mode
-          currentCmd = CMD_FREQ;
+          currentCmd = CMD_FREQ_KEYPAD;
+          freqKeypadReset();
           needRedraw = true;
           break;
         case CMD_FREQ:
