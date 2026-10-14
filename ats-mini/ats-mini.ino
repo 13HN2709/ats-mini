@@ -929,6 +929,12 @@ void loop()
           needRedraw = true;
         }
       }
+      else if(currentCmd == CMD_FREQ_KEYPAD)
+      {
+        clickFreqKeypad(pb1st.wasShortPressed);
+        needRedraw = true;
+      }
+                
       else if(clickHandler(currentCmd, pb1st.wasShortPressed))
       {
         // Command handled, redraw screen
