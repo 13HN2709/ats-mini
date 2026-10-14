@@ -47,6 +47,8 @@
 #define CMD_FM_STEREO  0x3300 // |
 #define CMD_DSP_PATCHES 0x3400 // |
 #define CMD_ABOUT      0x3500 //-+
+#define CMD_FREQ_KEYPAD 0x3600 // |
+
 
 // UI Layouts
 #define UI_DEFAULT  0
