@@ -10,4 +10,3 @@ bool clickFreqKeypad(bool shortPress);
 void drawFreqKeypad();
 
 #endif
-
