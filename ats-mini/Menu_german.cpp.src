@@ -1184,6 +1184,7 @@ bool doSideBar(uint16_t cmd, int16_t enc, int16_t enca)
     case CMD_AGC:        doAgc(enc);break;
     case CMD_BANDWIDTH:  doBandwidth(scrollDirection * enc);break;
     case CMD_VOLUME:     doVolume(enca);break;
+    case CMD_BFO:        doBfo(enc); break;
     case CMD_SOFTMUTE:   doSoftMute(enc);break;
     case CMD_BAND:       doBand(scrollDirection * enc);break;
     case CMD_AVC:        doAvc(enc);break;
@@ -2093,6 +2094,7 @@ void drawSideBar(uint16_t cmd, int x, int y, int sx)
     case CMD_THEME:      drawTheme(x, y, sx);      break;
     case CMD_UI:         drawUILayout(x, y, sx);   break;
     case CMD_VOLUME:     drawVolume(x, y, sx);     break;
+    case CMD_BFO:        drawBfo(x, y, sx); break;
     case CMD_AGC:        drawAgc(x, y, sx);        break;
     case CMD_SOFTMUTE:   drawSoftMuteMaxAtt(x, y, sx);break;
     case CMD_CAL:        drawCal(x, y, sx);        break;
