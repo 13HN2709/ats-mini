@@ -6,19 +6,17 @@
 #include "Draw.h"
 #include "FreqKeypad.h"
 
-// Tastenfeld im 4x3 Querformat-Layout: 
-// Zeile 1: 1, 2, 3, BS
-// Zeile 2: 4, 5, 6, 0
-// Zeile 3: 7, 8, 9, OK
-static const char* keypadLayout[12] = {
+// 4 Spalten, 4 Reihen (16 Felder, davon 13 belegt)
+static const char* keypadLayout[16] = {
   "1", "2", "3", "BS",
   "4", "5", "6", "0",
-  "7", "8", "9", "OK"
+  "7", "8", "9", ".",
+  "OK", "", "", ""   // Index 12 ist OK, 13-15 leer/ohne Funktion
 };
 
 static uint8_t tempMode = FM;
 static int8_t keypadIndex = 5; // Startet auf '5'
-static char inputFreqStr[12] = "";
+static char inputFreqStr[15] = "";
 static uint8_t inputLen = 0;
 
 void freqKeypadReset()
@@ -29,7 +27,7 @@ void freqKeypadReset()
   tempMode = currentMode;
 }
 
-// Navigation auf dem Keypad per Encoder (Drehen)
+// Navigation auf dem Keypad per Encoder (4x4 Grid + Modus = 17 Positionen: 0-15 Grid, 16 Modus)
 bool doFreqKeypad(int16_t enc)
 {
   if (!enc) return false;
@@ -37,12 +35,20 @@ bool doFreqKeypad(int16_t enc)
   int step = (scrollDirection * enc > 0) ? 1 : -1;
   
   keypadIndex += step;
-  if (keypadIndex < 0) keypadIndex = 12;  // 0-11 = 4x3 Grid, 12 = Modus-Auswahlfeld
-  if (keypadIndex > 12) keypadIndex = 0;
+  if (keypadIndex < 0) keypadIndex = 16;  
+  if (keypadIndex > 16) keypadIndex = 0;
+  
+  // Leere Felder in der letzten Reihe überspringen
+  while ((keypadIndex >= 13 && keypadIndex <= 15)) {
+    keypadIndex += step;
+    if (keypadIndex < 0) keypadIndex = 16;
+    if (keypadIndex > 16) keypadIndex = 0;
+  }
+  
   return true;
 }
 
-// Automatische Band-Auswahl basierend auf Frequenz und Modus
+// Automatische Band-Auswahl
 static void switchToMatchingBand(uint32_t freq, uint8_t mode)
 {
   int bestMatch = -1;
@@ -64,30 +70,49 @@ static void switchToMatchingBand(uint32_t freq, uint8_t mode)
   }
 }
 
-// Klick-Verarbeitung: Kurzer Klick = Ziffer/Aktion wählen, Langer Klick = Abbrechen
+// Klick-Verarbeitung
 bool clickFreqKeypad(bool shortPress)
 {
-  // Langer Klick -> Keypad sofort verlassen (abbrechen)
   if (!shortPress) {
     currentCmd = CMD_NONE; 
     return true;
   }
 
-  // Modus-Feld oben angewählt (Index 12)
-  if (keypadIndex == 12) {
-    tempMode = (tempMode + 1) % 4; // Durchschalten: FM, AM, LSB, USB
+  // Modus-Feld oben angewählt (Index 16)
+  if (keypadIndex == 16) {
+    tempMode = (tempMode + 1) % 4; 
     return true;
   }
+
+  // Leere Felder abfangen
+  if (keypadIndex >= 13 && keypadIndex <= 15) return true;
 
   const char* selectedKey = keypadLayout[keypadIndex];
 
   if (strcmp(selectedKey, "OK") == 0) {
     if (inputLen > 0) {
-      uint32_t rawVal = atol(inputFreqStr);
-      uint32_t targetFreq = rawVal;
+      uint32_t targetFreq = 0;
 
-      if (tempMode == FM) {
-        if (rawVal < 200) targetFreq = rawVal * 100; 
+      // Prüfen, ob ein Punkt enthalten ist (z.B. für UKW wie "107.9")
+      char *dotPtr = strchr(inputFreqStr, '.');
+      if (dotPtr != NULL) {
+        *dotPtr = '\0'; // String vor dem Punkt
+        uint32_t mhzPart = atol(inputFreqStr);
+        uint32_t khzPart = atol(dotPtr + 1);
+        
+        // Nachkommastellen auffüllen (z.B. "9" -> 900 kHz)
+        int len = strlen(dotPtr + 1);
+        if (len == 1) khzPart *= 100;
+        else if (len == 2) khzPart *= 10;
+
+        targetFreq = (mhzPart * 1000) + khzPart;
+      } else {
+        uint32_t rawVal = atol(inputFreqStr);
+        targetFreq = rawVal;
+        // Fallback falls jemand FM ohne Punkt als MHz eingibt (z.B. 107 -> 10700 kHz oder ähnlich)
+        if (tempMode == FM && rawVal < 200) {
+          targetFreq = rawVal * 1000; 
+        }
       }
 
       switchToMatchingBand(targetFreq, tempMode);
@@ -95,7 +120,7 @@ bool clickFreqKeypad(bool shortPress)
       updateFrequency(targetFreq, false);
       if (isSSB()) updateBFO(0, true);
     }
-    currentCmd = CMD_NONE; // Keypad nach OK schließen
+    currentCmd = CMD_NONE; 
     return true;
   }
   else if (strcmp(selectedKey, "BS") == 0) {
@@ -112,7 +137,7 @@ bool clickFreqKeypad(bool shortPress)
   return true;
 }
 
-// Zeichnen des Keypads mit sauberen Borders und hoher Lesbarkeit
+// Zeichnen des Keypads im 4x4 Layout
 void drawFreqKeypad()
 {
   int boxX = 6;
@@ -120,10 +145,9 @@ void drawFreqKeypad()
   int boxW = 308;
   int boxH = 166;
 
-  // Tiefschwarzer Hintergrund und äußerer Rahmen
   spr.fillRect(boxX, boxY, boxW, boxH, 0x0000);
   spr.drawRoundRect(boxX, boxY, boxW, boxH, 4, 0xFCA0);
-  spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, 0xFCA0); // Doppelte Umrandung für Tiefe
+  spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, 0xFCA0);
 
   // Titel
   spr.setTextDatum(TC_DATUM);
@@ -137,12 +161,12 @@ void drawFreqKeypad()
   spr.setTextColor(0xFD20);
   spr.drawString(inputLen > 0 ? inputFreqStr : "---", boxX + 8 + (boxW - 100) / 2, boxY + 26, 2);
 
-  // Modus-Auswahltaste rechts oben
+  // Modus-Auswahltaste rechts oben (Index 16)
   int modeX = boxX + boxW - 88;
   int modeY = boxY + 16;
   int modeW = 80;
   int modeH = 20;
-  bool modeSelected = (keypadIndex == 12);
+  bool modeSelected = (keypadIndex == 16);
 
   if (modeSelected) {
     spr.fillRoundRect(modeX, modeY, modeW, modeH, 2, 0xFD20);
@@ -155,32 +179,33 @@ void drawFreqKeypad()
   spr.setTextDatum(MC_DATUM);
   spr.drawString(bandModeDesc[tempMode], modeX + modeW / 2, modeY + modeH / 2, 1);
 
-  // Tastenfeld im 4x3 Format mit klarer Hervorhebung
+  // 4x4 Tastenfeld (4 Spalten, 4 Reihen)
   int startX = boxX + 8;
-  int startY = boxY + 40;
+  int startY = boxY + 39;
   int btnW = 68;
-  int btnH = 38;
+  int btnH = 28; // Etwas kompakter für 4 Reihen auf 170px Höhe
   int gapX = 5;
-  int gapY = 3;
+  int gapY = 2;
 
-  for (int i = 0; i < 12; i++) {
-    int col = i % 4; // 4 Spalten
-    int row = i / 4; // 3 Reihen
+  for (int i = 0; i < 16; i++) {
+    // Leere Platzhalter in der letzten Reihe optisch ausblenden
+    if (i >= 13 && i <= 15) continue;
+
+    int col = i % 4;
+    int row = i / 4;
     int x = startX + col * (btnW + gapX);
     int y = startY + row * (btnH + gapY);
 
     bool isSelected = (i == keypadIndex);
 
     if (isSelected) {
-      // Aktive Taste: Leuchtendes Orange mit schwarzem Text für maximalen Kontrast
       spr.fillRoundRect(x, y, btnW, btnH, 3, 0xFD20);
-      spr.drawRoundRect(x, y, btnW, btnH, 3, 0xFFFF); // Weißer Innenrand bei Selektion
+      spr.drawRoundRect(x, y, btnW, btnH, 3, 0xFFFF);
       spr.setTextColor(0x0000);                       
     } else {
-      // Inaktive Tasten: Dunkler Hintergrund mit feinem orangen Rahmen und doppelter Border-Optik
       spr.fillRoundRect(x, y, btnW, btnH, 3, 0x0841); 
       spr.drawRoundRect(x, y, btnW, btnH, 3, 0xFCA0); 
-      spr.drawRoundRect(x + 1, y + 1, btnW - 2, btnH - 2, 2, 0x528A); // Dezenter innerer Rahmen
+      spr.drawRoundRect(x + 1, y + 1, btnW - 2, btnH - 2, 2, 0x528A); 
       spr.setTextColor(0xFD20);                       
     }
 
