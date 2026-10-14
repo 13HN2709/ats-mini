@@ -869,6 +869,10 @@ void loop()
           // Current frequency may have changed
           prefsRequestSave(SAVE_CUR_BAND);
           break;
+          case CMD_FREQ_KEYPAD:
+          doFreqKeypad(encCount);
+          needRedraw = true;
+          break;
         case CMD_FREQ:
           // Digit tuning
           needRedraw |= doDigit(encCount);
