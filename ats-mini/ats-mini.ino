@@ -933,17 +933,19 @@ void loop()
           needRedraw = true;
         }
       }
-      else if(currentCmd == CMD_FREQ_KEYPAD)
+        else if(currentCmd == CMD_FREQ_KEYPAD)
       {
-        if (encCount) {
-          doFreqKeypad(encCount);
+        if(pb1st.isLongPressed)
+        {
+          currentCmd = CMD_NONE; // Langer Klick verlässt das Keypad
           needRedraw = true;
-        } else {
-          clickFreqKeypad(pb1st.wasShortPressed);
+        }
+        else if(pb1st.wasClicked || pb1st.wasShortPressed)
+        {
+          clickFreqKeypad(true); // Kurzer Klick wählt die Ziffer/Taste
           needRedraw = true;
         }
       }
-
                 
       else if(clickHandler(currentCmd, pb1st.wasShortPressed))
       {
