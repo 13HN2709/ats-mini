@@ -20,6 +20,8 @@
 #include "Splash.h"
 #include <stdlib.h>
 #include <time.h>
+#include "FreqKeypad.h"
+
 
 // SI473/5 and UI
 #define MIN_ELAPSED_TIME         5  // 300
