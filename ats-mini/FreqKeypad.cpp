@@ -95,7 +95,7 @@ bool clickFreqKeypad(bool shortPress)
       updateFrequency(targetFreq, false);
       if (isSSB()) updateBFO(0, true);
 
-      prefsRequestSave(SAVE_SETTINGS);
+      prefsRequestSave(SAVE_ALL);
     }
     currentCmd = CMD_NONE;
     return true;
