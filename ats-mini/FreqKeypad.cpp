@@ -30,7 +30,12 @@ void freqKeypadReset()
 // Navigation auf dem Keypad & Modus-Button per Encoder
 bool doFreqKeypad(int16_t enc)
 {
-  keypadIndex += enc;
+  if (!enc) return false;
+  
+  // Berücksichtige die Scroll-Richtung des Users für natürliche Bedienung
+  int step = (scrollDirection * enc > 0) ? 1 : -1;
+  
+  keypadIndex += step;
   if (keypadIndex < 0) keypadIndex = 12;  // 0-11 = Grid, 12 = Modus-Auswahlfeld oben
   if (keypadIndex > 12) keypadIndex = 0;
   return true;
@@ -41,15 +46,14 @@ static void switchToMatchingBand(uint32_t freq, uint8_t mode)
 {
   int bestMatch = -1;
 
-  // Durchsuche alle Bänder nach einem passenden Bereich
   for (int i = 0; i < getTotalBands(); i++) {
     const Band *b = &bands[i];
     if (freq >= b->minimumFreq && freq <= b->maximumFreq) {
       if (b->bandMode == mode) {
         bestMatch = i;
-        break; // Exakter Treffer (Frequenz + Modus)
+        break;
       } else if (bestMatch == -1) {
-        bestMatch = i; // Fallback: Frequenz passt im Band
+        bestMatch = i;
       }
     }
   }
@@ -59,11 +63,12 @@ static void switchToMatchingBand(uint32_t freq, uint8_t mode)
   }
 }
 
-// Klick-Verarbeitung
+// Klick-Verarbeitung: Kurzer Klick wählt die Taste, langer Klick bricht ab
 bool clickFreqKeypad(bool shortPress)
 {
+  // Langer Klick -> Keypad verlassen (abbrechen)
   if (!shortPress) {
-    currentCmd = CMD_NONE; // Langer Druck -> Abbrechen
+    currentCmd = CMD_NONE; 
     return true;
   }
 
@@ -80,23 +85,16 @@ bool clickFreqKeypad(bool shortPress)
       uint32_t rawVal = atol(inputFreqStr);
       uint32_t targetFreq = rawVal;
 
-      // Konvertierung je nach Modus (FM in 10kHz Schritten / AM-SSB in kHz)
       if (tempMode == FM) {
-        if (rawVal < 200) targetFreq = rawVal * 100; // z.B. "1079" -> 10790 (107.90 MHz)
+        if (rawVal < 200) targetFreq = rawVal * 100; 
       }
 
-      // 1. Passendes Band automatisch suchen und aktivieren
       switchToMatchingBand(targetFreq, tempMode);
-
-      // 2. Modus setzen
       currentMode = tempMode;
-
-      // 3. Exakte Frequenz anwenden
       updateFrequency(targetFreq, false);
       if (isSSB()) updateBFO(0, true);
-
     }
-    currentCmd = CMD_NONE;
+    currentCmd = CMD_NONE; // Keypad nach OK schließen
     return true;
   }
   else if (strcmp(selectedKey, "BS") == 0) {
@@ -113,54 +111,55 @@ bool clickFreqKeypad(bool shortPress)
   return true;
 }
 
-// Zeichnen des Keypads
+// Zeichnen des Keypads in Schwarz mit großen orangen Ziffern
 void drawFreqKeypad()
 {
-  int boxX = 30;
-  int boxY = 15;
-  int boxW = 260;
-  int boxH = 210;
+  int boxX = 20;
+  int boxY = 10;
+  int boxW = 280;
+  int boxH = 220;
 
-  spr.fillSmoothRoundRect(boxX, boxY, boxW, boxH, 6, TH.menu_bg);
-  spr.drawRoundRect(boxX, boxY, boxW, boxH, 6, TH.menu_border);
+  // Tiefschwarzer Hintergrund für maximalen Kontrast
+  spr.fillRect(boxX, boxY, boxW, boxH, 0x0000);
+  spr.drawRoundRect(boxX, boxY, boxW, boxH, 6, 0xFCA0);
 
-  // Titel
+  // Titel in hellem Orange/Weiß
   spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(TH.text);
-  spr.drawString("FREQUENZ & MODUS EINGABE", boxX + boxW / 2, boxY + 8, FONT_SMALL);
+  spr.setTextColor(0xFD20);
+  spr.drawString("FREQUENZ & MODUS EINGABE", boxX + boxW / 2, boxY + 6, FONT_SMALL);
 
-  // Frequenz-Anzeigefeld
-  spr.fillRect(boxX + 15, boxY + 26, boxW - 110, 24, TH.bg);
-  spr.drawRoundRect(boxX + 15, boxY + 26, boxW - 110, 24, 3, TH.menu_border);
+  // Frequenz-Anzeigefeld (schwarz hinterlegt)
+  spr.fillRect(boxX + 15, boxY + 24, boxW - 115, 26, 0x0000);
+  spr.drawRoundRect(boxX + 15, boxY + 24, boxW - 115, 26, 3, 0xFCA0);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(TH.freq_text);
-  spr.drawString(inputLen > 0 ? inputFreqStr : "---", boxX + 15 + (boxW - 110) / 2, boxY + 38);
+  spr.setTextColor(0xFD20);
+  spr.drawString(inputLen > 0 ? inputFreqStr : "---", boxX + 15 + (boxW - 115) / 2, boxY + 37);
 
   // Modus-Auswahltaste rechts daneben
-  int modeX = boxX + boxW - 85;
-  int modeY = boxY + 26;
-  int modeW = 70;
-  int modeH = 24;
+  int modeX = boxX + boxW - 95;
+  int modeY = boxY + 24;
+  int modeW = 80;
+  int modeH = 26;
   bool modeSelected = (keypadIndex == 12);
 
   if (modeSelected) {
-    spr.fillRoundRect(modeX, modeY, modeW, modeH, 3, TH.freq_hl_sel);
-    spr.setTextColor(TH.bg);
+    spr.fillRoundRect(modeX, modeY, modeW, modeH, 3, 0xFD20); // Aktives Gelb/Orange
+    spr.setTextColor(0x0000); // Schwarzer Text auf hellem Grund
   } else {
-    spr.fillRoundRect(modeX, modeY, modeW, modeH, 3, TH.menu_item);
-    spr.setTextColor(TH.text);
+    spr.fillRoundRect(modeX, modeY, modeW, modeH, 3, 0x1084); // Dunkelgrau
+    spr.setTextColor(0xFD20); // Orangener Text
   }
-  spr.drawRoundRect(modeX, modeY, modeW, modeH, 3, TH.menu_border);
+  spr.drawRoundRect(modeX, modeY, modeW, modeH, 3, 0xFCA0);
   spr.setTextDatum(MC_DATUM);
   spr.drawString(bandModeDesc[tempMode], modeX + modeW / 2, modeY + modeH / 2);
 
-  // Tastenfeld (Grid 3x4)
-  int startX = boxX + 20;
-  int startY = boxY + 60;
-  int btnW = 70;
-  int btnH = 30;
-  int gapX = 15;
-  int gapY = 6;
+  // Tastenfeld (Grid 3x4) mit größeren Ziffern
+  int startX = boxX + 15;
+  int startY = boxY + 58;
+  int btnW = 78;
+  int btnH = 34;
+  int gapX = 12;
+  int gapY = 5;
 
   for (int i = 0; i < 12; i++) {
     int col = i % 3;
@@ -171,13 +170,13 @@ void drawFreqKeypad()
     bool isSelected = (i == keypadIndex);
 
     if (isSelected) {
-      spr.fillRoundRect(x, y, btnW, btnH, 3, TH.freq_hl_sel);
-      spr.setTextColor(TH.bg);
+      spr.fillRoundRect(x, y, btnW, btnH, 3, 0xFD20); // Aktives Highlight in Orange
+      spr.setTextColor(0x0000);                       // Text schwarz
     } else {
-      spr.fillRoundRect(x, y, btnW, btnH, 3, TH.menu_item);
-      spr.setTextColor(TH.text);
+      spr.fillRoundRect(x, y, btnW, btnH, 3, 0x1084); // Tasten-Hintergrund dunkelgrau
+      spr.setTextColor(0xFD20);                       // Ziffern in kräftigem Orange
     }
-    spr.drawRoundRect(x, y, btnW, btnH, 3, TH.menu_border);
+    spr.drawRoundRect(x, y, btnW, btnH, 3, 0xFCA0);
 
     spr.setTextDatum(MC_DATUM);
     spr.drawString(keypadLayout[i], x + btnW / 2, y + btnH / 2);
