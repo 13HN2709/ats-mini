@@ -5,6 +5,7 @@
 #include "Menu.h"
 #include "BleMode.h"
 #include "Draw.h"
+#include "FreqKeypad.h" // <--- Eingebundenes Keypad-Modul
 
 // Layout-Prototypen
 void drawLayoutSmeter();
@@ -359,28 +360,24 @@ void drawSMeter(int strength, int x, int y)
 }
 
 //
-// Kompaktes S-Meter im H.J. Berndt Design (Exakt für NewUI rechtsbündig unter dem Akku)[span_0](start_span)[span_0](end_span)[span_1](start_span)[span_1](end_span)
+// Kompaktes S-Meter im H.J. Berndt Design
 //
 void drawCompactSMeter(int strength, int x, int y)
 {
   int smeterX = x;
   int smeterY = y;
 
-  // Horizontaler Kasten oben rechts
   spr.drawRoundRect(smeterX, smeterY, 96, 22, 2, 0xFFFF);
   
-  // Tuning-Pfeile links und rechts im Kasten
   spr.fillTriangle(smeterX + 6, smeterY + 11, smeterX + 12, smeterY + 6, smeterX + 12, smeterY + 16, 0xFFFF);
   spr.fillTriangle(smeterX + 90, smeterY + 11, smeterX + 84, smeterY + 6, smeterX + 84, smeterY + 16, 0xFFFF);
 
-  // Text "SIG XX/XX" in der Mitte des Kastens
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFFFF);
   char sigText[16];
   sprintf(sigText, "SIG %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
   spr.drawString(sigText, smeterX + 48, smeterY + 3, FONT_SMALL);
 
-  // Empfangsbalken unten im Kasten
   int bars = map(strength, 0, 60, 0, 10);
   bars = constrain(bars, 0, 10);
   for (int i = 0; i < 10; i++) {
@@ -486,6 +483,14 @@ void drawScanGraphs(uint32_t freq)
 void drawScreen()
 {
   if(sleepOn()) return;
+
+  // Keypad-Overlay sofort zeichnen und anzeigen, wenn aktiv
+  if(currentCmd == CMD_FREQ_KEYPAD)
+  {
+    drawFreqKeypad();
+    spr.pushSprite(0, 0);
+    return;
+  }
 
   spr.fillSprite(TH.bg);
 
