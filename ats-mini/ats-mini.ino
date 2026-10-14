@@ -942,10 +942,11 @@ void loop()
         }
         else if(pb1st.wasClicked || pb1st.wasShortPressed)
         {
-          clickFreqKeypad(true); // Kurzer Klick wählt die Ziffer/Taste
+          clickFreqKeypad(true); // Kurzer Klick wählt die aktuelle Ziffer/Taste
           needRedraw = true;
         }
       }
+                
                 
       else if(clickHandler(currentCmd, pb1st.wasShortPressed))
       {
