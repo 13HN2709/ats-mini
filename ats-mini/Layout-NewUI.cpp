@@ -14,7 +14,7 @@ void drawLayoutNewUI()
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // 1. Band und Modus (leicht nach links versetzt)
+  // 1. Band und Modus (mittig oben)
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFFFF);
@@ -29,11 +29,11 @@ void drawLayoutNewUI()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenz & Einheit: Nach links verschoben
+  // 2. Frequenz & Einheit (mit Original-Offsets aus dem Default-Layout, leicht nach links)
   drawFrequency(
     currentFrequency,
-    FREQ_OFFSET_X - 15, FREQ_OFFSET_Y,  // Frequenz-Ziffern
-    FUNIT_OFFSET_X - 15, FUNIT_OFFSET_Y, // Einheit MHz / kHz
+    FREQ_OFFSET_X - 15, FREQ_OFFSET_Y,
+    FUNIT_OFFSET_X - 15, FUNIT_OFFSET_Y,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
@@ -52,18 +52,21 @@ void drawLayoutNewUI()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. S-Meter: Perfekt angepasst, breiter und mit Sicherheitsabstand zu den Ecken
+  // 4. S-Meter: Dynamischerer Ausschlag (Angepasster RSSI-Bereich je nach Modus)
   int strength = rx.getCurrentRSSI();
   int smeterWidth = 296;
-  int smeterX = (320 - smeterWidth) / 2; // Exakt zentriert (Start bei 12)
+  int smeterX = (320 - smeterWidth) / 2; // Exakt zentriert
   int smeterY = 132;
-  int smeterHeight = 22;                  // Etwas flacher, damit nichts den Rahmen berührt
-  int centerX = smeterX + (smeterWidth / 2); // Exakt 160
+  int smeterHeight = 22;
+  int centerX = smeterX + (smeterWidth / 2);
   
   spr.drawRoundRect(smeterX, smeterY, smeterWidth, smeterHeight, 4, 0xFFFF);
   
-  int pairsPerSide = 19;                  // Etwas weniger Paare, damit sie nicht in den Radius laufen
-  int activePairs = map(strength, 0, 60, 0, pairsPerSide);
+  int pairsPerSide = 19;
+  
+  // Dynamische Skalierung: FM liefert oft höhere RSSI-Werte als AM/SSB
+  int maxRssi = (currentMode == FM) ? 80 : 50; 
+  int activePairs = map(strength, 0, maxRssi, 0, pairsPerSide);
   activePairs = constrain(activePairs, 0, pairsPerSide);
 
   int boxWidth = 5;
