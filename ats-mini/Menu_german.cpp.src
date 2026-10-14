@@ -33,8 +33,8 @@ int bandIdx = 0;
 Band bands[] =
 {
   {"VHF",  FM_BAND_TYPE, FM,   6400, 10800, 10390, 2, 0, 0, 0},
-  {"ALLE",  SW_BAND_TYPE, AM,    149, 30000, 15000, 1, 4, 0, 0},
-  {"MW1",  MW_BAND_TYPE, AM,    149,  1800,   810, 3, 4, 0, 0},
+  {"ALL",  SW_BAND_TYPE, AM,    100, 30000, 15000, 1, 4, 0, 0},
+  {"MW1",  MW_BAND_TYPE, AM,    100,  1800,   810, 3, 4, 0, 0},
   {"MW2",  MW_BAND_TYPE, AM,    495,  1701,   783, 2, 4, 0, 0},
   {"MW3",  MW_BAND_TYPE, AM,   1700,  3500,  2500, 1, 4, 0, 0},
   {"160M", MW_BAND_TYPE, LSB,  1800,  2000,  1900, 5, 4, 0, 0},
