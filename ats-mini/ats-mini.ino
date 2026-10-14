@@ -899,12 +899,24 @@ void loop()
       elapsedSleep = elapsedCommand = currentTime;
     }
     else if(pb1st.isLongPressed)
+        // 1. Langer Klick im Keypad fängt das Verlassen ab
+    else if(currentCmd == CMD_FREQ_KEYPAD && pb1st.isLongPressed)
+    {
+      currentCmd = CMD_NONE; // Keypad sofort verlassen
+      needRedraw = true;
+    }
+    else if(pb1st.isLongPressed)
     {
       // Encoder is being LONG PRESSED: TOGGLE DISPLAY
       sleepOn(!sleepOn());
       // CPU sleep can take long time, renew the timestamps
       elapsedSleep = elapsedCommand = currentTime = millis();
-
+    }
+    // 2. Kurzer Klick im Keypad wählt die Ziffer/Taste aus
+    else if(currentCmd == CMD_FREQ_KEYPAD && (pb1st.wasClicked || pb1st.wasShortPressed))
+    {
+      clickFreqKeypad(true);
+      needRedraw = true;
     }
     else if(pb1st.wasClicked || pb1st.wasShortPressed)
     {
@@ -915,8 +927,6 @@ void loop()
       // If in locked/unlocked sleep mode
       if(sleepOn())
       {
-        // If sleep timeout is enabled, exit it via button press of any duration
-        // (users don't need to figure out that a long press is required to wake up the device)
         if(currentSleep)
         {
           sleepOn(false);
@@ -924,7 +934,6 @@ void loop()
         }
         else if(sleepModeIdx == SLEEP_UNLOCKED)
         {
-          // Allow to adjust the volume in sleep mode
           if(pb1st.wasShortPressed && currentCmd==CMD_NONE)
             currentCmd = CMD_VOLUME;
           else if(currentCmd==CMD_VOLUME)
@@ -933,19 +942,32 @@ void loop()
           needRedraw = true;
         }
       }
-        else if(currentCmd == CMD_FREQ_KEYPAD)
+      else if(clickHandler(currentCmd, pb1st.wasShortPressed))
       {
-        if(pb1st.isLongPressed)
-        {
-          currentCmd = CMD_NONE; // Langer Klick verlässt das Keypad
-          needRedraw = true;
-        }
-        else if(pb1st.wasClicked || pb1st.wasShortPressed)
-        {
-          clickFreqKeypad(true); // Kurzer Klick wählt die aktuelle Ziffer/Taste
-          needRedraw = true;
-        }
+        // Command handled, redraw screen
+        needRedraw = true;
+        elapsedSleep = elapsedCommand = currentTime = millis();
       }
+      else if(currentCmd != CMD_NONE)
+      {
+        // Deactivate modal mode
+        currentCmd = CMD_NONE;
+        needRedraw = true;
+      }
+      else if(pb1st.wasShortPressed)
+      {
+        // Volume shortcut (only active in VFO mode)
+        currentCmd = CMD_VOLUME;
+        needRedraw = true;
+      }
+      else
+      {
+        // Activate menu
+        currentCmd = CMD_MENU;
+        needRedraw = true;
+      }
+    }
+
                 
                 
       else if(clickHandler(currentCmd, pb1st.wasShortPressed))
