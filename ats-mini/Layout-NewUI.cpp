@@ -52,7 +52,7 @@ void drawLayoutNewUI()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. S-Meter: Dynamischerer Ausschlag (Angepasster RSSI-Bereich je nach Modus)
+  // 4. S-Meter: Angepasster Skalenbereich für kraftvollen Ausschlag bei FM
   int strength = rx.getCurrentRSSI();
   int smeterWidth = 296;
   int smeterX = (320 - smeterWidth) / 2; // Exakt zentriert
@@ -64,8 +64,8 @@ void drawLayoutNewUI()
   
   int pairsPerSide = 19;
   
-  // Dynamische Skalierung: FM liefert oft höhere RSSI-Werte als AM/SSB
-  int maxRssi = (currentMode == FM) ? 80 : 50; 
+  // Da FM-Ortssender ca. bei RSSI ~30 liegen, setzen wir maxRssi auf 35 für vollen Ausschlag
+  int maxRssi = (currentMode == FM) ? 35 : 45; 
   int activePairs = map(strength, 0, maxRssi, 0, pairsPerSide);
   activePairs = constrain(activePairs, 0, pairsPerSide);
 
