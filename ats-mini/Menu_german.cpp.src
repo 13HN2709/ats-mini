@@ -80,7 +80,7 @@ Band *getCurrentBand() { return(&bands[bandIdx]); }
 #define MENU_BAND         1
 #define MENU_KEYPAD       2
 #define MENU_FREQ_INPUT   3
-#define MENU_BFO.         4
+#define MENU_BFO          4
 #define MENU_VOLUME       5
 #define MENU_STEP         6
 #define MENU_SEEK         7
@@ -101,7 +101,7 @@ static const char *menu[] =
   "BAENDER",
   "KEYPAD",
   "FREQUENZ",
-  "BFO"
+  "BFO",
   "LAUTST.",
   "STEPS",
   "SUCHE",
