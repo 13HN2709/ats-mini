@@ -9,6 +9,8 @@
 #include "Menu.h"
 #include "Memories.h"
 #include "Patches.h"
+#include "FreqKeypad.h"
+
 
 #include <time.h>
 
