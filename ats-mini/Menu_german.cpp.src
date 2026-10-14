@@ -80,17 +80,18 @@ Band *getCurrentBand() { return(&bands[bandIdx]); }
 #define MENU_BAND         1
 #define MENU_KEYPAD       2
 #define MENU_FREQ_INPUT   3
-#define MENU_VOLUME       4
-#define MENU_STEP         5
-#define MENU_SEEK         6
-#define MENU_SCAN         7
-#define MENU_MEMORY       8
-#define MENU_SQUELCH      9
-#define MENU_BW          10
-#define MENU_AGC_ATT     11
-#define MENU_AVC         12
-#define MENU_SOFTMUTE    13
-#define MENU_SETTINGS    14
+#define MENU_BFO.         4
+#define MENU_VOLUME       5
+#define MENU_STEP         6
+#define MENU_SEEK         7
+#define MENU_SCAN         8
+#define MENU_MEMORY       9
+#define MENU_SQUELCH     10
+#define MENU_BW          11
+#define MENU_AGC_ATT     12
+#define MENU_AVC         13
+#define MENU_SOFTMUTE    14
+#define MENU_SETTINGS    15
 
 int8_t menuIdx = MENU_KEYPAD;
 
@@ -100,6 +101,7 @@ static const char *menu[] =
   "BAENDER",
   "KEYPAD",
   "FREQUENZ",
+  "BFO"
   "LAUTST.",
   "STEPS",
   "SUCHE",
@@ -595,6 +597,23 @@ static void dateTimeInit()
   dateTimeMonth = fields.tm_mon + 1;
   dateTimeDay = fields.tm_mday;
 }
+void doBfo(int16_t enc)
+{
+  // BFO in feinen Schritten (z.B. 10 Hz) anpassen
+  currentBFO = clamp_range(currentBFO, 10 * enc, -5000, 5000);
+  updateBFO(currentBFO, true);
+}
+
+static void drawBfo(int x, int y, int sx)
+{
+  drawCommon("BFO", x, y, sx);
+  drawZoomedMenu("BFO");
+  spr.setTextDatum(MC_DATUM);
+
+  spr.setTextColor(TH.menu_param);
+  spr.drawNumber(currentBFO, 40+x+(sx/2), 60+y, FONT_LARGE);
+  spr.drawString("Hz", 40+x+(sx/2), 90+y, FONT_LARGE);
+}
 
 static void doDateTime(int16_t enc)
 {
@@ -1070,6 +1089,7 @@ static void clickMenu(int cmd, bool shortPress)
     case MENU_SETTINGS: currentCmd = CMD_SETTINGS;  break;
     case MENU_KEYPAD:   currentCmd = CMD_FREQ_KEYPAD; freqKeypadReset(); break;
     case MENU_FREQ_INPUT: currentCmd = CMD_FREQ; resetFreqInputPos(); break;
+    case MENU_BFO:        currentCmd = CMD_BFO; break;
     case MENU_SQUELCH:  currentCmd = CMD_SQUELCH;   break;
     case MENU_VOLUME:   currentCmd = CMD_VOLUME;    break;
 
