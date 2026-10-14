@@ -435,8 +435,8 @@ int getFreqInputStep()
 
 static uint8_t getMinFreqInputPos()
 {
-  // Im AM-Modus erlauben wir das Wandern hinter das Komma (bis Position 0 für 1-Hz-Schritte)
-  if (currentMode == AM) {
+  // In AM, USB und LSB erlauben wir das Wandern hinter das Komma (bis Position 0 für Hz-genaue Schritte)
+  if (currentMode == AM || currentMode == USB || currentMode == LSB) {
     return 0; 
   }
   return getDefaultFreqInputPos(currentMode, steps[currentMode][0].step);
