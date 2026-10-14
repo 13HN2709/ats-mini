@@ -1,3 +1,12 @@
+Changelog
+What's New in V1.07
+Graphical Keypad: Added a new 4x4 on-screen keypad for fast, direct input of frequencies and operating modes.
+Optimized Menu Order: Reorganized the main menu to prioritize the Keypad at the top, followed by the classic Frequency underline tuning mode and Volume.
+Precise Sub-kHz Tuning: Extended cursor-based navigation to allow fine Hz-level tuning past the decimal point in AM, USB, and LSB modes.
+General UI Polish: Improved menu layout and updated localizations for cleaner usability.
+
+__________
+
 Neuestes Release: v1.04 mit folgenden Änderungen:
 
 🛠️ Changelog / Versionshinweise
