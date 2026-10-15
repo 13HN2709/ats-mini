@@ -6,7 +6,7 @@
 #include "Draw.h"
 #include "FreqKeypad.h"
 
-// 4 Spalten, 4 Reihen (16 Felder: Index 13 ist jetzt UNIT, 14-15 frei)
+// 4 Spalten, 4 Reihen (16 Felder: Index 13 ist UNIT, 14-15 frei)
 static const char* keypadLayout[16] = {
   "1", "2", "3", "BS",
   "4", "5", "6", "0",
@@ -26,7 +26,7 @@ void freqKeypadReset()
   inputLen = 0;
   keypadIndex = 5;
   tempMode = currentMode;
-  inputInMHz = false; // Standardmäßig kHz (oder je nach Wunsch)
+  inputInMHz = false;
 }
 
 // Navigation auf dem Keypad per Encoder (4x4 Grid + Modus = 17 Positionen: 0-15 Grid, 16 Modus)
@@ -40,7 +40,7 @@ bool doFreqKeypad(int16_t enc)
   if (keypadIndex < 0) keypadIndex = 16;  
   if (keypadIndex > 16) keypadIndex = 0;
   
-  // Leere Felder überspringen (jetzt nur noch 14 und 15)
+  // Leere Felder überspringen (Indizes 14 und 15)
   while ((keypadIndex >= 14 && keypadIndex <= 15)) {
     keypadIndex += step;
     if (keypadIndex < 0) keypadIndex = 16;
@@ -50,7 +50,7 @@ bool doFreqKeypad(int16_t enc)
   return true;
 }
 
-// Automatische Band-Auswahl mit Fallback für freie Eingaben
+// Automatische Band-Auswahl mit Fallback, damit freie Eingaben nicht blockieren
 static void switchToMatchingBand(uint32_t freq, uint8_t mode)
 {
   int bestMatch = -1;
@@ -111,7 +111,6 @@ bool clickFreqKeypad(bool shortPress)
           targetFreq = (uint32_t)(fVal / 10.0f);
         }
       } else {
-        // Wenn MHz gewählt wurde, konvertieren wir die Eingabe in kHz (Multiplikation mit 1000)
         float fVal = atof(inputFreqStr);
         if (inputInMHz) {
           targetFreq = (uint32_t)(fVal * 1000.0f);
@@ -142,7 +141,7 @@ bool clickFreqKeypad(bool shortPress)
   return true;
 }
 
-// Zeichnen des Keypads inkl. UNIT-Statusanzeige
+// Zeichnen des Keypads mit angepasster, gut lesbarer Feldhöhe oben
 void drawFreqKeypad()
 {
   int boxX = 6;
@@ -159,9 +158,11 @@ void drawFreqKeypad()
   spr.setTextColor(0xFD20);
   spr.drawString("FREQUENCY INPUT MENU", boxX + boxW / 2, boxY + 3, 1);
 
-  // Frequenz-Anzeigefeld (jetzt mit Einheiten-Anzeige kHz/MHz im Feld)
-  spr.fillRect(boxX + 8, boxY + 16, boxW - 100, 20, 0x0000);
-  spr.drawRoundRect(boxX + 8, boxY + 16, boxW - 100, 20, 2, 0xFCA0);
+  // Frequenz-Anzeigefeld (Vergrößerte Höhe auf 26 Pixel für fehlerfreie Darstellung)
+  int displayH = 26;
+  spr.fillRect(boxX + 8, boxY + 15, boxW - 100, displayH, 0x0000);
+  spr.drawRoundRect(boxX + 8, boxY + 15, boxW - 100, displayH, 2, 0xFCA0);
+  
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(0xFD20);
   
@@ -171,13 +172,16 @@ void drawFreqKeypad()
   } else {
     snprintf(displayBuf, sizeof(displayBuf), "--- %s", inputInMHz ? "MHz" : "kHz");
   }
-  spr.drawString(displayBuf, boxX + 8 + (boxW - 100) / 2, boxY + 26, 1);
+  
+  spr.setTextSize(2);
+  spr.drawString(displayBuf, boxX + 8 + (boxW - 100) / 2, boxY + 15 + displayH / 2, 1);
+  spr.setTextSize(1);
 
   // Modus-Auswahltaste rechts oben (Index 16)
   int modeX = boxX + boxW - 88;
-  int modeY = boxY + 16;
+  int modeY = boxY + 15;
   int modeW = 80;
-  int modeH = 20;
+  int modeH = displayH;
   bool modeSelected = (keypadIndex == 16);
 
   if (modeSelected) {
@@ -195,14 +199,14 @@ void drawFreqKeypad()
 
   // 4x4 Tastenfeld
   int startX = boxX + 8;
-  int startY = boxY + 39;
+  int startY = boxY + 45;
   int btnW = 68;
-  int btnH = 28;
+  int btnH = 27;
   int gapX = 5;
   int gapY = 2;
 
   for (int i = 0; i < 16; i++) {
-    if (i >= 14 && i <= 15) continue; // Nur Indizes 14 und 15 bleiben leer
+    if (i >= 14 && i <= 15) continue; // Indizes 14 und 15 bleiben leer
 
     int col = i % 4;
     int row = i / 4;
@@ -225,7 +229,6 @@ void drawFreqKeypad()
     spr.setTextDatum(MC_DATUM);
     spr.setTextSize(2);
     
-    // Beschriftung für den UNIT-Button dynamisch anpassen
     if (i == 13) {
       spr.drawString(inputInMHz ? "MHz" : "kHz", x + btnW / 2, y + btnH / 2, 1);
     } else {
