@@ -1131,7 +1131,7 @@ static void drawRDSMode(int x, int y, int sx)
 
 static void drawUTCOffset(int x, int y, int sx)
 {
-  drawCommon(settings[MENU_UTCOffset], x, y, sx, true);
+  drawCommon(settings[MENU_UTCOFFSET], x, y, sx, true);
   int count = ITEM_COUNT(utcOffsets);
   uint8_t idx = utcOffsetIdx;
   for(int i=-2 ; i<3 ; i++)
