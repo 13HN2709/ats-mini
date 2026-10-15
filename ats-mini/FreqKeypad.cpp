@@ -143,7 +143,7 @@ void drawFreqKeypad()
   // Titel
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFD20);
-  spr.drawString("FREQUENZ & MODUS EINGABE", boxX + boxW / 2, boxY + 3, 1);
+  spr.drawString("FREQUENCY INPUT MENU", boxX + boxW / 2, boxY + 3, 1);
 
   // Frequenz-Anzeigefeld
   spr.fillRect(boxX + 8, boxY + 16, boxW - 100, 20, 0x0000);
@@ -168,7 +168,11 @@ void drawFreqKeypad()
   }
   spr.drawRoundRect(modeX, modeY, modeW, modeH, 2, 0xFCA0);
   spr.setTextDatum(MC_DATUM);
+  
+  // Modus-Schrift vergrößert
+  spr.setTextSize(2);
   spr.drawString(bandModeDesc[tempMode], modeX + modeW / 2, modeY + modeH / 2, 1);
+  spr.setTextSize(1);
 
   // 4x4 Tastenfeld (4 Spalten, 4 Reihen)
   int startX = boxX + 8;
@@ -200,6 +204,10 @@ void drawFreqKeypad()
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(keypadLayout[i], x + btnW / 2, y + btnH / 2, 2);
+    
+    // Tastenbeschriftung (Zahlen, BS, OK) skaliert mit Faktor 2 für perfekte Lesbarkeit
+    spr.setTextSize(2);
+    spr.drawString(keypadLayout[i], x + btnW / 2, y + btnH / 2, 1);
+    spr.setTextSize(1);
   }
 }
