@@ -21,13 +21,11 @@ void drawLayoutDecoder()
   int box1H = 85;
   spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); // Rahmen Kasten 1
 
-  // Band und Modus
+  // Nur den Bandnamen anzeigen (verhindert das doppelte Auftauchen von LSB/Modi)
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFFFF);
-  char bandModeBuf[32];
-  snprintf(bandModeBuf, sizeof(bandModeBuf), "%s %s", getCurrentBand()->bandName, bandModeDesc[currentMode]);
-  spr.drawString(bandModeBuf, box1X + 100, box1Y + 6);
+  spr.drawString(getCurrentBand()->bandName, box1X + 100, box1Y + 6);
 
   if(switchThemeEditor())
   {
@@ -36,7 +34,7 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // Mono/Stereo Anzeige
+  // Mono/Stereo bei FM oder sauberer Modus (USB/LSB/AM) bei KW/VHF
   spr.setTextDatum(TC_DATUM);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   if (currentMode == FM) {
@@ -44,16 +42,16 @@ void drawLayoutDecoder()
     spr.setTextColor(isStereo ? 0x07E0 : 0xF800); 
     spr.drawString(isStereo ? "Stereo" : "Mono", box1X + 100, box1Y + 30);
   } else {
-    spr.setTextColor(0x8410); 
+    spr.setTextColor(0x07E0); // Schönes Grün für den aktuellen Modus
     spr.drawString(bandModeDesc[currentMode], box1X + 100, box1Y + 30);
   }
 
-  // Frequenz & Einheit
+  // Frequenz & Einheit weiter nach rechts zentriert ausgerichtet
   drawFrequency(
     currentFrequency,
-    box1X + 50, box1Y + 58,
-    box1X + 165, box1Y + 58,
-    currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
+    box1X + 70, box1Y + 58,
+    box1X + 175, box1Y + 58,
+    currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
 
@@ -64,7 +62,6 @@ void drawLayoutDecoder()
   int box2H = 85;
   spr.drawRect(box2X, box2Y, box2W, box2H, 0xFFFF); // Rahmen Kasten 2
   
-  // Trennlinie in Kasten 2
   spr.drawFastHLine(box2X, box2Y + 45, box2W, 0xFFFF);
 
   spr.setTextDatum(TL_DATUM);
@@ -84,36 +81,39 @@ void drawLayoutDecoder()
   snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", hour, minute);
   spr.drawString(timeBuf, box2X + 8, box2Y + 55);
 
-  // Menü / Sidebar bei Tastendruck
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
   {
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
 
-  // === KASTEN 3: Unten (Eco-Waterfall) ===
+  // === KASTEN 3: Unten (Eco-Waterfall mit sichtbarem Pegel) ===
   int wfX = 10;
   int wfY = 125;
   int wfW = 300;
   int wfH = 95;
   
-  // Äußeren Kasten für den Wasserfall zeichnen
   spr.drawRect(wfX, wfY, wfW, wfH, 0xFFFF);
 
-  // Linker und rechter statischer blauer Bereich
   int midStartRel = 90;
   int midWidth = 60;
   
   spr.fillRect(wfX, wfY, midStartRel, wfH, 0x001F); // Dunkles Blau links
   spr.fillRect(wfX + midStartRel + midWidth, wfY, wfW - (midStartRel + midWidth), wfH, 0x001F); // Dunkles Blau rechts
 
-  // Dynamischer Mittelstreifen
+  // Dynamischer Mittelstreifen mit robuster Farblogik (kein reines Schwarz mehr bei schwachen Signalen)
   uint8_t currentRssi = rx.getCurrentRSSI();
-  uint16_t sigColor = (currentRssi < 5) ? 0x0000 : (currentRssi < 20 ? 0xF800 : (currentRssi < 30 ? 0xFFE0 : 0x07E0));
-  
+  uint16_t sigColor = 0x07E0; // Standard Grün, damit man direkt was sieht
+  if (currentRssi < 5)   sigColor = 0x8410; // Grau für fast kein Signal statt komplett Schwarz
+  else if (currentRssi < 15) sigColor = 0xF800; // Rot
+  else if (currentRssi < 25) sigColor = 0xFFE0; // Gelb
+
   spr.fillRect(wfX + midStartRel, wfY, midWidth, wfH, 0x0000); // Hintergrund Mitte Schwarz
-  int barH = map(currentRssi, 0, 45, 0, wfH);
-  barH = constrain(barH, 0, wfH);
+  
+  // Mindesthöhe von 4 Pixeln erzwingen, damit man immer einen Balken sieht
+  int barH = map(currentRssi, 0, 45, 4, wfH);
+  barH = constrain(barH, 4, wfH);
+  
   spr.fillRect(wfX + midStartRel + 10, wfY + wfH - barH, midWidth - 20, barH, sigColor);
 
   if(currentCmd == CMD_SCAN)
