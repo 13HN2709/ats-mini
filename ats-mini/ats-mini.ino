@@ -436,13 +436,13 @@ void checkAutoModeByFrequency(uint32_t freq) {
   uint8_t targetMode = currentMode;
 
   if (freq >= 87500L) {
-    targetMode = FM;
+    targetMode = FM;       // UKW-Radio ab 87.5 MHz
   } else if (freq >= 10000L) {
-    targetMode = USB;
-  } else if (freq >= 2000L) {
-    targetMode = LSB;
+    targetMode = USB;      // Obere Kurzwelle (z.B. 10 MHz bis 30 MHz)
+  } else if (freq >= 1800L) {
+    targetMode = LSB;      // Untere Kurzwelle / 80m / 40m Band (1.8 MHz bis 10 MHz)
   } else {
-    targetMode = AM;
+    targetMode = AM;       // Mittelwelle und Langwelle unter 1.8 MHz
   }
 
   if (targetMode != currentMode) {
