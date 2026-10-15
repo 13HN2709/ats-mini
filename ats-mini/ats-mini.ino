@@ -441,8 +441,8 @@ void useBand(const Band *band)
 void checkAutoModeByFrequency(uint32_t freq) {
   uint8_t targetMode = currentMode;
 
-  // Wenn wir uns im UKW-Bereich befinden (87.5 MHz bis 108 MHz = 87500 bis 108000 kHz)
-  if (freq >= 87500L && freq <= 108000L) {
+  // Wenn die Frequenz im UKW-Bereich liegt (egal ob als kHz wie 87500 oder MHz wie 87 übergeben)
+  if ((freq >= 87500L && freq <= 108000L) || (freq >= 87 && freq <= 108)) {
     targetMode = FM;       
   } else if (freq >= 10000L) {
     targetMode = USB;      
