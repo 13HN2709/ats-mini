@@ -425,6 +425,9 @@ bool updateBFO(int newBFO, bool wrap)
   else
     rx.setSSBBfo(-currentBFO);
 
+  // Automatische Modus-Anpassung auch beim Durchstimmen im SSB-Bereich
+  checkAutoModeByFrequency(currentFrequency);
+
   band->currentFreq = currentFrequency + currentBFO / 1000;
   return true;
 }
