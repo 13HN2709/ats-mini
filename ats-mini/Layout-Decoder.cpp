@@ -49,11 +49,11 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenzanzeige stabil zentriert im linken Kasten (fixierte Koordinaten gegen das Abdriften)
+  // 2. Frequenzanzeige stabil zentriert im linken Kasten
   drawFrequency(
     currentFrequency,
-    box1X + 25, box1Y + 40,
-    box1X + 160, box1Y + 40,
+    box1X + 35, box1Y + 40,
+    box1X + 175, box1Y + 40,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
@@ -90,7 +90,7 @@ void drawLayoutDecoder()
   }
 
 
-  // === KASTEN 3: Unten (Beschleunigter Wasserfall mit dickerem roten Rand) ===
+  // === KASTEN 3: Unten (Wasserfall mit 5px dickem rotem Rand) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
@@ -118,11 +118,11 @@ void drawLayoutDecoder()
   // Hintergrund der neuen Zeile mit dunklem Blau füllen
   wfSpr.fillRect(0, 0, wfInnerW, 1, 0x001F);
 
-  // Signalstärke auslesen und den Aufbau über schnelle Blöcke (fillRect) beschleunigen
+  // Signalstärke auslesen und Farbprofil zeichnen
   uint8_t currentRssi = rx.getCurrentRSSI();
   int center = wfInnerW / 2;
-  int halfWidth = map(currentRssi, 0, 45, 4, 35);
-  halfWidth = constrain(halfWidth, 4, wfInnerW / 2 - 10);
+  int halfWidth = map(currentRssi, 0, 45, 6, 35);
+  halfWidth = constrain(halfWidth, 6, wfInnerW / 2 - 12);
 
   // 1. Grüner Kern in der Mitte
   int coreW = max(2, halfWidth);
@@ -133,8 +133,8 @@ void drawLayoutDecoder()
   wfSpr.fillRect(center - coreW / 2 - yellowW, 0, yellowW, 1, 0xFFE0);
   wfSpr.fillRect(center + coreW / 2, 0, yellowW, 1, 0xFFE0);
 
-  // 3. Kräftiger, ca. 3 Pixel dicker roter Rand nach außen hin
-  int redW = 3;
+  // 3. Kräftiger, 5 Pixel dicker roter Rand außen
+  int redW = 5;
   int leftRedX = center - coreW / 2 - yellowW - redW;
   int rightRedX = center + coreW / 2 + yellowW;
 
