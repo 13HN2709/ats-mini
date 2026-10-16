@@ -6,6 +6,9 @@
 
 extern uint32_t lastTuneTime;
 
+static LGFX_Sprite wfSpr(&tft);
+static bool wfInitialized = false;
+
 void drawLayoutDecoder()
 {
   // Icons oben rechts (Akku, WiFi, BLE, Save)
@@ -21,21 +24,23 @@ void drawLayoutDecoder()
   int box1H = 82;
   spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); 
 
-  spr.drawFastHLine(box1X, box1Y + 30, box1W, 0xFFFF);
+  // Trennlinie etwas weiter nach oben gesetzt, damit genug Platz für die Frequenz bleibt
+  spr.drawFastHLine(box1X, box1Y + 24, box1W, 0xFFFF);
 
+  // 1. Oberer Bereich: Band links, Modus/Stereo rechts
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0xFFFF);
-  spr.drawString(getCurrentBand()->bandName, box1X + 8, box1Y + 8);
+  spr.drawString(getCurrentBand()->bandName, box1X + 8, box1Y + 4);
 
   spr.setTextDatum(TR_DATUM);
   if (currentMode == FM) {
     bool isStereo = (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
     spr.setTextColor(isStereo ? 0x07E0 : 0xF800); 
-    spr.drawString(isStereo ? "Stereo" : "Mono", box1X + box1W - 8, box1Y + 8);
+    spr.drawString(isStereo ? "Stereo" : "Mono", box1X + box1W - 8, box1Y + 4);
   } else {
     spr.setTextColor(0x07E0);
-    spr.drawString(bandModeDesc[currentMode], box1X + box1W - 8, box1Y + 8);
+    spr.drawString(bandModeDesc[currentMode], box1X + box1W - 8, box1Y + 4);
   }
 
   if(switchThemeEditor())
@@ -45,10 +50,11 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
+  // 2. Frequenzanzeige im unteren Teil von Kasten 1 (sicher zentriert, damit nichts abgeschnitten wird)
   drawFrequency(
     currentFrequency,
-    box1X + 45, box1Y + 45,
-    box1X + 155, box1Y + 45,
+    box1X + 25, box1Y + 38,
+    box1X + 135, box1Y + 38,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
@@ -85,7 +91,7 @@ void drawLayoutDecoder()
   }
 
 
-  // === KASTEN 3: Unten (SDR-Wasserfall-Layout mit festen Seitenrahmen) ===
+  // === KASTEN 3: Unten (Durchgehend fließender Wasserfall) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
@@ -93,30 +99,34 @@ void drawLayoutDecoder()
   
   spr.drawRect(wfX, wfY, wfW, wfH, 0xFFFF);
 
-  int sideWidth = 75; // Breite für die stabilen Seitenbänder links und rechts
-  int midWidth = wfW - (sideWidth * 2); // Dynamische Mitte für den Wasserfall
+  int wfInnerW = wfW - 2;
+  int wfInnerH = wfH - 2;
 
-  // 1. Äußere Seitenbereiche zeichnen (wie die farbigen Blöcke im Original-SDR)
-  spr.fillRect(wfX + 1, wfY + 1, sideWidth, wfH - 2, 0x03EF); // Cyan/Blau linker Rand
-  spr.fillRect(wfX + wfW - sideWidth - 1, wfY + 1, sideWidth, wfH - 2, 0x03EF); // Cyan/Blau rechter Rand
+  if (!wfInitialized) {
+    wfSpr.setPsram(true);
+    wfSpr.setColorDepth(16);
+    wfSpr.createSprite(wfInnerW, wfInnerH);
+    wfSpr.fillScreen(0x03EF); 
+    wfInitialized = true;
+  }
 
-  // 2. Mittlerer Wasserfall-Bereich (schwarzer Grund)
-  spr.fillRect(wfX + sideWidth, wfY + 1, midWidth, wfH - 2, 0x0000);
+  wfSpr.scroll(0, 1);
 
-  // 3. Signalstärke-Auswertung für den aktuellen Kanal
   uint8_t currentRssi = rx.getCurrentRSSI();
-  uint16_t lineCol = 0x001F; // Dunkles Blau
-  if (currentRssi > 5)  lineCol = 0x04FF; // Hellblau
-  if (currentRssi > 15) lineCol = 0x07E0; // Grün
-  if (currentRssi > 25) lineCol = 0xFFE0; // Gelb
-  if (currentRssi > 35) lineCol = 0xF800; // Rot bei starkem Signal
+  uint16_t lineCol = 0x03EF; 
+  if (currentRssi > 3)  lineCol = 0x04FF; 
+  if (currentRssi > 10) lineCol = 0x07E0; 
+  if (currentRssi > 20) lineCol = 0xFFE0; 
+  if (currentRssi > 30) lineCol = 0xF800; 
 
-  // Zeichne den Pegel als fokussierten Balken in der Mitte des Wasserfalls
-  int barW = map(currentRssi, 0, 45, 4, midWidth - 8);
-  barW = constrain(barW, 4, midWidth - 8);
-  int barX = wfX + sideWidth + (midWidth - barW) / 2;
-  
-  spr.fillRect(barX, wfY + 3, barW, wfH - 6, lineCol);
+  int barW = map(currentRssi, 0, 45, 10, wfInnerW - 20);
+  barW = constrain(barW, 10, wfInnerW - 20);
+  int barX = (wfInnerW - barW) / 2;
+
+  wfSpr.fillRect(0, 0, wfInnerW, 1, 0x03EF); 
+  wfSpr.fillRect(barX, 0, barW, 1, lineCol);
+
+  wfSpr.pushSprite(&spr, wfX + 1, wfY + 1);
 
   if(currentCmd == CMD_SCAN)
   {
