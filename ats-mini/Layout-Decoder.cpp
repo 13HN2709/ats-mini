@@ -10,7 +10,7 @@ extern uint32_t lastTuneTime;
 static LGFX_Sprite wfSpr(&tft);
 static bool wfInitialized = false;
 
-void drawLayoutNewUI()
+void drawLayoutDecoder()
 {
   // Icons oben rechts (Akku, WiFi, BLE, Save)
   drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
