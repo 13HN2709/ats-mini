@@ -49,7 +49,7 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenzanzeige wieder sicher zentriert im linken Kasten (stabiler Bereich)
+  // 2. Frequenzanzeige stabil im linken Kasten zentriert
   drawFrequency(
     currentFrequency,
     box1X + 15, box1Y + 38,
@@ -90,7 +90,7 @@ void drawLayoutDecoder()
   }
 
 
-  // === KASTEN 3: Unten (Echtes Wasserfall-Spektrum mit grünem Kern, Gelb und rotem Rand) ===
+  // === KASTEN 3: Unten (Wasserfall mit robustem Layout-Wechsel-Schutz) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
@@ -101,11 +101,15 @@ void drawLayoutDecoder()
   int wfInnerW = wfW - 2;
   int wfInnerH = wfH - 2;
 
-  if (!wfInitialized) {
+  // Sicherstellen, dass das Sprite nach einem Layout-Wechsel immer gängig ist
+  if (!wfInitialized || wfSpr.width() != wfInnerW || wfSpr.height() != wfInnerH) {
+    if (wfInitialized) {
+      wfSpr.deleteSprite();
+    }
     wfSpr.setPsram(true);
     wfSpr.setColorDepth(16);
     wfSpr.createSprite(wfInnerW, wfInnerH);
-    wfSpr.fillScreen(0x001F); // Sattes, dunkles SDR-Blau als Grundfarbe
+    wfSpr.fillScreen(0x001F); // Dunkles SDR-Blau als Basis
     wfInitialized = true;
   }
 
@@ -115,25 +119,24 @@ void drawLayoutDecoder()
   // Hintergrund der neuen Zeile mit dunklem Blau füllen
   wfSpr.fillRect(0, 0, wfInnerW, 1, 0x001F);
 
-  // Signalstärke auslesen und Peak-Profil berechnen
+  // Signalstärke auslesen und Peak-Profil zeichnen (Mitte Grün, Gelb daneben, Rot am Rand)
   uint8_t currentRssi = rx.getCurrentRSSI();
   int center = wfInnerW / 2;
-  int peakWidth = map(currentRssi, 0, 45, 6, 45); // Breite skaliert mit RSSI
+  int peakWidth = map(currentRssi, 0, 45, 6, 45);
   peakWidth = constrain(peakWidth, 6, wfInnerW / 2 - 5);
 
-  // Symmetrisches Spektralprofil zeichnen: Mitte Grün, Flanken Gelb, Ränder Rot
   for(int x = -peakWidth; x <= peakWidth; x++) {
     int px = center + x;
     if(px >= 0 && px < wfInnerW) {
       uint16_t col = 0x07E0; // Grün im Kern
       int dist = abs(x);
-      if(dist > peakWidth * 0.5)  col = 0xFFE0; // Gelb daneben
+      if(dist > peakWidth * 0.5)  col = 0xFFE0; // Gelb
       if(dist > peakWidth * 0.85) col = 0xF800; // Rot am Rand
       wfSpr.drawPixel(px, 0, col);
     }
   }
 
-  // Den fertigen Wasserfall in das Haupt-Sprite einfügen
+  // Den Wasserfall in das Haupt-Sprite pushen
   wfSpr.pushSprite(&spr, wfX + 1, wfY + 1);
 
   if(currentCmd == CMD_SCAN)
