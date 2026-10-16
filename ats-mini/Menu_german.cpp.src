@@ -220,7 +220,7 @@ static uint8_t dateTimeMinute;
 static uint8_t dateTimeSecond;
 
 uint8_t uiLayoutIdx = 0;
-static const char *uiLayoutDesc[] = { "Default", "S-Meter", "NewUI", "Decoder" };
+static const char *uiLayoutDesc[] = { "Default", "S-Meter", "NewUI", "Waterfall" };
 
 uint8_t usbModeIdx = USB_OFF;
 static const char *usbModeDesc[] = { "Off", "Ad hoc" };
