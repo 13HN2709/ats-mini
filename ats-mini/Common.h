@@ -18,7 +18,7 @@ static constexpr const lgfx::IFont* FONT_DIGITS  = &lgfx::fonts::Font7;  // 48px
 #define RECEIVER_NAME  "ATS-Mini"
 #define FIRMWARE_URL   "https://github.com/music4ever2026-collab/ats-mini"
 #define MANUAL_URL     "https://esp32-si4732.github.io/ats-mini/manual.html"
-#define AUTHORS_LINE1  "Original Fork @Max Arnold"
+#define AUTHORS_LINE1  "Original Fork @Max Arnold <= Thank you"
 #define AUTHORS_LINE2  "Volos Projects, Ralph Xavier, Sunnygold,"
 #define AUTHORS_LINE3  "Goshante, G8PTN (Dave), R9UCL (Max Arnold),Marat Fayzullin"
 #define AUTHORS_LINE4  "Modified by 13HN2709 - Andre Schlueter"
