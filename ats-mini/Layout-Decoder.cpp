@@ -86,26 +86,27 @@ void drawLayoutDecoder()
   // Hintergrund der neuen Zeile mit dunklem Blau füllen
   wfSpr.fillRect(0, 0, wfInnerW, 1, 0x001F);
 
-  // Signalstärke auslesen und mit leichtem Jitter (Zacken-Effekt) versehen
+  // Signalstärke auslesen und strikt auf die Mitte begrenzen
   uint8_t currentRssi = rx.getCurrentRSSI();
   int center = wfInnerW / 2;
   int maxRssi = (currentMode == FM) ? 35 : 45;
   
-  int baseWidth = map(currentRssi, 0, maxRssi, 4, wfInnerW / 2 - 10);
-  int jitter = (rand() % 5) - 2; // Leichter optischer Jitter für den klassischen SDR-Look
-  int halfWidth = constrain(baseWidth + jitter, 4, (wfInnerW / 2) - 15);
+  int maxHalfWidth = 55; // Begrenzt den Maximal-Ausschlag nach links/rechts
+  int baseWidth = map(currentRssi, 0, maxRssi, 4, maxHalfWidth);
+  int jitter = (rand() % 5) - 2; // Lebendiger SDR-Zackeneffekt
+  int halfWidth = constrain(baseWidth + jitter, 4, maxHalfWidth);
 
   // 1. Grüner Kern in der Mitte
   int coreW = max(2, halfWidth);
   wfSpr.fillRect(center - coreW / 2, 0, coreW, 1, 0x07E0);
 
   // 2. Gelber Zwischenbereich daneben
-  int yellowW = max(2, halfWidth / 2);
+  int yellowW = max(2, halfWidth / 3);
   wfSpr.fillRect(center - coreW / 2 - yellowW, 0, yellowW, 1, 0xFFE0);
   wfSpr.fillRect(center + coreW / 2, 0, yellowW, 1, 0xFFE0);
 
   // 3. Kräftiger, roter Rand außen
-  int redW = 4;
+  int redW = 3;
   int leftRedX = center - coreW / 2 - yellowW - redW;
   int rightRedX = center + coreW / 2 + yellowW;
 
