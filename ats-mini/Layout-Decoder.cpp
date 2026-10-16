@@ -40,7 +40,7 @@ void drawLayoutDecoder()
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-    // 3. Sendername / RDS weiter nach oben gesetzt
+  // 3. Sendername / RDS weiter nach oben gesetzt (Y = 90)
   const char *stationName = getStationName();
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x07E0);
@@ -55,10 +55,10 @@ void drawLayoutDecoder()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // === 4. Unten: Der Wasserfall ===
-  int wfX = 12;
+  // === 4. Unten: Der Wasserfall (perfekt zentrierte Box) ===
+  int wfX = 20;
   int wfY = 132;
-  int wfW = 296;
+  int wfW = 280;
   int wfH = 26;
   
   spr.drawRect(wfX, wfY, wfW, wfH, 0xFFFF);
@@ -86,12 +86,14 @@ void drawLayoutDecoder()
   // Hintergrund der neuen Zeile mit dunklem Blau füllen
   wfSpr.fillRect(0, 0, wfInnerW, 1, 0x001F);
 
-  // Signalstärke auslesen und Farbprofil mit 5px rotem Rand zeichnen
+  // Signalstärke auslesen und mit leichtem Jitter (Zacken-Effekt) versehen
   uint8_t currentRssi = rx.getCurrentRSSI();
   int center = wfInnerW / 2;
   int maxRssi = (currentMode == FM) ? 35 : 45;
-  int halfWidth = map(currentRssi, 0, maxRssi, 4, wfInnerW / 2 - 15);
-  halfWidth = constrain(halfWidth, 4, wfInnerW / 2 - 12);
+  
+  int baseWidth = map(currentRssi, 0, maxRssi, 4, wfInnerW / 2 - 10);
+  int jitter = (rand() % 5) - 2; // Leichter optischer Jitter für den klassischen SDR-Look
+  int halfWidth = constrain(baseWidth + jitter, 4, (wfInnerW / 2) - 15);
 
   // 1. Grüner Kern in der Mitte
   int coreW = max(2, halfWidth);
@@ -102,8 +104,8 @@ void drawLayoutDecoder()
   wfSpr.fillRect(center - coreW / 2 - yellowW, 0, yellowW, 1, 0xFFE0);
   wfSpr.fillRect(center + coreW / 2, 0, yellowW, 1, 0xFFE0);
 
-  // 3. Kräftiger, 5 Pixel dicker roter Rand außen
-  int redW = 5;
+  // 3. Kräftiger, roter Rand außen
+  int redW = 4;
   int leftRedX = center - coreW / 2 - yellowW - redW;
   int rightRedX = center + coreW / 2 + yellowW;
 
