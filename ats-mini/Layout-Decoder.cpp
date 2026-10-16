@@ -40,14 +40,14 @@ void drawLayoutDecoder()
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // 3. Sendername / RDS weiter nach oben gesetzt (Y = 94)
+    // 3. Sendername / RDS weiter nach oben gesetzt
   const char *stationName = getStationName();
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x07E0);
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, 145, 94);
+    drawLongStationName(stationName + 1, 145, 90);
   else if(*stationName)
-    drawStationName(stationName, 94); // Korrigiert auf zentriert bei Y=94
+    drawStationName(stationName, 145, 90);
 
   // Menü / Sidebar bei Tastendruck
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
