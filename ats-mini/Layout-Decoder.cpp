@@ -24,7 +24,6 @@ void drawLayoutDecoder()
   int box1H = 82;
   spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); 
 
-  // Trennlinie etwas weiter nach oben gesetzt, damit genug Platz für die Frequenz bleibt
   spr.drawFastHLine(box1X, box1Y + 24, box1W, 0xFFFF);
 
   // 1. Oberer Bereich: Band links, Modus/Stereo rechts
@@ -50,11 +49,11 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenzanzeige im unteren Teil von Kasten 1 (sicher zentriert, damit nichts abgeschnitten wird)
+  // 2. Frequenzanzeige wieder sicher zentriert im linken Kasten (stabiler Bereich)
   drawFrequency(
     currentFrequency,
-    box1X + 25, box1Y + 38,
-    box1X + 135, box1Y + 38,
+    box1X + 15, box1Y + 38,
+    box1X + 130, box1Y + 38,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
@@ -91,7 +90,7 @@ void drawLayoutDecoder()
   }
 
 
-  // === KASTEN 3: Unten (Durchgehend fließender Wasserfall) ===
+  // === KASTEN 3: Unten (Echtes Wasserfall-Spektrum mit grünem Kern, Gelb und rotem Rand) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
@@ -106,26 +105,35 @@ void drawLayoutDecoder()
     wfSpr.setPsram(true);
     wfSpr.setColorDepth(16);
     wfSpr.createSprite(wfInnerW, wfInnerH);
-    wfSpr.fillScreen(0x03EF); 
+    wfSpr.fillScreen(0x001F); // Sattes, dunkles SDR-Blau als Grundfarbe
     wfInitialized = true;
   }
 
+  // Wasserfall fließend nach unten scrollen
   wfSpr.scroll(0, 1);
 
+  // Hintergrund der neuen Zeile mit dunklem Blau füllen
+  wfSpr.fillRect(0, 0, wfInnerW, 1, 0x001F);
+
+  // Signalstärke auslesen und Peak-Profil berechnen
   uint8_t currentRssi = rx.getCurrentRSSI();
-  uint16_t lineCol = 0x03EF; 
-  if (currentRssi > 3)  lineCol = 0x04FF; 
-  if (currentRssi > 10) lineCol = 0x07E0; 
-  if (currentRssi > 20) lineCol = 0xFFE0; 
-  if (currentRssi > 30) lineCol = 0xF800; 
+  int center = wfInnerW / 2;
+  int peakWidth = map(currentRssi, 0, 45, 6, 45); // Breite skaliert mit RSSI
+  peakWidth = constrain(peakWidth, 6, wfInnerW / 2 - 5);
 
-  int barW = map(currentRssi, 0, 45, 10, wfInnerW - 20);
-  barW = constrain(barW, 10, wfInnerW - 20);
-  int barX = (wfInnerW - barW) / 2;
+  // Symmetrisches Spektralprofil zeichnen: Mitte Grün, Flanken Gelb, Ränder Rot
+  for(int x = -peakWidth; x <= peakWidth; x++) {
+    int px = center + x;
+    if(px >= 0 && px < wfInnerW) {
+      uint16_t col = 0x07E0; // Grün im Kern
+      int dist = abs(x);
+      if(dist > peakWidth * 0.5)  col = 0xFFE0; // Gelb daneben
+      if(dist > peakWidth * 0.85) col = 0xF800; // Rot am Rand
+      wfSpr.drawPixel(px, 0, col);
+    }
+  }
 
-  wfSpr.fillRect(0, 0, wfInnerW, 1, 0x03EF); 
-  wfSpr.fillRect(barX, 0, barW, 1, lineCol);
-
+  // Den fertigen Wasserfall in das Haupt-Sprite einfügen
   wfSpr.pushSprite(&spr, wfX + 1, wfY + 1);
 
   if(currentCmd == CMD_SCAN)
