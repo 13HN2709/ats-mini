@@ -40,12 +40,12 @@ void drawLayoutDecoder()
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // Stereo / Mono Status-Kasten (wird nur im FM-Modus direkt unter .000 / kHz angezeigt)
+  // Stereo / Mono Status-Kasten
   if(currentMode == FM)
   {
     bool isStereo = (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
     
-    int boxX = 218;
+    int boxX = 225;
     int boxY = 62;
     int boxW = 65;
     int boxH = 18;
