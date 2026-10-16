@@ -17,30 +17,28 @@ void drawLayoutDecoder()
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // === KASTEN 1: Oben Links (Oben: Band & Stereo/Mono | Unten: Exklusiv nur die Frequenz) ===
+  // === KASTEN 1: Oben Links (NewUI Original-Layout) ===
   int box1X = 10;
   int box1Y = 35;
   int box1W = 195;
   int box1H = 82;
   spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); 
 
-  // Trennlinie, die den stabilen oberen Bereich von der Frequenz trennt
-  spr.drawFastHLine(box1X, box1Y + 30, box1W, 0xFFFF);
+  spr.drawFastHLine(box1X, box1Y + 24, box1W, 0xFFFF);
 
-  // 1. Oberer Bereich: Band links, Modus/Stereo rechts (wie gehabt, da es super lief)
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0xFFFF);
-  spr.drawString(getCurrentBand()->bandName, box1X + 8, box1Y + 6);
+  spr.drawString(getCurrentBand()->bandName, box1X + 8, box1Y + 4);
 
   spr.setTextDatum(TR_DATUM);
   if (currentMode == FM) {
     bool isStereo = (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
     spr.setTextColor(isStereo ? 0x07E0 : 0xF800); 
-    spr.drawString(isStereo ? "Stereo" : "Mono", box1X + box1W - 8, box1Y + 6);
+    spr.drawString(isStereo ? "Stereo" : "Mono", box1X + box1W - 8, box1Y + 4);
   } else {
     spr.setTextColor(0x07E0);
-    spr.drawString(bandModeDesc[currentMode], box1X + box1W - 8, box1Y + 6);
+    spr.drawString(bandModeDesc[currentMode], box1X + box1W - 8, box1Y + 4);
   }
 
   if(switchThemeEditor())
@@ -50,40 +48,40 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Unterer Bereich: Die Frequenz hat jetzt ihren eigenen, geschützten Kastenbereich
+  // Frequenzkoordinaten stabil wie in der NewUI
   drawFrequency(
     currentFrequency,
-    box1X + 15, box1Y + 45,
-    box1X + 180, box1Y + 45,
+    box1X + 8, box1Y + 32,
+    box1X + 135, box1Y + 32,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
 
-  // === KASTEN 2: Oben Rechts (S-Meter, SNR und MHz/kHz statt Uhrzeit) ===
+  // === KASTEN 2: Oben Rechts (NewUI Original) ===
   int box2X = 210;
   int box2Y = 35;
   int box2W = 100;
   int box2H = 82;
   spr.drawRect(box2X, box2Y, box2W, box2H, 0xFFFF); 
   
-  // Trennlinie für das untere Segment in Kasten 2
-  spr.drawFastHLine(box2X, box2Y + 50, box2W, 0xFFFF);
+  spr.drawFastHLine(box2X, box2Y + 42, box2W, 0xFFFF);
 
   spr.setTextDatum(TL_DATUM);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextColor(0xFFFF);
   
-  // Oben in Kasten 2: S-Meter & SNR
   char rssiBuf[16], snrBuf[16];
   snprintf(rssiBuf, sizeof(rssiBuf), "S:%d", rx.getCurrentRSSI());
   snprintf(snrBuf, sizeof(snrBuf), "SNR:%ddB", rx.getCurrentSNR());
   
   spr.drawString(rssiBuf, box2X + 6, box2Y + 6);
-  spr.drawString(snrBuf, box2X + 6, box2Y + 28);
+  spr.drawString(snrBuf, box2X + 6, box2Y + 22);
 
-  // Unten in Kasten 2: Die MHz/kHz-Einheit (ersetzt die Uhrzeit)
-  spr.setTextColor(0x07E0);
-  spr.drawString("MHz", box2X + 6, box2Y + 57);
+  uint8_t hour, minute;
+  clockGetHM(&hour, &minute);
+  char timeBuf[16];
+  snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", hour, minute);
+  spr.drawString(timeBuf, box2X + 6, box2Y + 50);
 
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
   {
@@ -91,7 +89,7 @@ void drawLayoutDecoder()
   }
 
 
-  // === KASTEN 3: Unten (Wasserfall mit 5px rotem Rand & High-Speed fillRect) ===
+  // === KASTEN 3: Unten (Wasserfall mit weißer Trennlinie bündig am oberen Rand) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
@@ -99,8 +97,11 @@ void drawLayoutDecoder()
   
   spr.drawRect(wfX, wfY, wfW, wfH, 0xFFFF);
 
+  // Weiße Trennlinie direkt bündig am inneren oberen Rand des Wasserfalls gezogen
+  spr.drawFastHLine(wfX + 1, wfY + 1, wfW - 2, 0xFFFF);
+
   int wfInnerW = wfW - 2;
-  int wfInnerH = wfH - 2;
+  int wfInnerH = wfH - 3; // Um 1 Pixel reduziert, damit Platz für die Trennlinie bleibt
 
   if (!wfInitialized || wfSpr.width() != wfInnerW || wfSpr.height() != wfInnerH) {
     if (wfInitialized) {
@@ -113,13 +114,13 @@ void drawLayoutDecoder()
     wfInitialized = true;
   }
 
-  // Wasserfall fließend nach unten scrollen
+  // Wasserfall fließend nach unten scrollen (innerhalb des Bereichs unter der Linie)
   wfSpr.scroll(0, 1);
 
   // Hintergrund der neuen Zeile mit dunklem Blau füllen
   wfSpr.fillRect(0, 0, wfInnerW, 1, 0x001F);
 
-  // Signalstärke auslesen und Farbprofil mit schnellen Blöcken zeichnen
+  // Signalstärke auslesen und Farbprofil mit 5px rotem Rand zeichnen
   uint8_t currentRssi = rx.getCurrentRSSI();
   int center = wfInnerW / 2;
   int halfWidth = map(currentRssi, 0, 45, 6, 35);
@@ -146,8 +147,8 @@ void drawLayoutDecoder()
     wfSpr.fillRect(rightRedX, 0, redW, 1, 0xF800);
   }
 
-  // Den Wasserfall in das Haupt-Sprite pushen
-  wfSpr.pushSprite(&spr, wfX + 1, wfY + 1);
+  // Den Wasserfall direkt unter der Trennlinie in das Haupt-Sprite pushen (Y + 2)
+  wfSpr.pushSprite(&spr, wfX + 1, wfY + 2);
 
   if(currentCmd == CMD_SCAN)
   {
