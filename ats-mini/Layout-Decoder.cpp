@@ -6,6 +6,10 @@
 
 extern uint32_t lastTuneTime;
 
+// Statische Variablen hier oben deklarieren, damit sie im Scope bekannt sind
+static LGFX_Sprite wfSpr(&tft);
+static bool wfInitialized = false;
+
 void drawLayoutNewUI()
 {
   // Icons oben rechts (Akku, WiFi, BLE, Save)
