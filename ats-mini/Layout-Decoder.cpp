@@ -40,6 +40,25 @@ void drawLayoutDecoder()
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
+  // Stereo / Mono Status-Kasten (wird nur im FM-Modus direkt unter .000 / kHz angezeigt)
+  if(currentMode == FM)
+  {
+    bool isStereo = (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
+    
+    int boxX = 185;
+    int boxY = 62;
+    int boxW = 65;
+    int boxH = 18;
+    
+    // Weißer Kasten mit schwarzem Hintergrund für maximale Lesbarkeit
+    spr.drawRect(boxX, boxY, boxW, boxH, 0xFFFF);
+    spr.fillRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 0x0000);
+    
+    spr.setTextDatum(CC_DATUM);
+    spr.setTextColor(isStereo ? 0x07E0 : 0xF800); // 0x07E0 = Neongrün, 0xF800 = Neonrot
+    spr.drawString(isStereo ? "STEREO" : "MONO", boxX + boxW / 2, boxY + boxH / 2, 2);
+  }
+
   // 3. Sendername / RDS weiter nach oben gesetzt (Y = 90)
   const char *stationName = getStationName();
   spr.setTextDatum(TC_DATUM);
