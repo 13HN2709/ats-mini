@@ -17,14 +17,14 @@ void drawLayoutDecoder()
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // === KASTEN 1: Oben Links (Unterteilt in oberen Bereich & eigenes Frequenz-Kästchen unten) ===
+  // === KASTEN 1: Oben Links (Mit sauberer Trennlinie für Band/Modus oben und Frequenz unten) ===
   int box1X = 10;
   int box1Y = 35;
   int box1W = 195;
   int box1H = 82;
   spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); 
 
-  // Trennlinie analog zu Kasten 2 (teilt Kasten 1 in Band/Modus oben und Frequenz unten)
+  // Trennlinie teilt Kasten 1 in oberen Bereich und Frequenz-Abteil
   spr.drawFastHLine(box1X, box1Y + 30, box1W, 0xFFFF);
 
   // 1. Oberer Bereich: Band links, Modus/Stereo rechts
@@ -50,11 +50,11 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Unterer Bereich (Eigenes Frequenz-Kästchen): Perfekt zentriert eingepasst
+  // 2. Unterer Bereich (Frequenz-Kästchen): Perfekt zentriert in die untere Hälfte eingepasst
   drawFrequency(
     currentFrequency,
-    box1X + 12, box1Y + 38,
-    box1X + 182, box1Y + 38,
+    box1X + 15, box1Y + 52,
+    box1X + 135, box1Y + 52,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
