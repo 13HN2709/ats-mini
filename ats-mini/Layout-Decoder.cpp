@@ -45,7 +45,7 @@ void drawLayoutDecoder()
   {
     bool isStereo = (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
     
-    int boxX = 185;
+    int boxX = 218;
     int boxY = 62;
     int boxW = 65;
     int boxH = 18;
