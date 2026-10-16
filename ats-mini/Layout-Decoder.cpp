@@ -6,7 +6,6 @@
 
 extern uint32_t lastTuneTime;
 
-// Statische Variablen hier oben deklarieren, damit sie im Scope bekannt sind
 static LGFX_Sprite wfSpr(&tft);
 static bool wfInitialized = false;
 
@@ -33,7 +32,7 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenz & Einheit (mit Original-Offsets aus dem Default-Layout, leicht nach links)
+  // 2. Frequenz & Einheit
   drawFrequency(
     currentFrequency,
     FREQ_OFFSET_X - 15, FREQ_OFFSET_Y,
@@ -41,26 +40,26 @@ void drawLayoutDecoder()
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
   );
 
-  // 3. Sendername / RDS direkt darunter zentriert
+  // 3. Sendername / RDS weiter nach oben gesetzt (Y = 94)
   const char *stationName = getStationName();
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x07E0);
   if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, 145, 102);
+    drawLongStationName(stationName + 1, 145, 94);
   else if(*stationName)
-    drawStationName(stationName, 145, 102);
+    drawStationName(stationName, 94); // Korrigiert auf zentriert bei Y=94
 
   // Menü / Sidebar bei Tastendruck
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
   {
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
-  
-  // === Unten (Wasserfall mit weißer Trennlinie oben & 5px rotem Rand) ===
-  int wfX = 10;
-  int wfY = 121;
-  int wfW = 300;
-  int wfH = 44;
+
+  // === 4. Unten: Der Wasserfall ===
+  int wfX = 12;
+  int wfY = 132;
+  int wfW = 296;
+  int wfH = 26;
   
   spr.drawRect(wfX, wfY, wfW, wfH, 0xFFFF);
 
@@ -77,7 +76,7 @@ void drawLayoutDecoder()
     wfSpr.setPsram(true);
     wfSpr.setColorDepth(16);
     wfSpr.createSprite(wfInnerW, wfInnerH);
-    wfSpr.fillScreen(0x001F); // Dunkles SDR-Blau als Basis
+    wfSpr.fillScreen(0x001F);
     wfInitialized = true;
   }
 
@@ -90,8 +89,9 @@ void drawLayoutDecoder()
   // Signalstärke auslesen und Farbprofil mit 5px rotem Rand zeichnen
   uint8_t currentRssi = rx.getCurrentRSSI();
   int center = wfInnerW / 2;
-  int halfWidth = map(currentRssi, 0, 45, 6, 35);
-  halfWidth = constrain(halfWidth, 6, wfInnerW / 2 - 12);
+  int maxRssi = (currentMode == FM) ? 35 : 45;
+  int halfWidth = map(currentRssi, 0, maxRssi, 4, wfInnerW / 2 - 15);
+  halfWidth = constrain(halfWidth, 4, wfInnerW / 2 - 12);
 
   // 1. Grüner Kern in der Mitte
   int coreW = max(2, halfWidth);
@@ -120,5 +120,18 @@ void drawLayoutDecoder()
   if(currentCmd == CMD_SCAN)
   {
     drawScanGraphs(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
+  }
+  else if(!drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y))
+  {
+    const char *rt = getRadioText();
+    const char *pi = getProgramInfo();
+
+    if((rt && *rt) || (pi && *pi))
+    {
+      spr.setTextColor(0x07E0);
+      spr.setTextSize(1.0);
+      spr.setTextDatum(TC_DATUM);
+      spr.drawString(rt ? rt : pi, 145, 160, 4);
+    }
   }
 }
