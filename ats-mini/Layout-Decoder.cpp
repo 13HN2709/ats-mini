@@ -14,32 +14,27 @@ void drawLayoutDecoder()
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // === KASTEN 1: Oben Links (Mit fester Unterteilung für Band/Modus & Frequenz) ===
+  // === KASTEN 1: Oben Links (Band, Modus & Frequenz) ===
   int box1X = 10;
   int box1Y = 35;
   int box1W = 195;
   int box1H = 82;
-  spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); // Äußerer Rahmen Kasten 1
+  spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); 
 
-  // Interne Trennlinie in Kasten 1 (teilt Oben [Band/Modus] und Unten [Frequenz])
   spr.drawFastHLine(box1X, box1Y + 30, box1W, 0xFFFF);
 
-  // 1. Oberer Bereich von Kasten 1: Bandname links, Modus/Stereo rechts
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  
-  // Bandname links platziert
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0xFFFF);
   spr.drawString(getCurrentBand()->bandName, box1X + 8, box1Y + 8);
 
-  // Modus oder Stereo/Mono rechts platziert
   spr.setTextDatum(TR_DATUM);
   if (currentMode == FM) {
     bool isStereo = (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
     spr.setTextColor(isStereo ? 0x07E0 : 0xF800); 
     spr.drawString(isStereo ? "Stereo" : "Mono", box1X + box1W - 8, box1Y + 8);
   } else {
-    spr.setTextColor(0x07E0); // Schönes Grün für den Modus (USB/LSB/AM)
+    spr.setTextColor(0x07E0);
     spr.drawString(bandModeDesc[currentMode], box1X + box1W - 8, box1Y + 8);
   }
 
@@ -50,7 +45,6 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Unterer Bereich von Kasten 1: Frequenzanzeige sauber zentriert
   drawFrequency(
     currentFrequency,
     box1X + 45, box1Y + 45,
@@ -64,7 +58,7 @@ void drawLayoutDecoder()
   int box2Y = 35;
   int box2W = 100;
   int box2H = 82;
-  spr.drawRect(box2X, box2Y, box2W, box2H, 0xFFFF); // Rahmen Kasten 2
+  spr.drawRect(box2X, box2Y, box2W, box2H, 0xFFFF); 
   
   spr.drawFastHLine(box2X, box2Y + 42, box2W, 0xFFFF);
 
@@ -91,7 +85,7 @@ void drawLayoutDecoder()
   }
 
 
-  // === KASTEN 3: Unten (Eco-Waterfall, passgenau für 170px Display-Höhe) ===
+  // === KASTEN 3: Unten (Echter Zeilen-Wasserfall) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
@@ -101,23 +95,26 @@ void drawLayoutDecoder()
 
   int midStartRel = 90;
   int midWidth = 60;
-  
-  spr.fillRect(wfX, wfY, midStartRel, wfH, 0x001F); // Dunkles Blau links
-  spr.fillRect(wfX + midStartRel + midWidth, wfY, wfW - (midStartRel + midWidth), wfH, 0x001F); // Dunkles Blau rechts
 
+  // 1. Inhalt des mittleren Wasserfall-Bereichs 1 Pixel nach unten scrollen (lässt den Verlauf fließen)
+  spr.scroll(0, 1, wfX + midStartRel, wfY + 1, midWidth, wfH - 2);
+
+  // 2. Feste blaue Seitenbereiche zeichnen (bleiben stabil)
+  spr.fillRect(wfX, wfY + 1, midStartRel, wfH - 2, 0x001F); 
+  spr.fillRect(wfX + midStartRel + midWidth, wfY + 1, wfW - (midStartRel + midWidth), wfH - 2, 0x001F); 
+
+  // 3. Neue Farblinie für den aktuellen RSSI-Wert ganz oben im Wasserfall-Bereich einfügen
   uint8_t currentRssi = rx.getCurrentRSSI();
   
-  // Sichtbare Farbe erzwingen zum Testen
-  uint16_t sigColor = 0x07E0; 
-  if (currentRssi > 10) sigColor = 0xFFE0; // Gelb
-  if (currentRssi > 25) sigColor = 0xF800; // Rot
+  // Farbzuordnung analog zu SDR-Wasserfällen (Blau -> Türkis -> Gelb -> Rot)
+  uint16_t lineCol = 0x001F; // Dunkles Blau bei schwachem Signal
+  if (currentRssi > 5)  lineCol = 0x04FF; // Hellblau
+  if (currentRssi > 15) lineCol = 0x07E0; // Grün
+  if (currentRssi > 25) lineCol = 0xFFE0; // Gelb
+  if (currentRssi > 35) lineCol = 0xF800; // Rot bei starkem Signal
 
-  spr.fillRect(wfX + midStartRel, wfY, midWidth, wfH, 0x0000); // Hintergrund Mitte Schwarz
-  
-  int barH = map(currentRssi, 0, 45, 4, wfH);
-  barH = constrain(barH, 4, wfH);
-  
-  spr.fillRect(wfX + midStartRel + 10, wfY + wfH - barH, midWidth - 20, barH, sigColor);
+  // Eine feine Zeile oben in der Mitte zeichnen (die dann bei jedem Tick nach unten wandert)
+  spr.fillRect(wfX + midStartRel + 2, wfY + 1, midWidth - 4, 2, lineCol);
 
   if(currentCmd == CMD_SCAN)
   {
