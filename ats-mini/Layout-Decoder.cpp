@@ -17,29 +17,30 @@ void drawLayoutDecoder()
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // === KASTEN 1: Oben Links (Band, Modus & Frequenz) ===
+  // === KASTEN 1: Oben Links (Unterteilt in oberen Bereich & eigenes Frequenz-Kästchen unten) ===
   int box1X = 10;
   int box1Y = 35;
   int box1W = 195;
   int box1H = 82;
   spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); 
 
-  spr.drawFastHLine(box1X, box1Y + 24, box1W, 0xFFFF);
+  // Trennlinie analog zu Kasten 2 (teilt Kasten 1 in Band/Modus oben und Frequenz unten)
+  spr.drawFastHLine(box1X, box1Y + 30, box1W, 0xFFFF);
 
   // 1. Oberer Bereich: Band links, Modus/Stereo rechts
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0xFFFF);
-  spr.drawString(getCurrentBand()->bandName, box1X + 8, box1Y + 4);
+  spr.drawString(getCurrentBand()->bandName, box1X + 8, box1Y + 6);
 
   spr.setTextDatum(TR_DATUM);
   if (currentMode == FM) {
     bool isStereo = (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
     spr.setTextColor(isStereo ? 0x07E0 : 0xF800); 
-    spr.drawString(isStereo ? "Stereo" : "Mono", box1X + box1W - 8, box1Y + 4);
+    spr.drawString(isStereo ? "Stereo" : "Mono", box1X + box1W - 8, box1Y + 6);
   } else {
     spr.setTextColor(0x07E0);
-    spr.drawString(bandModeDesc[currentMode], box1X + box1W - 8, box1Y + 4);
+    spr.drawString(bandModeDesc[currentMode], box1X + box1W - 8, box1Y + 6);
   }
 
   if(switchThemeEditor())
@@ -49,11 +50,11 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenzanzeige stabil zentriert im linken Kasten
+  // 2. Unterer Bereich (Eigenes Frequenz-Kästchen): Perfekt zentriert eingepasst
   drawFrequency(
     currentFrequency,
-    box1X + 35, box1Y + 40,
-    box1X + 175, box1Y + 40,
+    box1X + 12, box1Y + 38,
+    box1X + 182, box1Y + 38,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
@@ -90,7 +91,7 @@ void drawLayoutDecoder()
   }
 
 
-  // === KASTEN 3: Unten (Wasserfall mit 5px dickem rotem Rand) ===
+  // === KASTEN 3: Unten (Wasserfall mit 5px rotem Rand & High-Speed fillRect) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
@@ -118,7 +119,7 @@ void drawLayoutDecoder()
   // Hintergrund der neuen Zeile mit dunklem Blau füllen
   wfSpr.fillRect(0, 0, wfInnerW, 1, 0x001F);
 
-  // Signalstärke auslesen und Farbprofil zeichnen
+  // Signalstärke auslesen und Farbprofil mit schnellen Blöcken zeichnen
   uint8_t currentRssi = rx.getCurrentRSSI();
   int center = wfInnerW / 2;
   int halfWidth = map(currentRssi, 0, 45, 6, 35);
