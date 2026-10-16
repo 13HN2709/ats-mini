@@ -49,11 +49,11 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Frequenzanzeige stabil im linken Kasten zentriert
+  // 2. Frequenzanzeige stabil zentriert im linken Kasten (fixierte Koordinaten gegen das Abdriften)
   drawFrequency(
     currentFrequency,
-    box1X + 15, box1Y + 38,
-    box1X + 130, box1Y + 38,
+    box1X + 25, box1Y + 40,
+    box1X + 160, box1Y + 40,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
@@ -90,7 +90,7 @@ void drawLayoutDecoder()
   }
 
 
-  // === KASTEN 3: Unten (Wasserfall mit robustem Layout-Wechsel-Schutz) ===
+  // === KASTEN 3: Unten (Beschleunigter Wasserfall mit dickerem roten Rand) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
@@ -101,7 +101,6 @@ void drawLayoutDecoder()
   int wfInnerW = wfW - 2;
   int wfInnerH = wfH - 2;
 
-  // Sicherstellen, dass das Sprite nach einem Layout-Wechsel immer gängig ist
   if (!wfInitialized || wfSpr.width() != wfInnerW || wfSpr.height() != wfInnerH) {
     if (wfInitialized) {
       wfSpr.deleteSprite();
@@ -119,21 +118,31 @@ void drawLayoutDecoder()
   // Hintergrund der neuen Zeile mit dunklem Blau füllen
   wfSpr.fillRect(0, 0, wfInnerW, 1, 0x001F);
 
-  // Signalstärke auslesen und Peak-Profil zeichnen (Mitte Grün, Gelb daneben, Rot am Rand)
+  // Signalstärke auslesen und den Aufbau über schnelle Blöcke (fillRect) beschleunigen
   uint8_t currentRssi = rx.getCurrentRSSI();
   int center = wfInnerW / 2;
-  int peakWidth = map(currentRssi, 0, 45, 6, 45);
-  peakWidth = constrain(peakWidth, 6, wfInnerW / 2 - 5);
+  int halfWidth = map(currentRssi, 0, 45, 4, 35);
+  halfWidth = constrain(halfWidth, 4, wfInnerW / 2 - 10);
 
-  for(int x = -peakWidth; x <= peakWidth; x++) {
-    int px = center + x;
-    if(px >= 0 && px < wfInnerW) {
-      uint16_t col = 0x07E0; // Grün im Kern
-      int dist = abs(x);
-      if(dist > peakWidth * 0.5)  col = 0xFFE0; // Gelb
-      if(dist > peakWidth * 0.85) col = 0xF800; // Rot am Rand
-      wfSpr.drawPixel(px, 0, col);
-    }
+  // 1. Grüner Kern in der Mitte
+  int coreW = max(2, halfWidth);
+  wfSpr.fillRect(center - coreW / 2, 0, coreW, 1, 0x07E0);
+
+  // 2. Gelber Zwischenbereich daneben
+  int yellowW = max(2, halfWidth / 2);
+  wfSpr.fillRect(center - coreW / 2 - yellowW, 0, yellowW, 1, 0xFFE0);
+  wfSpr.fillRect(center + coreW / 2, 0, yellowW, 1, 0xFFE0);
+
+  // 3. Kräftiger, ca. 3 Pixel dicker roter Rand nach außen hin
+  int redW = 3;
+  int leftRedX = center - coreW / 2 - yellowW - redW;
+  int rightRedX = center + coreW / 2 + yellowW;
+
+  if (leftRedX >= 0) {
+    wfSpr.fillRect(leftRedX, 0, redW, 1, 0xF800);
+  }
+  if (rightRedX + redW <= wfInnerW) {
+    wfSpr.fillRect(rightRedX, 0, redW, 1, 0xF800);
   }
 
   // Den Wasserfall in das Haupt-Sprite pushen
