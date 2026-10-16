@@ -17,17 +17,17 @@ void drawLayoutDecoder()
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
-  // === KASTEN 1: Oben Links (Mit sauberer Trennlinie für Band/Modus oben und Frequenz unten) ===
+  // === KASTEN 1: Oben Links (Oben: Band & Stereo/Mono | Unten: Exklusiv nur die Frequenz) ===
   int box1X = 10;
   int box1Y = 35;
   int box1W = 195;
   int box1H = 82;
   spr.drawRect(box1X, box1Y, box1W, box1H, 0xFFFF); 
 
-  // Trennlinie teilt Kasten 1 in oberen Bereich und Frequenz-Abteil
+  // Trennlinie, die den stabilen oberen Bereich von der Frequenz trennt
   spr.drawFastHLine(box1X, box1Y + 30, box1W, 0xFFFF);
 
-  // 1. Oberer Bereich: Band links, Modus/Stereo rechts
+  // 1. Oberer Bereich: Band links, Modus/Stereo rechts (wie gehabt, da es super lief)
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0xFFFF);
@@ -50,40 +50,40 @@ void drawLayoutDecoder()
     spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
   }
 
-  // 2. Unterer Bereich (Frequenz-Kästchen): Perfekt zentriert in die untere Hälfte eingepasst
+  // 2. Unterer Bereich: Die Frequenz hat jetzt ihren eigenen, geschützten Kastenbereich
   drawFrequency(
     currentFrequency,
-    box1X + 15, box1Y + 52,
-    box1X + 135, box1Y + 52,
+    box1X + 15, box1Y + 45,
+    box1X + 180, box1Y + 45,
     currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : getFreqInputPos()
   );
 
 
-  // === KASTEN 2: Oben Rechts (S:, SNR:, Uhrzeit) ===
+  // === KASTEN 2: Oben Rechts (S-Meter, SNR und MHz/kHz statt Uhrzeit) ===
   int box2X = 210;
   int box2Y = 35;
   int box2W = 100;
   int box2H = 82;
   spr.drawRect(box2X, box2Y, box2W, box2H, 0xFFFF); 
   
-  spr.drawFastHLine(box2X, box2Y + 42, box2W, 0xFFFF);
+  // Trennlinie für das untere Segment in Kasten 2
+  spr.drawFastHLine(box2X, box2Y + 50, box2W, 0xFFFF);
 
   spr.setTextDatum(TL_DATUM);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextColor(0xFFFF);
   
+  // Oben in Kasten 2: S-Meter & SNR
   char rssiBuf[16], snrBuf[16];
   snprintf(rssiBuf, sizeof(rssiBuf), "S:%d", rx.getCurrentRSSI());
   snprintf(snrBuf, sizeof(snrBuf), "SNR:%ddB", rx.getCurrentSNR());
   
   spr.drawString(rssiBuf, box2X + 6, box2Y + 6);
-  spr.drawString(snrBuf, box2X + 6, box2Y + 22);
+  spr.drawString(snrBuf, box2X + 6, box2Y + 28);
 
-  uint8_t hour, minute;
-  clockGetHM(&hour, &minute);
-  char timeBuf[16];
-  snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", hour, minute);
-  spr.drawString(timeBuf, box2X + 6, box2Y + 50);
+  // Unten in Kasten 2: Die MHz/kHz-Einheit (ersetzt die Uhrzeit)
+  spr.setTextColor(0x07E0);
+  spr.drawString("MHz", box2X + 6, box2Y + 57);
 
   if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
   {
