@@ -1,5 +1,58 @@
+#include "Common.h"
+#include "Themes.h"
+#include "Utils.h"
+#include "Menu.h"
+#include "Draw.h"
 
-  // === KASTEN 3: Unten (Wasserfall mit weißer Trennlinie oben & 5px rotem Rand) ===
+extern uint32_t lastTuneTime;
+
+void drawLayoutNewUI()
+{
+  // Icons oben rechts (Akku, WiFi, BLE, Save)
+  drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
+  drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
+  bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+  drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
+
+  // 1. Band und Modus (mittig oben)
+  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
+  spr.setTextDatum(TC_DATUM);
+  spr.setTextColor(0xFFFF);
+  char bandModeBuf[32];
+  snprintf(bandModeBuf, sizeof(bandModeBuf), "%s %s", getCurrentBand()->bandName, bandModeDesc[currentMode]);
+  spr.drawString(bandModeBuf, 145, 8);
+
+  if(switchThemeEditor())
+  {
+    spr.setTextDatum(TR_DATUM);
+    spr.setTextColor(TH.text_warn);
+    spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
+  }
+
+  // 2. Frequenz & Einheit (mit Original-Offsets aus dem Default-Layout, leicht nach links)
+  drawFrequency(
+    currentFrequency,
+    FREQ_OFFSET_X - 15, FREQ_OFFSET_Y,
+    FUNIT_OFFSET_X - 15, FUNIT_OFFSET_Y,
+    currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
+  );
+
+  // 3. Sendername / RDS direkt darunter zentriert
+  const char *stationName = getStationName();
+  spr.setTextDatum(TC_DATUM);
+  spr.setTextColor(0x07E0);
+  if(*stationName == 0xFF)
+    drawLongStationName(stationName + 1, 145, 102);
+  else if(*stationName)
+    drawStationName(stationName, 145, 102);
+
+  // Menü / Sidebar bei Tastendruck
+  if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
+  {
+    drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
+  }
+  
+  // === Unten (Wasserfall mit weißer Trennlinie oben & 5px rotem Rand) ===
   int wfX = 10;
   int wfY = 121;
   int wfW = 300;
