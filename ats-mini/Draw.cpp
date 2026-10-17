@@ -12,6 +12,7 @@ void drawLayoutSmeter();
 void drawLayoutNewUI();
 void drawLayoutDecoder();
 void drawLayoutDefault();
+void drawLayoutClean();
 
 uint32_t lastTuneTime = 0;
 
