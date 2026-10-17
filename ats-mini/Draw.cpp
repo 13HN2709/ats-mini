@@ -501,7 +501,7 @@ void drawScreen()
     return;
   }
 
-  switch(uiLayoutIdx)
+    switch(uiLayoutIdx)
   {
     case 1:
       drawLayoutSmeter();
@@ -511,6 +511,9 @@ void drawScreen()
       break;
     case 3:
       drawLayoutDecoder();
+      break;
+    case 4:
+      drawLayoutClean(); 
       break;
     default:
       drawLayoutDefault();
