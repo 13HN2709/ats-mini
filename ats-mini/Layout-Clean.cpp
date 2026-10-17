@@ -9,23 +9,55 @@ void drawLayoutClean()
   // 1. Batterie & Spannung oben rechts
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
 
-  // 2. Oben Links: Band-Name (z.B. VHF) in Neongrün
-  spr.setFont(&lgfx::fonts::FreeSansBold12pt7b);
-  spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(0x07E0); // Neongrün
-  spr.drawString(getCurrentBand()->bandName, 10, 8);
+  // 2. Oben Links: Automatischer RDS-Wechsel (Sendename vs. RDS-Text) oder Bandname
+  static uint32_t lastRdsToggle = 0;
+  static bool showRdsText = false;
+  
+  // Alle 4 Sekunden zwischen Stationsname und RDS-Text umschalten (bei UKW / FM)
+  if (millis() - lastRdsToggle > 4000) {
+    lastRdsToggle = millis();
+    showRdsText = !showRdsText;
+  }
+
+  // Prüfen, ob RDS-Daten vorhanden sind (über die Receiver-API / rx-Objekt)
+  const char* rdsStation = rx.getRdsStationName(); // Stationsname (PS)
+  const char* rdsText = rx.getRdsText();         // Radiotext (RT)
+  
+  bool hasRds = (currentMode == FM && rdsStation != nullptr && strlen(rdsStation) > 0);
+
+  // Styling oben links (VHF / FM-Bereich)
+  int modeBoxX = 10;
+  int modeBoxY = 28;
+  int modeBoxW = 48;
+  int modeBoxH = 20;
+
+  if (hasRds) {
+    // Wenn RDS da ist, zeigen wir den Sendernamen oder den Lauftext im Wechsel
+    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+    spr.setTextDatum(TL_DATUM);
+    spr.setTextColor(0x07E0); // Neongrün
+
+    if (showRdsText && rdsText != nullptr && strlen(rdsText) > 0) {
+      // Zeige RDS-Radiotext
+      spr.drawString(rdsText, 10, 5);
+    } else {
+      // Zeige RDS-Stationsnamen groß oben
+      spr.drawString(rdsStation, 10, 5);
+    }
+  } else {
+    // Standard-Fallback, wenn kein RDS empfangen wird: Band-Name (z.B. VHF)
+    spr.setFont(&lgfx::fonts::FreeSansBold12pt7b);
+    spr.setTextDatum(TL_DATUM);
+    spr.setTextColor(0x07E0); // Neongrün
+    spr.drawString(getCurrentBand()->bandName, 10, 5);
+  }
 
   // Modus in abgerundetem neongrünen Kasten (Button-Style für FM)
-  int modeBoxX = 10;
-  int modeBoxY = 32;
-  int modeBoxW = 48;
-  int modeBoxH = 22;
-
-  spr.fillRoundRect(modeBoxX, modeBoxY, modeBoxW, modeBoxH, 6, 0x07E0); // Neongrüner Hintergrund
+  spr.fillRoundRect(modeBoxX, modeBoxY, modeBoxW, modeBoxH, 5, 0x07E0);
   
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(0x0000); // Schwarzer Text auf neongrünem Grund (für optimale Lesbarkeit) oder 0xFFFF für Weiß
+  spr.setTextColor(0x0000); // Schwarzer Text auf neongrünem Grund
   spr.drawString(bandModeDesc[currentMode], modeBoxX + (modeBoxW / 2), modeBoxY + (modeBoxH / 2));
 
   // 3. Große Frequenzanzeige in der Mitte (Orbitron-Font)
@@ -34,19 +66,15 @@ void drawLayoutClean()
   spr.setTextColor(0xFFFF);
 
   char freqBuf[16];
-  if (currentFrequency >= 30000) {
-    snprintf(freqBuf, sizeof(freqBuf), "%.2f", (float)currentFrequency / 1000.0);
-  } else {
-    snprintf(freqBuf, sizeof(freqBuf), "%lu", currentFrequency);
-  }
+  snprintf(freqBuf, sizeof(freqBuf), "%.2f", (float)currentFrequency / 100.0);
   
-  spr.drawString(freqBuf, 145, 95);
+  spr.drawString(freqBuf, 120, 75);
 
-  // Einheit (MHz / kHz) rechts neben/unter der Frequenz
+  // Einheit (MHz / kHz) direkt rechts unter/neben der Frequenz
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0x9CD3);
-  spr.drawString((currentFrequency >= 30000) ? "MHz" : "kHz", 215, 110);
+  spr.drawString("MHz", 205, 90);
 
   // 4. Unten Links: S-Wert & SNR
   uint8_t rssi = rx.getCurrentRSSI();
@@ -59,22 +87,22 @@ void drawLayoutClean()
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextDatum(BL_DATUM);
   spr.setTextColor(0x9CD3);
-  spr.drawString(sigBuf, 10, 195);
+  spr.drawString(sigBuf, 10, 125);
 
   // 5. Unten: Abgerundeter grüner S-Meter Balken
-  int barX = 70;
-  int barY = 202;
-  int maxBarW = 110;
-  int barH = 12;
+  int barX = 95;
+  int barY = 115;
+  int maxBarW = 105;
+  int barH = 10;
 
-  int currentBarW = map(constrain(rssi, 0, 60), 0, 60, 8, maxBarW);
+  int currentBarW = map(constrain(rssi, 0, 60), 0, 60, 5, maxBarW);
 
   // Hintergrund-Schiene (Dunkelgrau)
-  spr.fillRoundRect(barX, barY, maxBarW, barH, 5, 0x2104);
+  spr.fillRoundRect(barX, barY, maxBarW, barH, 4, 0x2104);
   
   // Aktueller Signal-Ausschlag (Neongrün)
   if (currentBarW > 0) {
-    spr.fillRoundRect(barX, barY, currentBarW, barH, 5, 0x07E0);
+    spr.fillRoundRect(barX, barY, currentBarW, barH, 4, 0x07E0);
   }
 
   // Sidebar / Menü falls aufgerufen
