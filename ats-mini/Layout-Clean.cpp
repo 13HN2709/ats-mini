@@ -9,23 +9,23 @@ void drawLayoutClean()
   // 1. Batterie & Spannung oben rechts
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
 
-  // 2. Oben Links: Band-Name (z.B. VHF)
+  // 2. Oben Links: Band-Name (z.B. VHF) in Neongrün
   spr.setFont(&lgfx::fonts::FreeSansBold12pt7b);
   spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(0x3A5F); // Schönes Blau/Cyanton
+  spr.setTextColor(0x07E0); // Neongrün
   spr.drawString(getCurrentBand()->bandName, 10, 8);
 
-  // Modus in abgerundetem blauen Kasten (Button-Style wie FM)
+  // Modus in abgerundetem neongrünen Kasten (Button-Style für FM)
   int modeBoxX = 10;
   int modeBoxY = 32;
   int modeBoxW = 48;
   int modeBoxH = 22;
 
-  spr.fillRoundRect(modeBoxX, modeBoxY, modeBoxW, modeBoxH, 6, 0x001F); // Blauer Hintergrund
+  spr.fillRoundRect(modeBoxX, modeBoxY, modeBoxW, modeBoxH, 6, 0x07E0); // Neongrüner Hintergrund
   
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(0xFFFF); // Weißer Text
+  spr.setTextColor(0x0000); // Schwarzer Text auf neongrünem Grund (für optimale Lesbarkeit) oder 0xFFFF für Weiß
   spr.drawString(bandModeDesc[currentMode], modeBoxX + (modeBoxW / 2), modeBoxY + (modeBoxH / 2));
 
   // 3. Große Frequenzanzeige in der Mitte (Orbitron-Font)
@@ -83,4 +83,3 @@ void drawLayoutClean()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 }
-
