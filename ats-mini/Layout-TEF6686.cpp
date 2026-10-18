@@ -95,16 +95,22 @@ void drawLayoutTEF6686()
   // Aktuelle Bandbreite
   const Bandwidth *bw = getCurrentBandwidth();
 
-  if (bw != nullptr)
-  {
-    // Prüfe den Namen des Textfelds in der struct Bandwidth.
-    // Falls das Feld nicht "label" heißt, bitte entsprechend ändern.
-    spr.drawString(
-      bw->label,
-      statusX + statusW / 2,
-      statusY + statusH * 3 / 4
-    );
-  }
+  if (bw != nullptr && bw->desc != nullptr)
+{
+  spr.drawString(
+    bw->desc,
+    statusX + statusW / 2,
+    statusY + statusH * 3 / 4
+  );
+}
+else
+{
+  spr.drawString(
+    "BW",
+    statusX + statusW / 2,
+    statusY + statusH * 3 / 4
+  );
+}
   else
   {
     spr.drawString(
