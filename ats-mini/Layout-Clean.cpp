@@ -31,34 +31,49 @@ void drawLayoutClean()
 
 // RDS und Text
   
-const char* rdsStation = rx.getRdsStationName();
+
 const char* rt = getRadioText();
-const char* pi = getProgramInfo();
-
-static unsigned long lastRdsSwitch = 0;
-static bool showRadioText = false;
-
-bool hasStation = (rdsStation && *rdsStation);
-bool hasText = (rt && *rt);
-bool hasInfo = (pi && *pi);
-bool hasRdsText = hasText || hasInfo;
 
 if (currentMode == FM) {
-  if (hasRdsText && millis() - lastRdsSwitch >= 10000) {
-    lastRdsSwitch = millis();
-    showRadioText = !showRadioText;
-  }
+  // Position und Größe des RDS-Feldes
+  const int boxX = 20;
+  const int boxY = 105;
+  const int boxW = 280;
+  const int boxH = 36;
 
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(0x07E0);
+  // Dunkles Feld mit neongrünem Rahmen
+  spr.fillRoundRect(boxX, boxY, boxW, boxH, 5, 0x0000);
+  spr.drawRoundRect(boxX, boxY, boxW, boxH, 5, 0x07E0);
 
-  if (showRadioText && hasText) {
-    spr.drawString(rt, 160, 20);
-  } else if (showRadioText && hasInfo) {
-    spr.drawString(pi, 160, 20);
-  } else if (hasStation) {
-    spr.drawString(rdsStation, 160, 20);
+  if (rt != nullptr && *rt) {
+    static unsigned long scrollStart = 0;
+    static char previousText[256] = "";
+
+    // Bei neuem Radiotext den Lauftext neu starten
+    if (strncmp(rt, previousText, sizeof(previousText) - 1) != 0) {
+      strncpy(previousText, rt, sizeof(previousText) - 1);
+      previousText[sizeof(previousText) - 1] = '\0';
+      scrollStart = millis();
+    }
+
+    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+    spr.setTextColor(0xFFFF);
+    spr.setTextDatum(TL_DATUM);
+
+    int textW = spr.textWidth(rt);
+    int textH = 20;
+
+    // Laufgeschwindigkeit: ein Pixel alle 35 ms
+    int offset = ((millis() - scrollStart) / 35)
+                 % (textW + boxW);
+
+    int textX = boxX + boxW - offset;
+    int textY = boxY + (boxH - textH) / 2;
+
+    // Text auf den Innenbereich des Kastens begrenzen
+    spr.setClipRect(boxX + 3, boxY + 2, boxW - 6, boxH - 4);
+    spr.drawString(rt, textX, textY);
+    spr.clearClipRect();
   }
 }
   
