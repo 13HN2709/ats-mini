@@ -7,12 +7,12 @@
 #include <string.h>
 
 // --------------------------------------------------
-// ATS Mini V4 - Clean Layout im klassischen TEF6686-Stil
-// 320 x 170 Pixel
-// Schwarz, blaue Rahmen, neongrüne Schrift
+// ATS Mini V4 - TEF6686-Style Layout
+// Display: 320 x 170 Pixel
+// Schwarzer Hintergrund, blaue Rahmen, grüne Schrift
 // --------------------------------------------------
 
-void drawLayoutClean()
+void drawLayoutTEF6686()
 {
   // Farben im RGB565-Format
   const uint16_t COLOR_BG     = 0x0000;
@@ -21,6 +21,8 @@ void drawLayoutClean()
   const uint16_t COLOR_GREEN  = 0x07E0;
   const uint16_t COLOR_WHITE  = 0xFFFF;
   const uint16_t COLOR_GREY   = 0x4208;
+  const uint16_t COLOR_YELLOW = 0xFFE0;
+  const uint16_t COLOR_RED    = 0xF800;
 
   // -----------------------------------------------
   // 1. Batterieanzeige
@@ -94,13 +96,11 @@ void drawLayoutClean()
     unitBuf = "kHz";
   }
 
-  // Große Frequenzanzeige
   spr.setFont(&lgfx::fonts::Orbitron_Light_32);
   spr.setTextDatum(CC_DATUM);
   spr.setTextColor(COLOR_GREEN);
   spr.drawString(freqBuf, 160, 48);
 
-  // Einheit direkt rechts neben der Frequenz
   int freqWidth = spr.textWidth(freqBuf);
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
@@ -111,52 +111,100 @@ void drawLayoutClean()
   spr.drawString(unitBuf, unitX, 48);
 
   // -----------------------------------------------
-  // 5. S-Meter mit Skala und Zahlen
+  // 5. Dynamisches S-Meter mit Skala
   // -----------------------------------------------
   const int meterX = 10;
   const int meterY = 70;
   const int meterW = 300;
   const int meterH = 36;
 
-  // Äußerer Rahmen
-  spr.drawRect(
-    meterX, meterY, meterW, meterH, COLOR_BLUE
-  );
-
-  // S-Beschriftung
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(COLOR_GREEN);
-  spr.drawString("S", 15, 73);
-
-  // Balkenbereich
   const int barX = 38;
   const int barY = 79;
   const int barW = 262;
   const int barH = 7;
 
-  spr.fillRect(
-    barX, barY, barW, barH, COLOR_GREY
-  );
-
-  // Tatsächlichen RSSI-Wert vom Empfänger verwenden
-  int signal = constrain((int)rx.getCurrentRSSI(), 0, 60);
-
-  int currentBarW = map(signal, 0, 60, 0, barW);
-
-  if (currentBarW > 0)
-  {
-    spr.fillRect(
-      barX, barY, currentBarW, barH, COLOR_GREEN
-    );
-  }
-
-  // Skalenmarkierungen und Beschriftungen
   const int scaleValues[] = {0, 5, 10, 15, 20, 30, 45, 60};
   const char* scaleLabels[] = {
     "1", "3", "5", "7", "9", "+10", "+20", "+30"
   };
 
+  // Aktueller RSSI-Wert
+  int signal = constrain((int)rx.getCurrentRSSI(), 0, 60);
+  int targetW = map(signal, 0, 60, 0, barW);
+
+  // Sofortiger Anstieg, schrittweiser Rücklauf
+  static int displayedW = 0;
+  static unsigned long lastMeterUpdate = 0;
+
+  unsigned long now = millis();
+
+  if (lastMeterUpdate == 0)
+    lastMeterUpdate = now;
+
+  unsigned long elapsed = now - lastMeterUpdate;
+
+  if (targetW >= displayedW)
+  {
+    displayedW = targetW;
+    lastMeterUpdate = now;
+  }
+  else if (elapsed >= 150)
+  {
+    int steps = elapsed / 150;
+    displayedW -= steps * 5;
+
+    if (displayedW < targetW)
+      displayedW = targetW;
+
+    lastMeterUpdate = now;
+  }
+
+  displayedW = constrain(displayedW, 0, barW);
+
+  // Rahmen und Balkenhintergrund erneuern
+  spr.drawRect(
+    meterX, meterY, meterW, meterH, COLOR_BLUE
+  );
+
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setTextDatum(TL_DATUM);
+  spr.setTextColor(COLOR_GREEN);
+  spr.drawString("S", 15, 73);
+
+  spr.fillRect(barX, barY, barW, barH, COLOR_GREY);
+
+  // Grün, Gelb und Rot
+  const int greenEnd = barW * 65 / 100;
+  const int yellowEnd = barW * 82 / 100;
+
+  if (displayedW > 0)
+  {
+    int greenW = min(displayedW, greenEnd);
+
+    if (greenW > 0)
+      spr.fillRect(barX, barY, greenW, barH, COLOR_GREEN);
+
+    if (displayedW > greenEnd)
+    {
+      int yellowW = min(displayedW, yellowEnd) - greenEnd;
+
+      if (yellowW > 0)
+        spr.fillRect(
+          barX + greenEnd, barY, yellowW, barH, COLOR_YELLOW
+        );
+    }
+
+    if (displayedW > yellowEnd)
+    {
+      int redW = displayedW - yellowEnd;
+
+      spr.fillRect(
+        barX + yellowEnd, barY, redW, barH, COLOR_RED
+      );
+    }
+  }
+
+  // Skalenstriche und Zahlen
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextColor(COLOR_CYAN);
   spr.setTextDatum(TC_DATUM);
@@ -171,15 +219,11 @@ void drawLayoutClean()
       COLOR_BLUE
     );
 
-    spr.drawString(
-      scaleLabels[i],
-      tickX,
-      89
-    );
+    spr.drawString(scaleLabels[i], tickX, 89);
   }
 
   // -----------------------------------------------
-  // 6. Sendername: stabilisierte RDS-Anzeige
+  // 6. Sendername mit Stabilisierung
   // -----------------------------------------------
   if (currentMode == FM)
   {
@@ -197,7 +241,6 @@ void drawLayoutClean()
     spr.setTextColor(COLOR_CYAN);
     spr.drawString("PS:", stationX + 5, stationY + 3);
 
-    // Namen über die vorhandene ATS-Funktion abrufen
     const char* rawStation = getStationName();
 
     static char candidateStation[64] = "";
@@ -206,9 +249,9 @@ void drawLayoutClean()
 
     if (rawStation != nullptr && *rawStation)
     {
-      // Kennzeichen für lange Sendernamen beachten
       const char* stationText = rawStation;
 
+      // Kennzeichen für lange Sendernamen
       if ((uint8_t)*stationText == 0xFF)
         stationText++;
 
@@ -228,9 +271,8 @@ void drawLayoutClean()
         candidateSince = millis();
       }
 
-      // Erst übernehmen, wenn der Name kurz stabil geblieben ist
       if (candidateStation[0] &&
-          (millis() - candidateSince >= 1200))
+          millis() - candidateSince >= 1200)
       {
         strncpy(
           stableStation,
@@ -265,7 +307,7 @@ void drawLayoutClean()
     }
 
     // ---------------------------------------------
-    // 7. Radiotext: linksbündig, ohne Laufschrift
+    // 7. Radiotext ohne Laufschrift
     // ---------------------------------------------
     const int rtX = 10;
     const int rtY = 136;
@@ -296,19 +338,13 @@ void drawLayoutClean()
         rtH - 4
       );
 
-      // Keine X-Verschiebung: Text bleibt links stehen
-      spr.drawString(
-        rt,
-        rtX + 40,
-        rtY + 5
-      );
-
+      spr.drawString(rt, rtX + 40, rtY + 5);
       spr.clearClipRect();
     }
   }
 
   // -----------------------------------------------
-  // 8. Menüanzeige bei geöffnetem Menü
+  // 8. Menüanzeige
   // -----------------------------------------------
   if (currentCmd != CMD_NONE &&
       currentCmd != CMD_SCAN &&
