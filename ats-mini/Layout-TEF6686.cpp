@@ -1,4 +1,3 @@
-
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
@@ -8,7 +7,6 @@
 // --------------------------------------------------
 // ATS Mini V4 - TEF6686-Style Layout
 // Display: 320 x 170 Pixel
-// Farben nach dem kleinen TEF6686-Modell
 // --------------------------------------------------
 
 void drawLayoutTEF6686()
@@ -21,14 +19,10 @@ void drawLayoutTEF6686()
   const uint16_t COLOR_RED    = 0xF800;
   const uint16_t COLOR_BLACK  = 0x0000;
 
-  // ------------------------------------------------
   // 1. Batterie
-  // ------------------------------------------------
   drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
 
-  // ------------------------------------------------
   // 2. Bandname und Modusfeld
-  // ------------------------------------------------
   const int modeX = 10;
   const int modeY = 20;
   const int modeW = 48;
@@ -37,7 +31,6 @@ void drawLayoutTEF6686()
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(BC_DATUM);
   spr.setTextColor(COLOR_GREEN);
-
   spr.drawString(
     getCurrentBand()->bandName,
     modeX + modeW / 2,
@@ -45,35 +38,26 @@ void drawLayoutTEF6686()
   );
 
   spr.fillRect(
-    modeX + 1,
-    modeY + 1,
-    modeW - 2,
-    modeH - 2,
+    modeX + 1, modeY + 1,
+    modeW - 2, modeH - 2,
     COLOR_BLACK
   );
 
   spr.drawRoundRect(
-    modeX,
-    modeY,
-    modeW,
-    modeH,
-    3,
+    modeX, modeY, modeW, modeH, 3,
     COLOR_BLUE
   );
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_GREEN);
-
   spr.drawString(
     bandModeDesc[currentMode],
     modeX + modeW / 2,
     modeY + modeH / 2
   );
 
-  // ------------------------------------------------
   // 3. Rechter Statusblock
-  // ------------------------------------------------
   const int statusX = 242;
   const int statusY = 18;
   const int statusW = 68;
@@ -81,26 +65,19 @@ void drawLayoutTEF6686()
   const int statusMidY = statusY + statusH / 2;
 
   spr.fillRect(
-    statusX + 1,
-    statusY + 1,
-    statusW - 2,
-    statusH - 2,
+    statusX + 1, statusY + 1,
+    statusW - 2, statusH - 2,
     COLOR_BLACK
   );
 
   spr.drawRect(
-    statusX,
-    statusY,
-    statusW,
-    statusH,
+    statusX, statusY, statusW, statusH,
     COLOR_BLUE
   );
 
   spr.drawLine(
-    statusX,
-    statusMidY,
-    statusX + statusW - 1,
-    statusMidY,
+    statusX, statusMidY,
+    statusX + statusW - 1, statusMidY,
     COLOR_BLUE
   );
 
@@ -129,22 +106,14 @@ void drawLayoutTEF6686()
     );
   }
 
-  // ------------------------------------------------
   // 4. Frequenz berechnen
-  //
-  // FM:      100.50 MHz
-  // AM/MW:  1053.000 kHz
-  // KW/LW:  7100.000 kHz
-  // USB/LSB: Frequenz inklusive BFO
-  // ------------------------------------------------
   char freqBuf[24];
   const char *unitBuf;
 
   if (currentMode == FM)
   {
     snprintf(
-      freqBuf,
-      sizeof(freqBuf),
+      freqBuf, sizeof(freqBuf),
       "%lu.%02lu",
       (unsigned long)(currentFrequency / 100),
       (unsigned long)(currentFrequency % 100)
@@ -157,14 +126,12 @@ void drawLayoutTEF6686()
     long long freq =
       (long long)currentFrequency * 1000LL + currentBFO;
 
-    // Negative Werte korrekt behandeln.
     bool negative = (freq < 0);
     if (negative)
       freq = -freq;
 
     snprintf(
-      freqBuf,
-      sizeof(freqBuf),
+      freqBuf, sizeof(freqBuf),
       "%s%lld.%03lld",
       negative ? "-" : "",
       freq / 1000,
@@ -175,11 +142,8 @@ void drawLayoutTEF6686()
   }
   else
   {
-    // Alle Nicht-FM- und Nicht-SSB-Bänder:
-    // immer drei Nachkommastellen.
     snprintf(
-      freqBuf,
-      sizeof(freqBuf),
+      freqBuf, sizeof(freqBuf),
       "%lu.000",
       (unsigned long)currentFrequency
     );
@@ -187,43 +151,36 @@ void drawLayoutTEF6686()
     unitBuf = "kHz";
   }
 
-  // ------------------------------------------------
-  // 5. Frequenz mittig darstellen
-  // ------------------------------------------------
+  // 5. Frequenz: Standardschrift, tiefer und kräftiger
   const int freqX = 62;
-  const int freqY = 44;
+  const int freqY = 48;
   const int freqAvailableW = statusX - freqX - 5;
   const int freqCenterX = freqX + freqAvailableW / 2;
 
-  // Kleinere Orbitron-Schrift, damit auch lange
-  // Frequenzen mit drei Nachkommastellen passen.
-  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_GREEN);
 
-  const int freqWidth = spr.textWidth(freqBuf);
+  const int freqWidth = spr.textWidth(freqBuf, FONT_DIGITS);
 
   spr.setClipRect(
-    freqX,
-    37,
-    freqAvailableW,
-    32
+    freqX, 38,
+    freqAvailableW, 30
+  );
+
+  // Leicht versetzt doppelt zeichnen für kräftigere Ziffern
+  spr.drawString(
+    freqBuf, freqCenterX, freqY, FONT_DIGITS
   );
 
   spr.drawString(
-    freqBuf,
-    freqCenterX,
-    freqY
+    freqBuf, freqCenterX + 1, freqY, FONT_DIGITS
   );
 
   spr.clearClipRect();
 
-  // ------------------------------------------------
   // 6. Frequenzeinheit und Bandbreite
-  // ------------------------------------------------
   const int freqLeft = freqCenterX - freqWidth / 2;
   const int freqRight = freqLeft + freqWidth;
-
   const int unitX = freqRight + 3;
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
@@ -231,18 +188,6 @@ void drawLayoutTEF6686()
 
   const bool unitFits =
     unitX + unitWidth <= statusX - 4;
-
-  if (unitFits)
-  {
-    spr.setTextDatum(ML_DATUM);
-    spr.setTextColor(COLOR_CYAN);
-
-    spr.drawString(
-      unitBuf,
-      unitX,
-      freqY
-    );
-  }
 
   const Bandwidth *bw = getCurrentBandwidth();
 
@@ -275,19 +220,15 @@ void drawLayoutTEF6686()
     );
   }
 
-  // ------------------------------------------------
   // 7. Sendername oben mittig
-  // ------------------------------------------------
   const int stationTopX = 62;
   const int stationTopY = 18;
   const int stationTopW = statusX - stationTopX - 4;
   const int stationTopH = 19;
 
   spr.fillRect(
-    stationTopX,
-    stationTopY,
-    stationTopW,
-    stationTopH,
+    stationTopX, stationTopY,
+    stationTopW, stationTopH,
     COLOR_BLACK
   );
 
@@ -302,10 +243,8 @@ void drawLayoutTEF6686()
       spr.setTextColor(COLOR_GREEN);
 
       spr.setClipRect(
-        stationTopX,
-        stationTopY,
-        stationTopW,
-        stationTopH
+        stationTopX, stationTopY,
+        stationTopW, stationTopH
       );
 
       if ((uint8_t)*stationName == 0xFF)
@@ -329,21 +268,15 @@ void drawLayoutTEF6686()
     }
   }
 
-  // Statusblock nach dem Löschen des Sendernamens
-  // erneut zeichnen.
+  // Statusblock erneut zeichnen
   spr.drawRect(
-    statusX,
-    statusY,
-    statusW,
-    statusH,
+    statusX, statusY, statusW, statusH,
     COLOR_BLUE
   );
 
   spr.drawLine(
-    statusX,
-    statusMidY,
-    statusX + statusW - 1,
-    statusMidY,
+    statusX, statusMidY,
+    statusX + statusW - 1, statusMidY,
     COLOR_BLUE
   );
 
@@ -399,9 +332,7 @@ void drawLayoutTEF6686()
     );
   }
 
-  // ------------------------------------------------
   // 8. S-Meter
-  // ------------------------------------------------
   const int meterX = 10;
   const int meterY = 70;
   const int meterW = 300;
@@ -421,18 +352,10 @@ void drawLayoutTEF6686()
   };
 
   int signal = constrain(
-    (int)rx.getCurrentRSSI(),
-    0,
-    60
+    (int)rx.getCurrentRSSI(), 0, 60
   );
 
-  int targetW = map(
-    signal,
-    0,
-    60,
-    0,
-    barW
-  );
+  int targetW = map(signal, 0, 60, 0, barW);
 
   static int displayedW = 0;
   static unsigned long lastMeterUpdate = 0;
@@ -444,13 +367,11 @@ void drawLayoutTEF6686()
 
   unsigned long elapsed = now - lastMeterUpdate;
 
-  // Schneller Anstieg
   if (targetW >= displayedW)
   {
     displayedW = targetW;
     lastMeterUpdate = now;
   }
-  // Verzögerter Rücklauf
   else if (elapsed >= 150)
   {
     int steps = elapsed / 150;
@@ -462,17 +383,10 @@ void drawLayoutTEF6686()
     lastMeterUpdate = now;
   }
 
-  displayedW = constrain(
-    displayedW,
-    0,
-    barW
-  );
+  displayedW = constrain(displayedW, 0, barW);
 
   spr.drawRect(
-    meterX,
-    meterY,
-    meterW,
-    meterH,
+    meterX, meterY, meterW, meterH,
     COLOR_BLUE
   );
 
@@ -482,10 +396,7 @@ void drawLayoutTEF6686()
   spr.drawString("S", 15, 73);
 
   spr.fillRect(
-    barX,
-    barY,
-    barW,
-    barH,
+    barX, barY, barW, barH,
     COLOR_GREY
   );
 
@@ -494,18 +405,12 @@ void drawLayoutTEF6686()
 
   if (displayedW > 0)
   {
-    int greenW = min(
-      displayedW,
-      greenEnd
-    );
+    int greenW = min(displayedW, greenEnd);
 
     if (greenW > 0)
     {
       spr.fillRect(
-        barX,
-        barY,
-        greenW,
-        barH,
+        barX, barY, greenW, barH,
         COLOR_GREEN
       );
     }
@@ -518,10 +423,8 @@ void drawLayoutTEF6686()
       if (yellowW > 0)
       {
         spr.fillRect(
-          barX + greenEnd,
-          barY,
-          yellowW,
-          barH,
+          barX + greenEnd, barY,
+          yellowW, barH,
           COLOR_YELLOW
         );
       }
@@ -532,10 +435,8 @@ void drawLayoutTEF6686()
       int redW = displayedW - yellowEnd;
 
       spr.fillRect(
-        barX + yellowEnd,
-        barY,
-        redW,
-        barH,
+        barX + yellowEnd, barY,
+        redW, barH,
         COLOR_RED
       );
     }
@@ -548,25 +449,18 @@ void drawLayoutTEF6686()
   for (int i = 0; i < 8; i++)
   {
     int tickX = barX + map(
-      scaleValues[i],
-      0,
-      60,
-      0,
-      barW
+      scaleValues[i], 0, 60, 0, barW
     );
 
     spr.drawLine(
-      tickX,
-      barY - 1,
-      tickX,
-      barY + barH + 2,
+      tickX, barY - 1,
+      tickX, barY + barH + 2,
       COLOR_BLUE
     );
 
     if (i == 7)
     {
       spr.setTextDatum(TR_DATUM);
-
       spr.drawString(
         scaleLabels[i],
         meterX + meterW - 4,
@@ -576,7 +470,6 @@ void drawLayoutTEF6686()
     else
     {
       spr.setTextDatum(TC_DATUM);
-
       spr.drawString(
         scaleLabels[i],
         tickX,
@@ -585,29 +478,19 @@ void drawLayoutTEF6686()
     }
   }
 
-  // ------------------------------------------------
   // 9. PS-Feld – in allen Modi sichtbar
-  // ------------------------------------------------
   const int psX = 10;
   const int psY = 109;
   const int psW = 300;
   const int psH = 24;
 
   spr.fillRect(
-    psX + 1,
-    psY + 1,
-    psW - 2,
-    psH - 2,
+    psX + 1, psY + 1,
+    psW - 2, psH - 2,
     COLOR_BLACK
   );
 
-  spr.drawRect(
-    psX,
-    psY,
-    psW,
-    psH,
-    COLOR_BLUE
-  );
+  spr.drawRect(psX, psY, psW, psH, COLOR_BLUE);
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
@@ -625,10 +508,8 @@ void drawLayoutTEF6686()
       spr.setTextColor(COLOR_GREEN);
 
       spr.setClipRect(
-        psX + 38,
-        psY + 2,
-        psW - 43,
-        psH - 4
+        psX + 38, psY + 2,
+        psW - 43, psH - 4
       );
 
       if ((uint8_t)*stationName == 0xFF)
@@ -652,29 +533,19 @@ void drawLayoutTEF6686()
     }
   }
 
-  // ------------------------------------------------
   // 10. RT-Feld – in allen Modi sichtbar
-  // ------------------------------------------------
   const int rtX = 10;
   const int rtY = 136;
   const int rtW = 300;
   const int rtH = 30;
 
   spr.fillRect(
-    rtX + 1,
-    rtY + 1,
-    rtW - 2,
-    rtH - 2,
+    rtX + 1, rtY + 1,
+    rtW - 2, rtH - 2,
     COLOR_BLACK
   );
 
-  spr.drawRect(
-    rtX,
-    rtY,
-    rtW,
-    rtH,
-    COLOR_BLUE
-  );
+  spr.drawRect(rtX, rtY, rtW, rtH, COLOR_BLUE);
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
@@ -692,25 +563,17 @@ void drawLayoutTEF6686()
       spr.setTextDatum(TL_DATUM);
 
       spr.setClipRect(
-        rtX + 38,
-        rtY + 2,
-        rtW - 43,
-        rtH - 4
+        rtX + 38, rtY + 2,
+        rtW - 43, rtH - 4
       );
 
-      spr.drawString(
-        rt,
-        rtX + 40,
-        rtY + 5
-      );
+      spr.drawString(rt, rtX + 40, rtY + 5);
 
       spr.clearClipRect();
     }
   }
 
-  // ------------------------------------------------
   // 11. Menüanzeige
-  // ------------------------------------------------
   if (currentCmd != CMD_NONE &&
       currentCmd != CMD_SCAN &&
       currentCmd != CMD_FREQ)
