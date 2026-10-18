@@ -53,7 +53,7 @@ void drawLayoutClean()
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0x9CD3);
-  spr.drawString("MHz", 175, 88);
+  spr.drawString("MHz", 155, 88);
 
   // 5. Unten Links: S-Wert & SNR
   uint8_t rssi = rx.getCurrentRSSI();
@@ -66,11 +66,11 @@ void drawLayoutClean()
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0x9CD3);
-  spr.drawString(sigBuf, 10, 105);
+  spr.drawString(sigBuf, 10, 115);
 
-  // 6. S-Meter Balken ganz unten
-  int barX = 10;
-  int barY = 122;
+// S-Meter weiter unten und zentriert
+  int barX = 50;
+  int barY = 132;
   int maxBarW = 220;
   int barH = 7;
 
