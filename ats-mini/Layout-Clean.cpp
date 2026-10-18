@@ -39,14 +39,34 @@ void drawLayoutClean()
     spr.drawString(rdsStation, 120, 20);
   }
 
-// 4. Frequenzanzeige mit korrekter Einheit
-drawFrequency(
-  currentFrequency,
-  150, 65,   // Frequenzposition X, Y
-  155, 88,   // Position der Einheit X, Y
-  100        // Keine Ziffer hervorgehoben
-);
-  // 5. Unten Links: S-Wert & SNR
+  // 4. Frequenzanzeige mit Orbitron-Font und angepasster Formatierung
+  spr.setFont(&lgfx::fonts::Orbitron_Light_32);
+  spr.setTextDatum(CC_DATUM);
+  spr.setTextColor(0xFFFF);
+
+  char freqBuf[16];
+  const char* unitStr = "kHz";
+
+  if (currentMode == FM) {
+    // FM: Immer mit Punkt und 2 Nachkommastellen (z.B. 107.90)
+    snprintf(freqBuf, sizeof(freqBuf), "%.2f", (float)currentFrequency / 100.0);
+    unitStr = "MHz";
+  } else {
+    // Kurzwelle / CB / Andere: Ganze kHz-Zahl (mit optionaler Feinabstimmung falls vorhanden)
+    snprintf(freqBuf, sizeof(freqBuf), "%d", currentFrequency);
+    unitStr = "kHz";
+  }
+  
+  // Frequenz perfekt in der Mitte zentriert
+  spr.drawString(freqBuf, 120, 65);
+
+  // Einheit (MHz / kHz) rechtsbündig daneben platziert
+  spr.setFont(&lgfx::fonts::FreeSans9pt7b);
+  spr.setTextDatum(TR_DATUM);
+  spr.setTextColor(0x9CD3);
+  spr.drawString(unitStr, 225, 75);
+
+  // 5. Unten: S-Wert & SNR (zentriert)
   uint8_t rssi = rx.getCurrentRSSI();
   uint8_t snr = rx.getCurrentSNR();
   uint8_t sVal = map(constrain(rssi, 0, 100), 0, 100, 0, 9);
@@ -55,14 +75,14 @@ drawFrequency(
   snprintf(sigBuf, sizeof(sigBuf), "S%d  SNR %d", sVal, snr);
   
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
-  spr.setTextDatum(TL_DATUM);
+  spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x9CD3);
-  spr.drawString(sigBuf, 10, 115);
+  spr.drawString(sigBuf, 120, 104);
 
-// S-Meter weiter unten und zentriert
-  int barX = 50;
-  int barY = 132;
-  int maxBarW = 220;
+  // 6. S-Meter Balken zentriert und perfekt unter S/SNR platziert
+  int barX = 20;
+  int barY = 118;
+  int maxBarW = 200;
   int barH = 7;
 
   int currentBarW = map(constrain(rssi, 0, 60), 0, 60, 5, maxBarW);
