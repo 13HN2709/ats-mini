@@ -69,6 +69,7 @@ typedef struct
   uint8_t idx;      // SI473X device bandwidth index
   const char *desc; // Bandwidth description
 } Bandwidth;
+const Bandwidth *getCurrentBandwidth();
 
 typedef struct
 {
