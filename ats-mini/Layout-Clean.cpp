@@ -29,16 +29,22 @@ void drawLayoutClean()
   spr.drawString(bandModeDesc[currentMode], modeBoxX + (modeBoxW / 2), modeBoxY + (modeBoxH / 2));
 
 
-// RDS 
+// RDS und Text
   
 const char* rdsStation = rx.getRdsStationName();
 const char* rt = getRadioText();
+const char* pi = getProgramInfo();
 
 static unsigned long lastRdsSwitch = 0;
 static bool showRadioText = false;
 
+bool hasStation = (rdsStation && *rdsStation);
+bool hasText = (rt && *rt);
+bool hasInfo = (pi && *pi);
+bool hasRdsText = hasText || hasInfo;
+
 if (currentMode == FM) {
-  if (millis() - lastRdsSwitch >= 10000) {
+  if (hasRdsText && millis() - lastRdsSwitch >= 10000) {
     lastRdsSwitch = millis();
     showRadioText = !showRadioText;
   }
@@ -47,13 +53,14 @@ if (currentMode == FM) {
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x07E0);
 
-  if (showRadioText && rt != nullptr && *rt) {
+  if (showRadioText && hasText) {
     spr.drawString(rt, 160, 20);
-  } else if (rdsStation != nullptr && *rdsStation) {
+  } else if (showRadioText && hasInfo) {
+    spr.drawString(pi, 160, 20);
+  } else if (hasStation) {
     spr.drawString(rdsStation, 160, 20);
   }
 }
-
   
   // 4. Frequenzanzeige: Orbitron, zentriert, Einheit in derselben Zeile
   char freqBuf[24];
