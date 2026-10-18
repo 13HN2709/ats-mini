@@ -55,6 +55,7 @@ void drawLayoutDefault();
 void drawLayoutSmeter();
 void drawLayoutNewUI();
 void drawLayoutClean();
+void drawLayoutTEF6686();
 
 void drawAbout();
 void drawAboutHelp(uint8_t arrow);
