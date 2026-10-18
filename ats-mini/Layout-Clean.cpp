@@ -28,28 +28,27 @@ void drawLayoutClean()
   spr.setTextColor(0x0000); // Schwarzer Text auf neongrünem Grund
   spr.drawString(bandModeDesc[currentMode], modeBoxX + (modeBoxW / 2), modeBoxY + (modeBoxH / 2));
 
-  // 3. RDS-Sendername in derselben Höhe wie FM (2. Zeile), aber genau über der Frequenz zentriert
+  // RDS 
   const char* rdsStation = rx.getRdsStationName();
-  bool hasRds = (currentMode == FM && rdsStation != nullptr && strlen(rdsStation) > 0);
+bool hasRds = (currentMode == FM && rdsStation != nullptr && strlen(rdsStation) > 0);
 
-  if (hasRds) {
-    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-    spr.setTextDatum(TC_DATUM);
-    spr.setTextColor(0x07E0); // Neongrün
-    spr.drawString(rdsStation, 120, 20);
-  }
-
+if (hasRds) {
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setTextDatum(TC_DATUM);
+  spr.setTextColor(0x07E0); // Neongrün
+  spr.drawString(rdsStation, 160, 20);
+}
   
-  // 4. Frequenzanzeige: Orbitron, horizontal zentriert
+  // 4. Frequenzanzeige: Orbitron, zentriert, Einheit in derselben Zeile
   char freqBuf[24];
-  char unitBuf[8];
+  const char* unitBuf;
 
   if (currentMode == FM)
   {
     snprintf(freqBuf, sizeof(freqBuf), "%lu.%02lu",
              (unsigned long)(currentFrequency / 100),
              (unsigned long)(currentFrequency % 100));
-    snprintf(unitBuf, sizeof(unitBuf), "MHz");
+    unitBuf = "MHz";
   }
   else if (isSSB())
   {
@@ -59,52 +58,45 @@ void drawLayoutClean()
 
     snprintf(freqBuf, sizeof(freqBuf), "%lld.%03lld",
              freq / 1000, freq % 1000);
-    snprintf(unitBuf, sizeof(unitBuf), "kHz");
+    unitBuf = "kHz";
   }
   else
   {
     snprintf(freqBuf, sizeof(freqBuf), "%lu",
              (unsigned long)currentFrequency);
-    snprintf(unitBuf, sizeof(unitBuf), "kHz");
+    unitBuf = "kHz";
   }
 
-  // Frequenz exakt horizontal mittig
+  // Frequenz zeichnen: exakt mittig
   spr.setFont(&lgfx::fonts::Orbitron_Light_32);
   spr.setTextDatum(CC_DATUM);
   spr.setTextColor(0xFFFF);
   spr.drawString(freqBuf, 160, 68);
 
-  // Einheit darunter rechts neben dem Frequenzende
+  // Tatsächliche Breite der Frequenz ermitteln
+  int freqWidth = spr.textWidth(freqBuf);
+
+  // Einheit direkt hinter der Frequenz in derselben Zeile
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
-  spr.setTextDatum(TL_DATUM);
+  spr.setTextDatum(ML_DATUM);
   spr.setTextColor(0x9CD3);
-  spr.drawString(unitBuf, 225, 88);
 
-  // 5. Unten: S-Wert & SNR (zentriert)
-  uint8_t rssi = rx.getCurrentRSSI();
-  uint8_t snr = rx.getCurrentSNR();
-  uint8_t sVal = map(constrain(rssi, 0, 100), 0, 100, 0, 9);
-
-  char sigBuf[32];
-  snprintf(sigBuf, sizeof(sigBuf), "S%d  SNR %d", sVal, snr);
+  int unitX = 160 + (freqWidth / 2) + 4;
+  spr.drawString(unitBuf, unitX, 68);
   
-  spr.setFont(&lgfx::fonts::FreeSans9pt7b);
-  spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(0x9CD3);
-  spr.drawString(sigBuf, 120, 104);
 
-  // 6. S-Meter Balken zentriert und perfekt unter S/SNR platziert
-  int barX = 20;
-  int barY = 118;
-  int maxBarW = 200;
+  // S-Meter: letzte Zeile, horizontal zentriert
+  int barW = 220;
   int barH = 7;
+  int barX = (320 - barW) / 2;  // ergibt 50
+  int barY = 160;               // unten im Display
 
-  int currentBarW = map(constrain(rssi, 0, 60), 0, 60, 5, maxBarW);
+  int currentBarW = map(constrain(rssi, 0, 60), 0, 60, 5, barW);
 
-  // Hintergrund-Schiene (Dunkelgrau)
-  spr.fillRoundRect(barX, barY, maxBarW, barH, 3, 0x2104);
-  
-  // Aktueller Signal-Ausschlag (Neongrün)
+  // Hintergrund-Schiene
+  spr.fillRoundRect(barX, barY, barW, barH, 3, 0x2104);
+
+  // Signal-Ausschlag
   if (currentBarW > 0) {
     spr.fillRoundRect(barX, barY, currentBarW, barH, 3, 0x07E0);
   }
