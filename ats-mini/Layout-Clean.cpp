@@ -39,22 +39,13 @@ void drawLayoutClean()
     spr.drawString(rdsStation, 120, 20);
   }
 
-  // 4. Große Frequenzanzeige in der Mitte (Orbitron-Font)
-  spr.setFont(&lgfx::fonts::Orbitron_Light_32);
-  spr.setTextDatum(CC_DATUM);
-  spr.setTextColor(0xFFFF);
-
-  char freqBuf[16];
-  snprintf(freqBuf, sizeof(freqBuf), "%.2f", (float)currentFrequency / 100.0);
-  
-  spr.drawString(freqBuf, 120, 68);
-
-  // Einheit (MHz) direkt unter dem hinteren Teil der Frequenz
-  spr.setFont(&lgfx::fonts::FreeSans9pt7b);
-  spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(0x9CD3);
-  spr.drawString("MHz", 155, 88);
-
+// 4. Frequenzanzeige mit korrekter Einheit
+drawFrequency(
+  currentFrequency,
+  150, 65,   // Frequenzposition X, Y
+  155, 88,   // Position der Einheit X, Y
+  100        // Keine Ziffer hervorgehoben
+);
   // 5. Unten Links: S-Wert & SNR
   uint8_t rssi = rx.getCurrentRSSI();
   uint8_t snr = rx.getCurrentSNR();
