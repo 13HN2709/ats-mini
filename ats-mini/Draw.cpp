@@ -516,6 +516,9 @@ void drawScreen()
     case 4:
       drawLayoutClean(); 
       break;
+    case 5:
+      drawLayoutTEF6686(); 
+      break;
     default:
       drawLayoutDefault();
       break;
