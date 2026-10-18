@@ -13,6 +13,7 @@ void drawLayoutNewUI();
 void drawLayoutDecoder();
 void drawLayoutDefault();
 void drawLayoutClean();
+void drawLayoutTEF6686();
 
 uint32_t lastTuneTime = 0;
 
