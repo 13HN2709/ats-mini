@@ -7,50 +7,91 @@
 
 void drawLayoutClean()
 {
+  const uint16_t COLOR_BLACK = 0x0000;
+  const uint16_t COLOR_GREEN = 0x07E0;
+  const uint16_t COLOR_WHITE = 0xFFFF;
+  const uint16_t COLOR_UNIT  = 0x9CD3;
+
   // 1. Batterie & Spannung oben rechts
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+  (void)has_voltage;
 
   // 2. Oben links: Bandname
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(0x07E0);
+  spr.setTextColor(COLOR_GREEN);
   spr.drawString(getCurrentBand()->bandName, 10, 2);
 
   // 3. Modus-Kasten
-  int modeBoxX = 10;
-  int modeBoxY = 20;
-  int modeBoxW = 48;
-  int modeBoxH = 18;
+  const int modeBoxX = 10;
+  const int modeBoxY = 20;
+  const int modeBoxW = 48;
+  const int modeBoxH = 18;
 
   spr.fillRoundRect(
-    modeBoxX, modeBoxY, modeBoxW, modeBoxH, 4, 0x07E0
+    modeBoxX, modeBoxY, modeBoxW, modeBoxH, 4, COLOR_GREEN
   );
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(0x0000);
+  spr.setTextColor(COLOR_BLACK);
   spr.drawString(
     bandModeDesc[currentMode],
-    modeBoxX + (modeBoxW / 2),
-    modeBoxY + (modeBoxH / 2)
+    modeBoxX + modeBoxW / 2,
+    modeBoxY + modeBoxH / 2
   );
 
   // 4. RDS: Sendername und Radiotext
   if (currentMode == FM)
   {
-    // Sendername wie im Layout-Default abrufen
-    const char* stationName = getStationName();
+    // Sendername direkt wie im Layout-Default abrufen
+    const char *stationName = getStationName();
+
+    // Anzeigebereich immer zuerst leeren, damit kein alter Name bleibt
+    const int stationAreaX = 65;
+    const int stationAreaY = 17;
+    const int stationAreaW = 245;
+    const int stationAreaH = 23;
+
+    spr.fillRect(
+      stationAreaX, stationAreaY,
+      stationAreaW, stationAreaH,
+      COLOR_BLACK
+    );
 
     if (stationName != nullptr && *stationName)
     {
-      // Sonderformat für lange Sendernamen beachten
-      if ((uint8_t)*stationName == 0xFF)
-        stationName++;
-
       spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
       spr.setTextDatum(TC_DATUM);
-      spr.setTextColor(0x07E0);
-      spr.drawString(stationName, 160, 20);
+      spr.setTextColor(COLOR_GREEN);
+
+      if ((uint8_t)*stationName == 0xFF)
+      {
+        // Langformat wie im Default-Layout
+        drawLongStationName(
+          stationName + 1,
+          stationAreaX,
+          stationAreaY
+        );
+      }
+      else
+      {
+        // Normalen Sendernamen zentriert anzeigen
+        spr.setClipRect(
+          stationAreaX,
+          stationAreaY,
+          stationAreaW,
+          stationAreaH
+        );
+
+        spr.drawString(
+          stationName,
+          stationAreaX + stationAreaW / 2,
+          stationAreaY + stationAreaH / 2
+        );
+
+        spr.clearClipRect();
+      }
     }
 
     // RDS-Textfeld
@@ -59,25 +100,23 @@ void drawLayoutClean()
     const int boxW = 280;
     const int boxH = 36;
 
-    // Hintergrund und Rahmen
     spr.fillRoundRect(
-      boxX, boxY, boxW, boxH, 5, 0x0000
+      boxX, boxY, boxW, boxH, 5, COLOR_BLACK
     );
 
     spr.drawRoundRect(
-      boxX, boxY, boxW, boxH, 5, 0x07E0
+      boxX, boxY, boxW, boxH, 5, COLOR_GREEN
     );
 
     // Radiotext linksbündig anzeigen
-    const char* rt = getRadioText();
+    const char *rt = getRadioText();
 
     if (rt != nullptr && *rt)
     {
       spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-      spr.setTextColor(0xFFFF);
+      spr.setTextColor(COLOR_WHITE);
       spr.setTextDatum(TL_DATUM);
 
-      // Text innerhalb des Kastens begrenzen
       spr.setClipRect(
         boxX + 5,
         boxY + 3,
@@ -85,7 +124,6 @@ void drawLayoutClean()
         boxH - 6
       );
 
-      // Der Text beginnt links und wird nicht verschoben
       spr.drawString(rt, boxX + 8, boxY + 8);
 
       spr.clearClipRect();
@@ -94,7 +132,7 @@ void drawLayoutClean()
 
   // 5. Frequenzanzeige: Orbitron, zentriert
   char freqBuf[24];
-  const char* unitBuf;
+  const char *unitBuf;
 
   if (currentMode == FM)
   {
@@ -131,10 +169,9 @@ void drawLayoutClean()
     unitBuf = "kHz";
   }
 
-  // Frequenz zeichnen
   spr.setFont(&lgfx::fonts::Orbitron_Light_32);
   spr.setTextDatum(CC_DATUM);
-  spr.setTextColor(0xFFFF);
+  spr.setTextColor(COLOR_WHITE);
   spr.drawString(freqBuf, 160, 68);
 
   // Breite der Frequenz ermitteln
@@ -143,16 +180,16 @@ void drawLayoutClean()
   // Einheit direkt hinter der Frequenz
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextDatum(ML_DATUM);
-  spr.setTextColor(0x9CD3);
+  spr.setTextColor(COLOR_UNIT);
 
   int unitX = 160 + (freqWidth / 2) + 4;
   spr.drawString(unitBuf, unitX, 68);
 
   // 6. S-Meter: untere Displayzeile
-  int barW = 220;
-  int barH = 7;
-  int barX = (320 - barW) / 2;
-  int barY = 160;
+  const int barW = 220;
+  const int barH = 7;
+  const int barX = (320 - barW) / 2;
+  const int barY = 160;
 
   int currentBarW = map(
     constrain(rssi, 0, 60),
@@ -160,16 +197,14 @@ void drawLayoutClean()
     5, barW
   );
 
-  // Hintergrund-Schiene
   spr.fillRoundRect(
     barX, barY, barW, barH, 3, 0x2104
   );
 
-  // Signal-Ausschlag
   if (currentBarW > 0)
   {
     spr.fillRoundRect(
-      barX, barY, currentBarW, barH, 3, 0x07E0
+      barX, barY, currentBarW, barH, 3, COLOR_GREEN
     );
   }
 
