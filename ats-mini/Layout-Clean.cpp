@@ -102,8 +102,6 @@ void drawLayoutClean()
       spr.clearClipRect();
     }
   }
-
-}
   
   // 4. Frequenzanzeige: Orbitron, zentriert, Einheit in derselben Zeile
   char freqBuf[24];
