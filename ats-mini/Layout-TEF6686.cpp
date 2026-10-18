@@ -1,13 +1,8 @@
-
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
 #include "Menu.h"
 #include "Draw.h"
-#include <string.h>
-
-// Falls getCurrentBandwidth() in Common.h noch nicht deklariert ist,
-// muss dort eine passende Deklaration ergänzt werden.
 
 // --------------------------------------------------
 // ATS Mini V4 - TEF6686-Style Layout
@@ -22,6 +17,7 @@ void drawLayoutTEF6686()
   const uint16_t COLOR_GREY   = 0x4208;
   const uint16_t COLOR_YELLOW = 0xFFE0;
   const uint16_t COLOR_RED    = 0xF800;
+  const uint16_t COLOR_BLACK  = 0x0000;
 
   // 1. Batterie
   drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
@@ -43,6 +39,7 @@ void drawLayoutTEF6686()
 
   // 3. Modusfeld
   spr.drawRoundRect(modeX, modeY, modeW, modeH, 3, COLOR_BLUE);
+
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_GREEN);
   spr.drawString(
@@ -51,7 +48,7 @@ void drawLayoutTEF6686()
     modeY + modeH / 2
   );
 
-  // 4. Statusfeld rechts
+  // 4. Statusfeld rechts: Stereo/Mono und Bandbreite
   const int statusX = 242;
   const int statusY = 19;
   const int statusW = 68;
@@ -69,16 +66,15 @@ void drawLayoutTEF6686()
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_CYAN);
 
-  // Stereo-Erkennung wie im bestehenden Layout:
-  // FM, Stereo nicht fest auf Mono gesetzt und Pilotton erkannt.
+  // Stereo-Erkennung wie im Layout-Default
   if (currentMode == FM)
   {
-    bool isStereo =
+    bool stereo =
       (fmStereoIdx != FM_STEREO_MONO) &&
       rx.getCurrentPilot();
 
     spr.drawString(
-      isStereo ? "STEREO" : "MONO",
+      stereo ? "STEREO" : "MONO",
       statusX + statusW / 2,
       statusY + statusH / 4
     );
@@ -92,37 +88,31 @@ void drawLayoutTEF6686()
     );
   }
 
-  // Aktuelle Bandbreite
+  // Tatsächliche Bandbreite
   const Bandwidth *bw = getCurrentBandwidth();
 
+  spr.setTextColor(COLOR_GREEN);
+
   if (bw != nullptr && bw->desc != nullptr)
-{
-  spr.drawString(
-    bw->desc,
-    statusX + statusW / 2,
-    statusY + statusH * 3 / 4
-  );
-}
-else
-{
-  spr.drawString(
-    "BW",
-    statusX + statusW / 2,
-    statusY + statusH * 3 / 4
-  );
-}
+  {
+    spr.drawString(
+      bw->desc,
+      statusX + statusW / 2,
+      statusY + (statusH * 3) / 4
+    );
+  }
   else
   {
     spr.drawString(
       "BW",
       statusX + statusW / 2,
-      statusY + statusH * 3 / 4
+      statusY + (statusH * 3) / 4
     );
   }
 
   // 5. Frequenz linksbündig an fester Position
   char freqBuf[24];
-  const char* unitBuf;
+  const char *unitBuf;
 
   if (currentMode == FM)
   {
@@ -163,16 +153,21 @@ else
   spr.setTextDatum(ML_DATUM);
   spr.setTextColor(COLOR_GREEN);
 
+  // Frequenz vom Statusfeld rechts fernhalten
   spr.setClipRect(62, 36, 176, 31);
   spr.drawString(freqBuf, freqX, freqY);
   spr.clearClipRect();
 
-  int freqWidth = spr.textWidth(freqBuf);
+  const int freqWidth = spr.textWidth(freqBuf);
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(ML_DATUM);
   spr.setTextColor(COLOR_CYAN);
+
+  // Einheit ebenfalls vor dem Statusfeld begrenzen
+  spr.setClipRect(62, 36, 176, 31);
   spr.drawString(unitBuf, freqX + freqWidth + 4, freqY);
+  spr.clearClipRect();
 
   // 6. S-Meter
   const int meterX = 10;
@@ -186,7 +181,7 @@ else
   const int barH = 7;
 
   const int scaleValues[] = {0, 5, 10, 15, 20, 30, 45, 60};
-  const char* scaleLabels[] = {
+  const char *scaleLabels[] = {
     "1", "3", "5", "7", "9", "+10", "+20", "+30"
   };
 
@@ -260,6 +255,7 @@ else
     }
   }
 
+  // Skalenstriche und Zahlen
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextColor(COLOR_CYAN);
 
@@ -275,6 +271,7 @@ else
 
     if (i == 7)
     {
+      // +30 vollständig innerhalb des Rahmens
       spr.setTextDatum(TR_DATUM);
       spr.drawString(
         scaleLabels[i],
@@ -301,75 +298,60 @@ else
       stationX, stationY, stationW, stationH, COLOR_BLUE
     );
 
+    // PS-Feld innen leeren, damit kein alter Name stehen bleibt
+    spr.fillRect(
+      stationX + 1, stationY + 1,
+      stationW - 2, stationH - 2,
+      COLOR_BLACK
+    );
+
+    spr.drawRect(
+      stationX, stationY, stationW, stationH, COLOR_BLUE
+    );
+
     spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
     spr.setTextDatum(TL_DATUM);
     spr.setTextColor(COLOR_CYAN);
     spr.drawString("PS:", stationX + 5, stationY + 3);
 
-    const char* rawStation = getStationName();
+    // Direkt wie im Layout-Default: kein eigener Namensspeicher
+    const char *stationName = getStationName();
 
-    static char candidateStation[64] = "";
-    static char stableStation[64] = "";
-    static unsigned long candidateSince = 0;
-
-    if (rawStation != nullptr && *rawStation)
+    if (stationName != nullptr && *stationName)
     {
-      const char* stationText = rawStation;
-
-      if ((uint8_t)*stationText == 0xFF)
-        stationText++;
-
-      if (strncmp(
-            stationText,
-            candidateStation,
-            sizeof(candidateStation) - 1
-          ) != 0)
+      if ((uint8_t)*stationName == 0xFF)
       {
-        strncpy(
-          candidateStation,
-          stationText,
-          sizeof(candidateStation) - 1
+        drawLongStationName(
+          stationName + 1,
+          stationX + 40,
+          stationY + 3
         );
-
-        candidateStation[sizeof(candidateStation) - 1] = '\0';
-        candidateSince = millis();
       }
-
-      if (candidateStation[0] &&
-          millis() - candidateSince >= 1200)
+      else
       {
-        strncpy(
-          stableStation,
-          candidateStation,
-          sizeof(stableStation) - 1
+        spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+        spr.setTextDatum(TL_DATUM);
+        spr.setTextColor(COLOR_GREEN);
+
+        spr.setClipRect(
+          stationX + 38,
+          stationY + 2,
+          stationW - 43,
+          stationH - 4
         );
 
-        stableStation[sizeof(stableStation) - 1] = '\0';
+        spr.drawString(stationName, stationX + 40, stationY + 3);
+        spr.clearClipRect();
       }
     }
 
-    if (stableStation[0])
-    {
-      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-      spr.setTextDatum(TL_DATUM);
-      spr.setTextColor(COLOR_GREEN);
-
-      spr.setClipRect(
-        stationX + 38,
-        stationY + 2,
-        stationW - 43,
-        stationH - 4
-      );
-
-      spr.drawString(stableStation, stationX + 40, stationY + 3);
-      spr.clearClipRect();
-    }
-
+    // Radiotext
     const int rtX = 10;
     const int rtY = 136;
     const int rtW = 300;
     const int rtH = 30;
 
+    spr.fillRect(rtX + 1, rtY + 1, rtW - 2, rtH - 2, COLOR_BLACK);
     spr.drawRect(rtX, rtY, rtW, rtH, COLOR_BLUE);
 
     spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
@@ -377,7 +359,7 @@ else
     spr.setTextColor(COLOR_CYAN);
     spr.drawString("RT:", rtX + 5, rtY + 5);
 
-    const char* rt = getRadioText();
+    const char *rt = getRadioText();
 
     if (rt != nullptr && *rt)
     {
