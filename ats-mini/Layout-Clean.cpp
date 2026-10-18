@@ -39,32 +39,46 @@ void drawLayoutClean()
     spr.drawString(rdsStation, 120, 20);
   }
 
-  // 4. Frequenzanzeige mit Orbitron-Font und angepasster Formatierung
+  
+  // 4. Frequenzanzeige: Orbitron, horizontal zentriert
+  char freqBuf[24];
+  char unitBuf[8];
+
+  if (currentMode == FM)
+  {
+    snprintf(freqBuf, sizeof(freqBuf), "%lu.%02lu",
+             (unsigned long)(currentFrequency / 100),
+             (unsigned long)(currentFrequency % 100));
+    snprintf(unitBuf, sizeof(unitBuf), "MHz");
+  }
+  else if (isSSB())
+  {
+    long long freq = (long long)currentFrequency * 1000LL + currentBFO;
+
+    if (freq < 0) freq = 0;
+
+    snprintf(freqBuf, sizeof(freqBuf), "%lld.%03lld",
+             freq / 1000, freq % 1000);
+    snprintf(unitBuf, sizeof(unitBuf), "kHz");
+  }
+  else
+  {
+    snprintf(freqBuf, sizeof(freqBuf), "%lu",
+             (unsigned long)currentFrequency);
+    snprintf(unitBuf, sizeof(unitBuf), "kHz");
+  }
+
+  // Frequenz exakt horizontal mittig
   spr.setFont(&lgfx::fonts::Orbitron_Light_32);
   spr.setTextDatum(CC_DATUM);
   spr.setTextColor(0xFFFF);
+  spr.drawString(freqBuf, 160, 68);
 
-  char freqBuf[16];
-  const char* unitStr = "kHz";
-
-  if (currentMode == FM) {
-    // FM: Immer mit Punkt und 2 Nachkommastellen (z.B. 107.90)
-    snprintf(freqBuf, sizeof(freqBuf), "%.2f", (float)currentFrequency / 100.0);
-    unitStr = "MHz";
-  } else {
-    // Kurzwelle / CB / Andere: Ganze kHz-Zahl (mit optionaler Feinabstimmung falls vorhanden)
-    snprintf(freqBuf, sizeof(freqBuf), "%d", currentFrequency);
-    unitStr = "kHz";
-  }
-  
-  // Frequenz perfekt in der Mitte zentriert
-  spr.drawString(freqBuf, 120, 65);
-
-  // Einheit (MHz / kHz) rechtsbündig daneben platziert
+  // Einheit darunter rechts neben dem Frequenzende
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
-  spr.setTextDatum(TR_DATUM);
+  spr.setTextDatum(TL_DATUM);
   spr.setTextColor(0x9CD3);
-  spr.drawString(unitStr, 225, 75);
+  spr.drawString(unitBuf, 225, 88);
 
   // 5. Unten: S-Wert & SNR (zentriert)
   uint8_t rssi = rx.getCurrentRSSI();
