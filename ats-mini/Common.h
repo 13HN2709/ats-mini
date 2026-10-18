@@ -229,7 +229,6 @@ void useBand(const Band *band);
 void setEncoderHalfStep(bool enabled);
 bool updateFrequency(int newFreq, bool wrap = true);
 bool updateBFO(int newBFO, bool wrap = true);
-const Bandwidth *getCurrentBandwidth();
 bool doSeek(int16_t enc);
 bool clickFreq(bool shortPress);
 uint8_t doAbout(int16_t enc);
