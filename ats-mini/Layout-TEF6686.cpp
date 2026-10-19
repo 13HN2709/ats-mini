@@ -55,7 +55,7 @@ void drawLayoutTEF6686()
   // Das doppelte USB/LSB entfällt hier.
   // Die Modulationsanzeige bleibt links erhalten.
   const int statusX = 242;
-  const int statusY = 24;
+  const int statusY = 18;
   const int statusW = 68;
   const int statusH = 20;
 
@@ -74,7 +74,7 @@ void drawLayoutTEF6686()
 
   // 6. Frequenz mit originaler Digits-Schrift und Cursor
   const int freqX = 230;
-  const int freqY = 39;
+  const int freqY = 45;
 
   uint8_t freqHighlight =
     currentCmd == CMD_FREQ
