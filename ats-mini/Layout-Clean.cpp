@@ -42,7 +42,7 @@ void drawLayoutClean()
   if (currentMode == FM)
   {
     const char *stationName = getStationName();
-    if (stationName != nullptr *stationName)
+    if (stationName != nullptr && *stationName != '\0')
     {
       spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
       spr.setTextDatum(TC_DATUM);
@@ -97,7 +97,7 @@ void drawLayoutClean()
   if (currentMode == FM)
   {
     const char *rt = getRadioText();
-    if (rt != nullptr *rt)
+    if (rt != nullptr && *rt != '\0')
     {
       spr.setFont(&lgfx::fonts::FreeSans9pt7b);
       spr.setTextColor(COLOR_WHITE);
