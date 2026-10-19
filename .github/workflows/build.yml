@@ -70,7 +70,6 @@ jobs:
           fi
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
 
-      - name: Compile firmware
         uses: arduino/compile-sketches@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
