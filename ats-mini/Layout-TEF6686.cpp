@@ -1,4 +1,3 @@
-
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
@@ -33,7 +32,7 @@ void drawLayoutTEF6686()
   spr.setTextColor(COLOR_GREEN);
   spr.drawString(getCurrentBand()->bandName, 10, 3);
 
-  // 4. Modusfeld
+  // 4. Modusfeld links
   const int modeX = 10;
   const int modeY = 24;
   const int modeW = 48;
@@ -52,61 +51,28 @@ void drawLayoutTEF6686()
     modeY + modeH / 2
   );
 
-  // 5. Statusfeld rechts
+  // 5. Einheit rechts oben
+  // Das doppelte USB/LSB entfällt hier.
+  // Die Modulationsanzeige bleibt links erhalten.
   const int statusX = 242;
-  const int statusY = 18;
+  const int statusY = 24;
   const int statusW = 68;
-  const int statusH = 50;
-  const int statusMidY = 43;
+  const int statusH = 20;
 
   spr.drawRect(
     statusX, statusY, statusW, statusH, COLOR_BLUE
   );
-  spr.drawFastHLine(
-    statusX, statusMidY, statusW, COLOR_BLUE
-  );
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(COLOR_CYAN);
-
-  if (currentMode == FM)
-  {
-    bool stereo =
-      (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
-
-    spr.drawString(
-      stereo ? "STEREO" : "MONO",
-      statusX + statusW / 2,
-      statusY + 13
-    );
-  }
-  else
-  {
-    spr.drawString(
-      bandModeDesc[currentMode],
-      statusX + statusW / 2,
-      statusY + 13
-    );
-  }
-
   spr.setTextColor(COLOR_GREEN);
   spr.drawString(
     currentMode == FM ? "MHz" : "kHz",
     statusX + statusW / 2,
-    statusMidY + 13
+    statusY + statusH / 2
   );
 
   // 6. Frequenz mit originaler Digits-Schrift und Cursor
-  // Die vorhandene Funktion drawFrequency() kümmert sich um:
-  // - FONT_DIGITS
-  // - FM- und AM/SSB-Formatierung
-  // - Auswahlcursor beim Abstimmen
-  // - gelben Cursor beim Drehen/Drücken
-  //
-  // Der Cursor wird nur bei CMD_FREQ aktiviert.
-  // CMD_FREQ_KEYPAD bleibt davon unberührt.
-
   const int freqX = 230;
   const int freqY = 39;
 
@@ -115,9 +81,8 @@ void drawLayoutTEF6686()
       ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0)
       : 100;
 
-  // Die Frequenzeinheit wird separat im Statuskasten gezeichnet.
-  // Daher wird sie hier an eine Position außerhalb des sichtbaren
-  // Bereichs gesetzt.
+  // Einheit wird separat rechts oben gezeichnet.
+  // Frequenz- und Cursorlogik bleiben unverändert.
   drawFrequency(
     currentFrequency,
     freqX,
@@ -125,54 +90,6 @@ void drawLayoutTEF6686()
     400,
     400,
     freqHighlight
-  );
-
-  // Statuskasten und Einheit nach der Frequenz erneut zeichnen,
-  // damit die Frequenzdarstellung diese Bereiche nicht überdeckt.
-  spr.fillRect(
-    statusX + 1,
-    statusY + 1,
-    statusW - 2,
-    statusH - 2,
-    COLOR_BLACK
-  );
-
-  spr.drawRect(
-    statusX, statusY, statusW, statusH, COLOR_BLUE
-  );
-  spr.drawFastHLine(
-    statusX, statusMidY, statusW, COLOR_BLUE
-  );
-
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(COLOR_CYAN);
-
-  if (currentMode == FM)
-  {
-    bool stereo =
-      (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
-
-    spr.drawString(
-      stereo ? "STEREO" : "MONO",
-      statusX + statusW / 2,
-      statusY + 13
-    );
-  }
-  else
-  {
-    spr.drawString(
-      bandModeDesc[currentMode],
-      statusX + statusW / 2,
-      statusY + 13
-    );
-  }
-
-  spr.setTextColor(COLOR_GREEN);
-  spr.drawString(
-    currentMode == FM ? "MHz" : "kHz",
-    statusX + statusW / 2,
-    statusMidY + 13
   );
 
   // 7. S-Meter
