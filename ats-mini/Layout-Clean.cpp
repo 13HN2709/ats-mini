@@ -16,18 +16,23 @@ void drawLayoutClean()
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
   (void)has_voltage;
 
-  // 2. Oben links: Bandname
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(COLOR_GREEN);
-  spr.drawString(getCurrentBand()->bandName, 34, 2);
-
-  // 3. Modus-Kasten
+  // 2. Oben links: Bandname mittig über dem Modus-Kasten
   const int modeBoxX = 10;
   const int modeBoxY = 20;
   const int modeBoxW = 48;
   const int modeBoxH = 18;
 
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setTextDatum(BC_DATUM);
+  spr.setTextColor(COLOR_GREEN);
+
+  spr.drawString(
+    getCurrentBand()->bandName,
+    modeBoxX + modeBoxW / 2,
+    modeBoxY - 2
+  );
+
+  // 3. Modus-Kasten
   spr.fillRoundRect(
     modeBoxX, modeBoxY, modeBoxW, modeBoxH, 4, COLOR_GREEN
   );
@@ -35,6 +40,7 @@ void drawLayoutClean()
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_BLACK);
+
   spr.drawString(
     bandModeDesc[currentMode],
     modeBoxX + modeBoxW / 2,
@@ -44,18 +50,20 @@ void drawLayoutClean()
   // 4. RDS: Sendername und Radiotext
   if (currentMode == FM)
   {
-    // Sendername direkt wie im Layout-Default abrufen
     const char *stationName = getStationName();
 
-    // Anzeigebereich immer zuerst leeren, damit kein alter Name bleibt
+    // Sendername: Bereich nach links verschoben
     const int stationAreaX = 65;
     const int stationAreaY = 17;
     const int stationAreaW = 245;
     const int stationAreaH = 23;
 
+    // Anzeigebereich zuerst leeren
     spr.fillRect(
-      stationAreaX, stationAreaY,
-      stationAreaW, stationAreaH,
+      stationAreaX,
+      stationAreaY,
+      stationAreaW,
+      stationAreaH,
       COLOR_BLACK
     );
 
@@ -65,9 +73,16 @@ void drawLayoutClean()
       spr.setTextDatum(TC_DATUM);
       spr.setTextColor(COLOR_GREEN);
 
+      // Sendername auf den vorgesehenen Bereich begrenzen
+      spr.setClipRect(
+        stationAreaX,
+        stationAreaY,
+        stationAreaW,
+        stationAreaH
+      );
+
       if ((uint8_t)*stationName == 0xFF)
       {
-        // Langformat wie im Default-Layout
         drawLongStationName(
           stationName + 1,
           stationAreaX,
@@ -76,22 +91,15 @@ void drawLayoutClean()
       }
       else
       {
-        // Normalen Sendernamen zentriert anzeigen
-        spr.setClipRect(
-          stationAreaX,
-          stationAreaY,
-          stationAreaW,
-          stationAreaH
-        );
-
+        // Normalen Sendernamen mittig ausrichten
         spr.drawString(
           stationName,
           stationAreaX + stationAreaW / 2,
           stationAreaY + stationAreaH / 2
         );
-
-        spr.clearClipRect();
       }
+
+      spr.clearClipRect();
     }
 
     // RDS-Textfeld
@@ -124,7 +132,11 @@ void drawLayoutClean()
         boxH - 6
       );
 
-      spr.drawString(rt, boxX + 8, boxY + 8);
+      spr.drawString(
+        rt,
+        boxX + 8,
+        boxY + 8
+      );
 
       spr.clearClipRect();
     }
