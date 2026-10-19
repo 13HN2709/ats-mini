@@ -72,8 +72,6 @@ void drawLayoutTEF6686()
 
   // ------------------------------------------------
   // 3. Rechter Statuskasten
-  // Oben: STEREO/MONO oder Betriebsmodus
-  // Unten: MHz/kHz
   // ------------------------------------------------
   const int statusX = 242;
   const int statusY = 18;
@@ -81,7 +79,6 @@ void drawLayoutTEF6686()
   const int statusH = 50;
   const int statusMidY = statusY + statusH / 2;
 
-  // Rahmen nur für den unteren Einheitenbereich
   spr.fillRect(
     statusX,
     statusY,
@@ -98,7 +95,6 @@ void drawLayoutTEF6686()
     COLOR_BLUE
   );
 
-  // STEREO/MONO ohne Kasten, kräftige Schrift
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_CYAN);
@@ -125,93 +121,198 @@ void drawLayoutTEF6686()
   }
 
   // ------------------------------------------------
-  // 4. Frequenz berechnen
+  // 4. Frequenz und originaler Abstimmcursor
+  // FONT_DIGITS = 48px 7-Segment-Schrift
   // ------------------------------------------------
-  char freqBuf[24];
-  const char *unitBuf;
+  const int freqX = 232;
+  const int freqY = 40;
+
+  struct Line
+  {
+    int x;
+    int y;
+    int w;
+  };
+
+  const Line hlDigitsFM[] =
+  {
+    { freqX - 30 - 32 * 0 -  0, freqY + 28, 27 },
+    { freqX - 30 - 32 * 0 - 16, freqY + 28, 43 },
+    { freqX - 30 - 32 * 1 -  0, freqY + 28, 27 },
+    { freqX - 30 - 32 * 1 - 22, freqY + 28, 49 },
+    { freqX - 30 - 32 * 2 - 12, freqY + 28, 27 },
+    { freqX - 30 - 32 * 2 - 28, freqY + 28, 43 },
+    { freqX - 30 - 32 * 3 - 12, freqY + 28, 27 },
+    { freqX - 30 - 32 * 3 - 28, freqY + 28, 43 },
+    { freqX - 30 - 32 * 4 +  4, freqY + 28, 11 },
+  };
+
+  const Line hlDigitsAMSSB[] =
+  {
+    { freqX + 12 + 14 * 2 -  0, freqY + 28, 12 },
+    { freqX + 12 + 14 * 2 -  7, freqY + 28, 19 },
+    { freqX + 12 + 14 * 1 -  0, freqY + 28, 12 },
+    { freqX + 12 + 14 * 1 -  7, freqY + 28, 19 },
+    { freqX + 12 + 14 * 0 -  0, freqY + 28, 12 },
+    { freqX + 12 + 14 * 0 - 11, freqY + 28, 23 },
+    { freqX - 30 - 32 * 0 -  0, freqY + 28, 27 },
+    { freqX - 30 - 32 * 0 - 16, freqY + 28, 43 },
+    { freqX - 30 - 32 * 1 -  0, freqY + 28, 27 },
+    { freqX - 30 - 32 * 1 - 16, freqY + 28, 43 },
+    { freqX - 30 - 32 * 2 -  0, freqY + 28, 27 },
+    { freqX - 30 - 32 * 2 - 16, freqY + 28, 43 },
+    { freqX - 30 - 32 * 3 -  0, freqY + 28, 27 },
+    { freqX - 30 - 32 * 3 - 16, freqY + 28, 43 },
+    { freqX - 30 - 32 * 4 -  0, freqY + 28, 27 },
+  };
+
+  uint8_t hl =
+    currentCmd == CMD_FREQ
+      ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0)
+      : 100;
+
+  bool selectOn = (hl & 0x80) != 0;
+  hl &= 0x7F;
+
+  const Line *li = nullptr;
+
+  spr.setTextDatum(MR_DATUM);
+  spr.setTextColor(COLOR_GREEN);
 
   if (currentMode == FM)
   {
-    snprintf(
-      freqBuf,
-      sizeof(freqBuf),
-      "%lu.%02lu",
-      (unsigned long)(currentFrequency / 100),
-      (unsigned long)(currentFrequency % 100)
+    if (hl < (sizeof(hlDigitsFM) / sizeof(hlDigitsFM[0])))
+      li = &hlDigitsFM[hl];
+
+    spr.drawFloat(
+      currentFrequency / 100.00,
+      2,
+      freqX,
+      freqY,
+      FONT_DIGITS
     );
-
-    unitBuf = "MHz";
-  }
-  else if (isSSB())
-  {
-    long long freq =
-      (long long)currentFrequency * 1000LL + currentBFO;
-
-    bool negative = (freq < 0);
-    if (negative)
-      freq = -freq;
-
-    snprintf(
-      freqBuf,
-      sizeof(freqBuf),
-      "%s%lld.%03lld",
-      negative ? "-" : "",
-      freq / 1000,
-      freq % 1000
-    );
-
-    unitBuf = "kHz";
   }
   else
   {
-    snprintf(
-      freqBuf,
-      sizeof(freqBuf),
-      "%lu.000",
-      (unsigned long)currentFrequency
-    );
+    if (hl < (sizeof(hlDigitsAMSSB) / sizeof(hlDigitsAMSSB[0])))
+      li = &hlDigitsAMSSB[hl];
 
-    unitBuf = "kHz";
+    if (isSSB())
+    {
+      long long freq =
+        (long long)currentFrequency * 1000LL + currentBFO;
+
+      bool negative = (freq < 0);
+      if (negative)
+        freq = -freq;
+
+      char text[32];
+
+      snprintf(
+        text,
+        sizeof(text),
+        "%03lld",
+        freq / 1000
+      );
+
+      spr.drawString(text, freqX, freqY, FONT_DIGITS);
+
+      spr.setTextDatum(ML_DATUM);
+      spr.setTextColor(COLOR_GREEN);
+
+      snprintf(
+        text,
+        sizeof(text),
+        ".%03lld",
+        freq % 1000
+      );
+
+      spr.drawString(text, freqX + 4, freqY + 17, FONT_LARGE);
+
+      if (negative)
+      {
+        spr.setTextDatum(MR_DATUM);
+        spr.drawString("-", freqX - 100, freqY, FONT_DIGITS);
+      }
+    }
+    else
+    {
+      spr.drawNumber(
+        currentFrequency,
+        freqX,
+        freqY,
+        FONT_DIGITS
+      );
+
+      spr.setTextDatum(ML_DATUM);
+      spr.setTextColor(COLOR_GREEN);
+      spr.drawString(
+        ".000",
+        freqX + 4,
+        freqY + 17,
+        FONT_LARGE
+      );
+    }
   }
 
   // ------------------------------------------------
-  // 5. Frequenz
-  // Etwas größer, normale Schrift, mittig
+  // 5. Cursor unter der ausgewählten Frequenzziffer
   // ------------------------------------------------
-  const int freqX = 62;
-  const int freqY = 52;
-  const int freqAvailableW = statusX - freqX - 5;
-  const int freqCenterX = freqX + freqAvailableW / 2;
+  if (li != nullptr)
+  {
+    if (selectOn)
+    {
+      spr.fillRoundRect(
+        li->x + 1,
+        li->y - 1,
+        li->w - 2,
+        3,
+        1,
+        COLOR_YELLOW
+      );
 
-  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
-  spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(COLOR_GREEN);
+      spr.fillTriangle(
+        li->x,
+        li->y,
+        li->x + 2,
+        li->y - 2,
+        li->x + 2,
+        li->y - 2,
+        COLOR_YELLOW
+      );
 
-  spr.setClipRect(
-    freqX,
-    38,
-    freqAvailableW,
-    30
-  );
-
-  spr.drawString(
-    freqBuf,
-    freqCenterX,
-    freqY
-  );
-
-  spr.clearClipRect();
+      spr.fillTriangle(
+        li->x + li->w - 1,
+        li->y,
+        li->x + li->w - 3,
+        li->y - 2,
+        li->x + li->w - 3,
+        li->y + 2,
+        COLOR_YELLOW
+      );
+    }
+    else
+    {
+      spr.fillRoundRect(
+        li->x,
+        li->y - 1,
+        li->w,
+        3,
+        1,
+        COLOR_GREEN
+      );
+    }
+  }
 
   // ------------------------------------------------
-  // 6. Einheit immer im unteren Statusbereich
-  // Kein BW/Auto
+  // 6. Einheit im unteren Statusbereich
   // ------------------------------------------------
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_GREEN);
 
   spr.drawString(
-    unitBuf,
+    currentMode == FM ? "MHz" : "kHz",
     statusX + statusW / 2,
     statusMidY + 13
   );
@@ -229,11 +330,13 @@ void drawLayoutTEF6686()
   const int barW = 250;
   const int barH = 7;
 
-  const int scaleValues[] = {
+  const int scaleValues[] =
+  {
     0, 5, 10, 15, 20, 30, 45, 60
   };
 
-  const char *scaleLabels[] = {
+  const char *scaleLabels[] =
+  {
     "1", "3", "5", "7", "9", "+10", "+20", "+30"
   };
 
@@ -243,13 +346,7 @@ void drawLayoutTEF6686()
     60
   );
 
-  int targetW = map(
-    signal,
-    0,
-    60,
-    0,
-    barW
-  );
+  int targetW = map(signal, 0, 60, 0, barW);
 
   static int displayedW = 0;
   static unsigned long lastMeterUpdate = 0;
@@ -277,11 +374,7 @@ void drawLayoutTEF6686()
     lastMeterUpdate = now;
   }
 
-  displayedW = constrain(
-    displayedW,
-    0,
-    barW
-  );
+  displayedW = constrain(displayedW, 0, barW);
 
   spr.drawRect(
     meterX,
@@ -296,13 +389,7 @@ void drawLayoutTEF6686()
   spr.setTextColor(COLOR_GREEN);
   spr.drawString("S", 15, 73);
 
-  spr.fillRect(
-    barX,
-    barY,
-    barW,
-    barH,
-    COLOR_GREY
-  );
+  spr.fillRect(barX, barY, barW, barH, COLOR_GREY);
 
   const int greenEnd = barW * 65 / 100;
   const int yellowEnd = barW * 82 / 100;
@@ -312,23 +399,13 @@ void drawLayoutTEF6686()
     int greenW = min(displayedW, greenEnd);
 
     if (greenW > 0)
-    {
-      spr.fillRect(
-        barX,
-        barY,
-        greenW,
-        barH,
-        COLOR_GREEN
-      );
-    }
+      spr.fillRect(barX, barY, greenW, barH, COLOR_GREEN);
 
     if (displayedW > greenEnd)
     {
-      int yellowW =
-        min(displayedW, yellowEnd) - greenEnd;
+      int yellowW = min(displayedW, yellowEnd) - greenEnd;
 
       if (yellowW > 0)
-      {
         spr.fillRect(
           barX + greenEnd,
           barY,
@@ -336,7 +413,6 @@ void drawLayoutTEF6686()
           barH,
           COLOR_YELLOW
         );
-      }
     }
 
     if (displayedW > yellowEnd)
@@ -353,19 +429,12 @@ void drawLayoutTEF6686()
     }
   }
 
-  // Skalenstriche und Zahlen
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextColor(COLOR_CYAN);
 
   for (int i = 0; i < 8; i++)
   {
-    int tickX = barX + map(
-      scaleValues[i],
-      0,
-      60,
-      0,
-      barW
-    );
+    int tickX = barX + map(scaleValues[i], 0, 60, 0, barW);
 
     spr.drawLine(
       tickX,
@@ -378,28 +447,17 @@ void drawLayoutTEF6686()
     if (i == 7)
     {
       spr.setTextDatum(TR_DATUM);
-
-      spr.drawString(
-        scaleLabels[i],
-        meterX + meterW - 4,
-        89
-      );
+      spr.drawString(scaleLabels[i], meterX + meterW - 4, 89);
     }
     else
     {
       spr.setTextDatum(TC_DATUM);
-
-      spr.drawString(
-        scaleLabels[i],
-        tickX,
-        89
-      );
+      spr.drawString(scaleLabels[i], tickX, 89);
     }
   }
 
   // ------------------------------------------------
   // 8. PS-Feld
-  // Sendername nur hier anzeigen
   // ------------------------------------------------
   const int psX = 10;
   const int psY = 109;
@@ -414,13 +472,7 @@ void drawLayoutTEF6686()
     COLOR_BLACK
   );
 
-  spr.drawRect(
-    psX,
-    psY,
-    psW,
-    psH,
-    COLOR_BLUE
-  );
+  spr.drawRect(psX, psY, psW, psH, COLOR_BLUE);
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
@@ -454,11 +506,7 @@ void drawLayoutTEF6686()
       }
       else
       {
-        spr.drawString(
-          stationName,
-          psX + 40,
-          psY + 3
-        );
+        spr.drawString(stationName, psX + 40, psY + 3);
       }
 
       spr.clearClipRect();
@@ -481,13 +529,7 @@ void drawLayoutTEF6686()
     COLOR_BLACK
   );
 
-  spr.drawRect(
-    rtX,
-    rtY,
-    rtW,
-    rtH,
-    COLOR_BLUE
-  );
+  spr.drawRect(rtX, rtY, rtW, rtH, COLOR_BLUE);
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
@@ -511,12 +553,7 @@ void drawLayoutTEF6686()
         rtH - 4
       );
 
-      spr.drawString(
-        rt,
-        rtX + 40,
-        rtY + 5
-      );
-
+      spr.drawString(rt, rtX + 40, rtY + 5);
       spr.clearClipRect();
     }
   }
