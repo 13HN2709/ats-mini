@@ -1,4 +1,3 @@
-
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
@@ -8,7 +7,7 @@
 // --------------------------------------------------
 // ATS Mini V4 - Clean Layout
 // Display: 320 x 170 Pixel
-// Frequenz: originale FONT_DIGITS-Funktion
+// Frequenz: originale FONT_DIGITS / drawFrequency()
 // --------------------------------------------------
 
 void drawLayoutClean()
@@ -73,17 +72,12 @@ void drawLayoutClean()
     }
   }
 
-  // 5. Frequenz mit Originalfunktion.
-  // Diese Funktion zeichnet FONT_DIGITS und den
-  // Abstimmcursor anhand von getFreqInputPos().
-  //
-  // Die Offset-Werte stammen aus dem Standardlayout.
-  // Sie dürfen nicht willkürlich verändert werden,
-  // da die Cursor-Koordinaten davon abhängen.
+  // 5. Frequenz mit Originalfunktion und Cursor
+  // MHz/kHz um 15 Pixel nach rechts verschoben.
   drawFrequency(
     currentFrequency,
     FREQ_OFFSET_X, FREQ_OFFSET_Y,
-    FUNIT_OFFSET_X, FUNIT_OFFSET_Y,
+    FUNIT_OFFSET_X + 15, FUNIT_OFFSET_Y,
     currentCmd == CMD_FREQ
       ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0)
       : 100
@@ -142,7 +136,7 @@ void drawLayoutClean()
     );
   }
 
-  // 8. Menü
+  // 8. Menüanzeige
   if (currentCmd != CMD_NONE &&
       currentCmd != CMD_SCAN &&
       currentCmd != CMD_FREQ)
