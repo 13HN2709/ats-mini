@@ -1,86 +1,157 @@
+
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
 #include "Menu.h"
 #include "Draw.h"
 
-extern uint32_t lastTuneTime;
+// --------------------------------------------------
+// ATS Mini V4 - Clean Layout
+// Display: 320 x 170 Pixel
+// Frequenz: originale FONT_DIGITS-Funktion
+// --------------------------------------------------
 
-void drawLayoutDefault()
+void drawLayoutClean()
 {
-  // Draw preferences write request icon
-  drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
+  const uint16_t COLOR_GREEN = 0x07E0;
+  const uint16_t COLOR_WHITE = 0xFFFF;
+  const uint16_t COLOR_BLACK = 0x0000;
+  const uint16_t COLOR_CYAN  = 0x07FF;
+  const uint16_t COLOR_GREY  = 0x2104;
 
-  // Draw BLE icon
-  drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
+  // 1. Batterie oben rechts
+  drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
 
-  // Draw battery indicator & voltage
-  bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+  // 2. Bandname oben links
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setTextDatum(TL_DATUM);
+  spr.setTextColor(COLOR_GREEN);
+  spr.drawString(getCurrentBand()->bandName, 10, 2);
 
-  // Draw WiFi icon
-  drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
+  // 3. Modusfeld
+  const int modeX = 10;
+  const int modeY = 20;
+  const int modeW = 48;
+  const int modeH = 18;
 
-  // Set font we are going to use
-  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
-
-  // Draw band and mode
-  drawBandAndMode(
-    getCurrentBand()->bandName,
-    bandModeDesc[currentMode],
-    BAND_OFFSET_X, BAND_OFFSET_Y
+  spr.fillRoundRect(
+    modeX, modeY, modeW, modeH, 4, COLOR_GREEN
   );
 
-  if(switchThemeEditor())
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(COLOR_BLACK);
+  spr.drawString(
+    bandModeDesc[currentMode],
+    modeX + modeW / 2,
+    modeY + modeH / 2
+  );
+
+  // 4. Sendername oberhalb der Frequenz
+  if (currentMode == FM)
   {
-    spr.setTextDatum(TR_DATUM);
-    spr.setTextColor(TH.text_warn);
-    spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
+    const char *stationName = getStationName();
+
+    if (stationName != nullptr && *stationName)
+    {
+      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+      spr.setTextDatum(TC_DATUM);
+      spr.setTextColor(COLOR_GREEN);
+
+      spr.setClipRect(65, 15, 185, 20);
+
+      if ((uint8_t)*stationName == 0xFF)
+      {
+        drawLongStationName(stationName + 1, 65, 17);
+      }
+      else
+      {
+        spr.drawString(stationName, 157, 17);
+      }
+
+      spr.clearClipRect();
+    }
   }
 
-  // Draw frequency, units, and optionally highlight a digit
+  // 5. Frequenz mit Originalfunktion.
+  // Diese Funktion zeichnet FONT_DIGITS und den
+  // Abstimmcursor anhand von getFreqInputPos().
+  //
+  // Die Offset-Werte stammen aus dem Standardlayout.
+  // Sie dürfen nicht willkürlich verändert werden,
+  // da die Cursor-Koordinaten davon abhängen.
   drawFrequency(
     currentFrequency,
     FREQ_OFFSET_X, FREQ_OFFSET_Y,
     FUNIT_OFFSET_X, FUNIT_OFFSET_Y,
-    currentCmd == CMD_FREQ ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0) : 100
+    currentCmd == CMD_FREQ
+      ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0)
+      : 100
   );
 
-  // Show station or channel name, if present (mit -4 Offset für den perfekten Zwischenraum)
-  const char *stationName = getStationName();
-  if(*stationName == 0xFF)
-    drawLongStationName(stationName + 1, MENU_OFFSET_X + 1 + 76 + MENU_DELTA_X + 2, RDS_OFFSET_Y - 4);
-  else if(*stationName)
-    drawStationName(stationName, RDS_OFFSET_X, RDS_OFFSET_Y - 4);
+  // 6. Radiotextfeld
+  const int rtX = 20;
+  const int rtY = 105;
+  const int rtW = 280;
+  const int rtH = 36;
 
-  // Draw left-side menu/info bar
-  drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
+  spr.fillRoundRect(
+    rtX, rtY, rtW, rtH, 5, COLOR_BLACK
+  );
+  spr.drawRoundRect(
+    rtX, rtY, rtW, rtH, 5, COLOR_GREEN
+  );
 
-  // Draw S-meter mit direktem Signalwert vom RX
-  drawSMeter(rx.getCurrentRSSI(), METER_OFFSET_X, METER_OFFSET_Y);
-
-  // Indicate FM pilot detection, unless the audio is pinned to mono
-  drawStereoIndicator(METER_OFFSET_X, METER_OFFSET_Y,
-    (currentMode==FM) && (fmStereoIdx!=FM_STEREO_MONO) && rx.getCurrentPilot());
-
-  if(currentCmd == CMD_SCAN)
-  {
-    drawScanGraphs(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
-  }
-  else if(!drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y))
+  if (currentMode == FM)
   {
     const char *rt = getRadioText();
-    const char *pi = getProgramInfo();
 
-    // 1. Wenn RDS oder ProgramInfo vorhanden ist: RDS-Text anzeigen & Skala ausblenden
-    if((rt && *rt) || (pi && *pi))
+    if (rt != nullptr && *rt)
     {
-      drawRadioText(130, 150);
+      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+      spr.setTextDatum(TL_DATUM);
+      spr.setTextColor(COLOR_WHITE);
+
+      spr.setClipRect(
+        rtX + 5, rtY + 3,
+        rtW - 10, rtH - 6
+      );
+
+      spr.drawString(rt, rtX + 8, rtY + 8);
+      spr.clearClipRect();
     }
-    // 2. Wenn KEIN RDS vorhanden ist: Signalwerte anzeigen und Röhrenskala unten rendern
-    else
-    {
-      drawRadioText(118, 138);
-      drawScale(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
-    }
+  }
+
+  // 7. S-Meter unten
+  const int barX = 50;
+  const int barY = 157;
+  const int barW = 220;
+  const int barH = 7;
+
+  int signal = constrain((int)rssi, 0, 60);
+  int currentBarW = map(signal, 0, 60, 5, barW);
+
+  spr.fillRoundRect(
+    barX, barY, barW, barH, 3, COLOR_GREY
+  );
+
+  if (currentBarW > 0)
+  {
+    spr.fillRoundRect(
+      barX, barY, currentBarW, barH, 3, COLOR_GREEN
+    );
+  }
+
+  // 8. Menü
+  if (currentCmd != CMD_NONE &&
+      currentCmd != CMD_SCAN &&
+      currentCmd != CMD_FREQ)
+  {
+    drawSideBar(
+      currentCmd,
+      MENU_OFFSET_X,
+      MENU_OFFSET_Y,
+      MENU_DELTA_X
+    );
   }
 }
