@@ -93,7 +93,7 @@ void drawLayoutTEF6686()
   // Das doppelte USB/LSB entfällt hier.
   // Die Modulationsanzeige bleibt links erhalten.
   const int statusX = 242;
-  const int statusY = 18;
+  const int statusY = 24;
   const int statusW = 68;
   const int statusH = 20;
 
