@@ -179,7 +179,7 @@ void drawLayoutTEF6686()
   // Etwas größer, normale Schrift, mittig
   // ------------------------------------------------
   const int freqX = 62;
-  const int freqY = 48;
+  const int freqY = 55;
   const int freqAvailableW = statusX - freqX - 5;
   const int freqCenterX = freqX + freqAvailableW / 2;
 
