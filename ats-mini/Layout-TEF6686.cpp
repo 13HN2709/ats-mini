@@ -70,9 +70,9 @@ void drawLayoutTEF6686()
   );
 
   // ------------------------------------------------
-  // 3. Rechter Statuskasten
-  // Oben: Stereo/Mono oder Betriebsmodus
-  // Unten: Immer MHz oder kHz
+  // 3. Rechter Statusbereich
+  // Oben: STEREO/MONO oder Betriebsmodus
+  // Unten: MHz oder kHz
   // ------------------------------------------------
   const int statusX = 242;
   const int statusY = 18;
@@ -81,13 +81,14 @@ void drawLayoutTEF6686()
   const int statusMidY = statusY + statusH / 2;
 
   spr.fillRect(
-    statusX + 1,
-    statusY + 1,
-    statusW - 2,
-    statusH - 2,
+    statusX,
+    statusY,
+    statusW,
+    statusH,
     COLOR_BLACK
   );
 
+  // Äußerer Rahmen bleibt erhalten
   spr.drawRect(
     statusX,
     statusY,
@@ -96,6 +97,7 @@ void drawLayoutTEF6686()
     COLOR_BLUE
   );
 
+  // Trennlinie zwischen Status und Einheit
   spr.drawLine(
     statusX,
     statusMidY,
@@ -104,8 +106,8 @@ void drawLayoutTEF6686()
     COLOR_BLUE
   );
 
-  // Kleinere Schrift für STEREO/MONO
-  spr.setFont(&lgfx::fonts::FreeSans9pt7b);
+  // STEREO/MONO wieder fett
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_CYAN);
 
@@ -186,14 +188,14 @@ void drawLayoutTEF6686()
 
   // ------------------------------------------------
   // 5. Frequenz
-  // Kräftige Schrift, jetzt kleiner
+  // Größer, kräftig und etwas tiefer positioniert
   // ------------------------------------------------
   const int freqX = 62;
-  const int freqY = 48;
+  const int freqY = 51;
   const int freqAvailableW = statusX - freqX - 5;
   const int freqCenterX = freqX + freqAvailableW / 2;
 
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setFont(&lgfx::fonts::FreeSansBold12pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_GREEN);
 
