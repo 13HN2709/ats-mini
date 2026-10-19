@@ -1,3 +1,4 @@
+
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
@@ -5,126 +6,152 @@
 #include "Draw.h"
 
 // --------------------------------------------------
-// ATS Mini V4 - Clean Layout (Optimiert für 240x135)
+// ATS Mini V4 - Clean Layout
+// Display: 320 x 170 Pixel
+// Frequenz: originale FONT_DIGITS-Funktion
 // --------------------------------------------------
 
 void drawLayoutClean()
 {
-  const uint16_t COLOR_GREEN  = 0x07E0;
-  const uint16_t COLOR_WHITE  = 0xFFFF;
-  const uint16_t COLOR_BLACK  = 0x0000;
-  const uint16_t COLOR_UNIT   = 0x9CD3;
-  const uint16_t COLOR_GREY   = 0x2104;
+  const uint16_t COLOR_GREEN = 0x07E0;
+  const uint16_t COLOR_WHITE = 0xFFFF;
+  const uint16_t COLOR_BLACK = 0x0000;
+  const uint16_t COLOR_CYAN  = 0x07FF;
+  const uint16_t COLOR_GREY  = 0x2104;
 
   // 1. Batterie oben rechts
   drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
 
-  // 2. Oben Links: Bandname (z.B. VHF)
+  // 2. Bandname oben links
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(COLOR_GREEN);
   spr.drawString(getCurrentBand()->bandName, 10, 2);
 
-  // 3. Modus-Kasten (FM) direkt unter dem Bandnamen
-  const int modeBoxX = 10;
-  const int modeBoxY = 20;
-  const int modeBoxW = 48;
-  const int modeBoxH = 18;
+  // 3. Modusfeld
+  const int modeX = 10;
+  const int modeY = 20;
+  const int modeW = 48;
+  const int modeH = 18;
 
-  spr.fillRoundRect(modeBoxX, modeBoxY, modeBoxW, modeBoxH, 4, COLOR_GREEN);
-  
+  spr.fillRoundRect(
+    modeX, modeY, modeW, modeH, 4, COLOR_GREEN
+  );
+
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_BLACK);
-  spr.drawString(bandModeDesc[currentMode], modeBoxX + (modeBoxW / 2), modeBoxY + (modeBoxH / 2));
+  spr.drawString(
+    bandModeDesc[currentMode],
+    modeX + modeW / 2,
+    modeY + modeH / 2
+  );
 
-  // 4. RDS-Sendername (PS) genau in der Mitte ÜBER der Frequenz
+  // 4. Sendername oberhalb der Frequenz
   if (currentMode == FM)
   {
     const char *stationName = getStationName();
-    if (stationName != nullptr && *stationName != '\0')
+
+    if (stationName != nullptr && *stationName)
     {
       spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
       spr.setTextDatum(TC_DATUM);
       spr.setTextColor(COLOR_GREEN);
 
+      spr.setClipRect(65, 15, 185, 20);
+
       if ((uint8_t)*stationName == 0xFF)
       {
-        drawLongStationName(stationName + 1, 120, 20);
+        drawLongStationName(stationName + 1, 65, 17);
       }
       else
       {
-        spr.setClipRect(65, 12, 110, 20);
-        spr.drawString(stationName, 120, 20);
-        spr.clearClipRect();
+        spr.drawString(stationName, 157, 17);
       }
-    }
-  }
 
-  // 5. Frequenzanzeige (mit Orbitron-Font und automatischem MHz/kHz Wechsel)
-  spr.setFont(&lgfx::fonts::Orbitron_Light_32);
-  spr.setTextDatum(CC_DATUM);
-  spr.setTextColor(COLOR_WHITE);
-
-  char freqBuf[16];
-  const char* unitStr = "kHz";
-
-  if (currentMode == FM) {
-    snprintf(freqBuf, sizeof(freqBuf), "%.2f", (float)currentFrequency / 100.0);
-    unitStr = "MHz";
-  } else {
-    snprintf(freqBuf, sizeof(freqBuf), "%d", currentFrequency);
-    unitStr = "kHz";
-  }
-  
-  spr.drawString(freqBuf, 115, 62);
-
-  // Einheit (MHz / kHz) rechtsbündig daneben
-  spr.setFont(&lgfx::fonts::FreeSans9pt7b);
-  spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(COLOR_UNIT);
-  spr.drawString(unitStr, 185, 72);
-
-  // 6. Neongrüner Kasten für den RDS-Radiotext (RT)
-  const int rtBoxX = 20;
-  const int rtBoxY = 92;
-  const int rtBoxW = 200;
-  const int rtBoxH = 24;
-
-  spr.fillRoundRect(rtBoxX, rtBoxY, rtBoxW, rtBoxH, 4, COLOR_BLACK);
-  spr.drawRoundRect(rtBoxX, rtBoxY, rtBoxW, rtBoxH, 4, COLOR_GREEN);
-
-  if (currentMode == FM)
-  {
-    const char *rt = getRadioText();
-    if (rt != nullptr && *rt != '\0')
-    {
-      spr.setFont(&lgfx::fonts::FreeSans9pt7b);
-      spr.setTextColor(COLOR_WHITE);
-      spr.setTextDatum(TL_DATUM);
-
-      spr.setClipRect(rtBoxX + 4, rtBoxY + 2, rtBoxW - 8, rtBoxH - 4);
-      spr.drawString(rt, rtBoxX + 6, rtBoxY + 4);
       spr.clearClipRect();
     }
   }
 
-  // 7. S-Meter Balken ganz unten
-  int barX = 20;
-  int barY = 124;
-  int maxBarW = 200;
-  int barH = 6;
+  // 5. Frequenz mit Originalfunktion.
+  // Diese Funktion zeichnet FONT_DIGITS und den
+  // Abstimmcursor anhand von getFreqInputPos().
+  //
+  // Die Offset-Werte stammen aus dem Standardlayout.
+  // Sie dürfen nicht willkürlich verändert werden,
+  // da die Cursor-Koordinaten davon abhängen.
+  drawFrequency(
+    currentFrequency,
+    FREQ_OFFSET_X, FREQ_OFFSET_Y,
+    FUNIT_OFFSET_X, FUNIT_OFFSET_Y,
+    currentCmd == CMD_FREQ
+      ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0)
+      : 100
+  );
 
-  int currentBarW = map(constrain(rssi, 0, 60), 0, 60, 5, maxBarW);
+  // 6. Radiotextfeld
+  const int rtX = 20;
+  const int rtY = 105;
+  const int rtW = 280;
+  const int rtH = 36;
 
-  spr.fillRoundRect(barX, barY, maxBarW, barH, 3, COLOR_GREY);
-  if (currentBarW > 0) {
-    spr.fillRoundRect(barX, barY, currentBarW, barH, 3, COLOR_GREEN);
+  spr.fillRoundRect(
+    rtX, rtY, rtW, rtH, 5, COLOR_BLACK
+  );
+  spr.drawRoundRect(
+    rtX, rtY, rtW, rtH, 5, COLOR_GREEN
+  );
+
+  if (currentMode == FM)
+  {
+    const char *rt = getRadioText();
+
+    if (rt != nullptr && *rt)
+    {
+      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+      spr.setTextDatum(TL_DATUM);
+      spr.setTextColor(COLOR_WHITE);
+
+      spr.setClipRect(
+        rtX + 5, rtY + 3,
+        rtW - 10, rtH - 6
+      );
+
+      spr.drawString(rt, rtX + 8, rtY + 8);
+      spr.clearClipRect();
+    }
   }
 
-  // 8. Sidebar / Menü falls aufgerufen
-  if(currentCmd != CMD_NONE && currentCmd != CMD_SCAN && currentCmd != CMD_FREQ)
+  // 7. S-Meter unten
+  const int barX = 50;
+  const int barY = 157;
+  const int barW = 220;
+  const int barH = 7;
+
+  int signal = constrain((int)rssi, 0, 60);
+  int currentBarW = map(signal, 0, 60, 5, barW);
+
+  spr.fillRoundRect(
+    barX, barY, barW, barH, 3, COLOR_GREY
+  );
+
+  if (currentBarW > 0)
   {
-    drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
+    spr.fillRoundRect(
+      barX, barY, currentBarW, barH, 3, COLOR_GREEN
+    );
+  }
+
+  // 8. Menü
+  if (currentCmd != CMD_NONE &&
+      currentCmd != CMD_SCAN &&
+      currentCmd != CMD_FREQ)
+  {
+    drawSideBar(
+      currentCmd,
+      MENU_OFFSET_X,
+      MENU_OFFSET_Y,
+      MENU_DELTA_X
+    );
   }
 }
