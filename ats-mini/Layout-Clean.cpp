@@ -5,154 +5,261 @@
 #include "Menu.h"
 #include "Draw.h"
 
+// --------------------------------------------------
+// ATS Mini V4 - Clean Layout
+// Display: 320 x 170 Pixel
+// --------------------------------------------------
+
 void drawLayoutClean()
 {
-  // 1. Batterie & Spannung oben rechts
-  bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+  const uint16_t COLOR_GREEN = 0x07E0;
+  const uint16_t COLOR_WHITE = 0xFFFF;
+  const uint16_t COLOR_BLACK = 0x0000;
+  const uint16_t COLOR_UNIT  = 0x9CD3;
+  const uint16_t COLOR_GREY  = 0x2104;
+  const uint16_t COLOR_YELLOW = 0xFFE0;
 
-  // 2. Oben links: Bandname
+  // 1. Batterie
+  drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+
+  // 2. Bandname
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(0x07E0);
+  spr.setTextColor(COLOR_GREEN);
   spr.drawString(getCurrentBand()->bandName, 10, 2);
 
   // 3. Modus-Kasten
-  int modeBoxX = 10;
-  int modeBoxY = 20;
-  int modeBoxW = 48;
-  int modeBoxH = 18;
+  const int modeBoxX = 10;
+  const int modeBoxY = 20;
+  const int modeBoxW = 48;
+  const int modeBoxH = 18;
 
   spr.fillRoundRect(
-    modeBoxX, modeBoxY, modeBoxW, modeBoxH, 4, 0x07E0
+    modeBoxX, modeBoxY, modeBoxW, modeBoxH, 4, COLOR_GREEN
   );
 
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(0x0000);
+  spr.setTextColor(COLOR_BLACK);
   spr.drawString(
     bandModeDesc[currentMode],
-    modeBoxX + (modeBoxW / 2),
-    modeBoxY + (modeBoxH / 2)
+    modeBoxX + modeBoxW / 2,
+    modeBoxY + modeBoxH / 2
   );
 
   // 4. RDS: Sendername und Radiotext
   if (currentMode == FM)
   {
-    // Sendername wie im Layout-Default abrufen
-    const char* stationName = getStationName();
+    const char *stationName = getStationName();
 
     if (stationName != nullptr && *stationName)
     {
-      // Sonderformat für lange Sendernamen beachten
-      if ((uint8_t)*stationName == 0xFF)
-        stationName++;
-
       spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
       spr.setTextDatum(TC_DATUM);
-      spr.setTextColor(0x07E0);
-      spr.drawString(stationName, 160, 20);
+      spr.setTextColor(COLOR_GREEN);
+
+      if ((uint8_t)*stationName == 0xFF)
+      {
+        drawLongStationName(stationName + 1, 160, 20);
+      }
+      else
+      {
+        spr.setClipRect(65, 10, 245, 25);
+        spr.drawString(stationName, 160, 20);
+        spr.clearClipRect();
+      }
     }
 
-    // RDS-Textfeld
     const int boxX = 20;
     const int boxY = 105;
     const int boxW = 280;
     const int boxH = 36;
 
-    // Hintergrund und Rahmen
     spr.fillRoundRect(
-      boxX, boxY, boxW, boxH, 5, 0x0000
+      boxX, boxY, boxW, boxH, 5, COLOR_BLACK
     );
-
     spr.drawRoundRect(
-      boxX, boxY, boxW, boxH, 5, 0x07E0
+      boxX, boxY, boxW, boxH, 5, COLOR_GREEN
     );
 
-    // Radiotext linksbündig anzeigen
-    const char* rt = getRadioText();
+    const char *rt = getRadioText();
 
     if (rt != nullptr && *rt)
     {
       spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-      spr.setTextColor(0xFFFF);
+      spr.setTextColor(COLOR_WHITE);
       spr.setTextDatum(TL_DATUM);
 
-      // Text innerhalb des Kastens begrenzen
       spr.setClipRect(
-        boxX + 5,
-        boxY + 3,
-        boxW - 10,
-        boxH - 6
+        boxX + 5, boxY + 3, boxW - 10, boxH - 6
       );
-
-      // Der Text beginnt links und wird nicht verschoben
       spr.drawString(rt, boxX + 8, boxY + 8);
-
       spr.clearClipRect();
     }
   }
 
-  // 5. Frequenzanzeige: Orbitron, zentriert
-  char freqBuf[24];
-  const char* unitBuf;
+  // 5. Frequenz mit originaler FONT_DIGITS und Cursor
+  const int freqX = 232;
+  const int freqY = 40;
+
+  struct Line
+  {
+    int x;
+    int y;
+    int w;
+  };
+
+  const Line hlDigitsFM[] =
+  {
+    { freqX - 30 - 32 * 0,      freqY + 28, 27 },
+    { freqX - 30 - 32 * 0 - 16, freqY + 28, 43 },
+    { freqX - 30 - 32 * 1,      freqY + 28, 27 },
+    { freqX - 30 - 32 * 1 - 22, freqY + 28, 49 },
+    { freqX - 30 - 32 * 2 - 12, freqY + 28, 27 },
+    { freqX - 30 - 32 * 2 - 28, freqY + 28, 43 },
+    { freqX - 30 - 32 * 3 - 12, freqY + 28, 27 },
+    { freqX - 30 - 32 * 3 - 28, freqY + 28, 43 },
+    { freqX - 30 - 32 * 4 +  4, freqY + 28, 11 },
+  };
+
+  const Line hlDigitsAMSSB[] =
+  {
+    { freqX + 12 + 14 * 2,      freqY + 28, 12 },
+    { freqX + 12 + 14 * 2 - 7,  freqY + 28, 19 },
+    { freqX + 12 + 14 * 1,      freqY + 28, 12 },
+    { freqX + 12 + 14 * 1 - 7,  freqY + 28, 19 },
+    { freqX + 12,               freqY + 28, 12 },
+    { freqX + 12 - 11,          freqY + 28, 23 },
+    { freqX - 30,                freqY + 28, 27 },
+    { freqX - 30 - 16,           freqY + 28, 43 },
+    { freqX - 30 - 32,           freqY + 28, 27 },
+    { freqX - 30 - 32 - 16,      freqY + 28, 43 },
+    { freqX - 30 - 64,           freqY + 28, 27 },
+    { freqX - 30 - 64 - 16,      freqY + 28, 43 },
+    { freqX - 30 - 96,           freqY + 28, 27 },
+    { freqX - 30 - 96 - 16,      freqY + 28, 43 },
+    { freqX - 30 - 128,          freqY + 28, 27 },
+  };
+
+  uint8_t hl =
+    currentCmd == CMD_FREQ
+      ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0)
+      : 100;
+
+  bool selectOn = (hl & 0x80) != 0;
+  hl &= 0x7F;
+
+  const Line *li = nullptr;
+
+  spr.setTextDatum(MR_DATUM);
+  spr.setTextColor(COLOR_WHITE);
 
   if (currentMode == FM)
   {
-    snprintf(
-      freqBuf, sizeof(freqBuf), "%lu.%02lu",
-      (unsigned long)(currentFrequency / 100),
-      (unsigned long)(currentFrequency % 100)
+    if (hl < (sizeof(hlDigitsFM) / sizeof(hlDigitsFM[0])))
+      li = &hlDigitsFM[hl];
+
+    spr.drawFloat(
+      currentFrequency / 100.00,
+      2,
+      freqX,
+      freqY,
+      FONT_DIGITS
     );
-
-    unitBuf = "MHz";
-  }
-  else if (isSSB())
-  {
-    long long freq =
-      (long long)currentFrequency * 1000LL + currentBFO;
-
-    if (freq < 0)
-      freq = 0;
-
-    snprintf(
-      freqBuf, sizeof(freqBuf), "%lld.%03lld",
-      freq / 1000, freq % 1000
-    );
-
-    unitBuf = "kHz";
   }
   else
   {
-    snprintf(
-      freqBuf, sizeof(freqBuf), "%lu",
-      (unsigned long)currentFrequency
-    );
+    if (hl < (sizeof(hlDigitsAMSSB) / sizeof(hlDigitsAMSSB[0])))
+      li = &hlDigitsAMSSB[hl];
 
-    unitBuf = "kHz";
+    if (isSSB())
+    {
+      long long freq =
+        (long long)currentFrequency * 1000LL + currentBFO;
+
+      bool negative = freq < 0;
+      if (negative)
+        freq = -freq;
+
+      char text[32];
+
+      snprintf(text, sizeof(text), "%03lld", freq / 1000);
+      spr.drawString(text, freqX, freqY, FONT_DIGITS);
+
+      spr.setTextDatum(ML_DATUM);
+      spr.setTextColor(COLOR_WHITE);
+
+      snprintf(text, sizeof(text), ".%03lld", freq % 1000);
+      spr.drawString(text, freqX + 4, freqY + 17, FONT_LARGE);
+
+      if (negative)
+      {
+        spr.setTextDatum(MR_DATUM);
+        spr.drawString("-", freqX - 100, freqY, FONT_DIGITS);
+      }
+    }
+    else
+    {
+      spr.drawNumber(
+        currentFrequency,
+        freqX,
+        freqY,
+        FONT_DIGITS
+      );
+
+      spr.setTextDatum(ML_DATUM);
+      spr.setTextColor(COLOR_WHITE);
+      spr.drawString(".000", freqX + 4, freqY + 17, FONT_LARGE);
+    }
   }
 
-  // Frequenz zeichnen
-  spr.setFont(&lgfx::fonts::Orbitron_Light_32);
-  spr.setTextDatum(CC_DATUM);
-  spr.setTextColor(0xFFFF);
-  spr.drawString(freqBuf, 160, 68);
+  // Cursor unter der aktiven Frequenzziffer
+  if (li != nullptr)
+  {
+    if (selectOn)
+    {
+      spr.fillRoundRect(
+        li->x + 1, li->y - 1, li->w - 2, 3, 1, COLOR_YELLOW
+      );
 
-  // Breite der Frequenz ermitteln
-  int freqWidth = spr.textWidth(freqBuf);
+      spr.fillTriangle(
+        li->x, li->y,
+        li->x + 2, li->y - 2,
+        li->x + 2, li->y - 2,
+        COLOR_YELLOW
+      );
 
-  // Einheit direkt hinter der Frequenz
+      spr.fillTriangle(
+        li->x + li->w - 1, li->y,
+        li->x + li->w - 3, li->y - 2,
+        li->x + li->w - 3, li->y + 2,
+        COLOR_YELLOW
+      );
+    }
+    else
+    {
+      spr.fillRoundRect(
+        li->x, li->y - 1, li->w, 3, 1, COLOR_GREEN
+      );
+    }
+  }
+
+  // Einheit neben der Frequenz
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextDatum(ML_DATUM);
-  spr.setTextColor(0x9CD3);
+  spr.setTextColor(COLOR_UNIT);
 
-  int unitX = 160 + (freqWidth / 2) + 4;
-  spr.drawString(unitBuf, unitX, 68);
+  spr.drawString(
+    currentMode == FM ? "MHz" : "kHz",
+    freqX + 5,
+    freqY + 17
+  );
 
-  // 6. S-Meter: untere Displayzeile
-  int barW = 220;
-  int barH = 7;
-  int barX = (320 - barW) / 2;
-  int barY = 160;
+  // 6. S-Meter
+  const int barW = 220;
+  const int barH = 7;
+  const int barX = (320 - barW) / 2;
+  const int barY = 160;
 
   int currentBarW = map(
     constrain(rssi, 0, 60),
@@ -160,16 +267,14 @@ void drawLayoutClean()
     5, barW
   );
 
-  // Hintergrund-Schiene
   spr.fillRoundRect(
-    barX, barY, barW, barH, 3, 0x2104
+    barX, barY, barW, barH, 3, COLOR_GREY
   );
 
-  // Signal-Ausschlag
   if (currentBarW > 0)
   {
     spr.fillRoundRect(
-      barX, barY, currentBarW, barH, 3, 0x07E0
+      barX, barY, currentBarW, barH, 3, COLOR_GREEN
     );
   }
 
