@@ -60,6 +60,7 @@ void drawLayoutTEF6686()
     COLOR_BLUE
   );
 
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_GREEN);
 
@@ -70,9 +71,9 @@ void drawLayoutTEF6686()
   );
 
   // ------------------------------------------------
-  // 3. Rechter Statusbereich
+  // 3. Rechter Statuskasten
   // Oben: STEREO/MONO oder Betriebsmodus
-  // Unten: MHz oder kHz
+  // Unten: MHz/kHz
   // ------------------------------------------------
   const int statusX = 242;
   const int statusY = 18;
@@ -80,6 +81,7 @@ void drawLayoutTEF6686()
   const int statusH = 50;
   const int statusMidY = statusY + statusH / 2;
 
+  // Rahmen nur für den unteren Einheitenbereich
   spr.fillRect(
     statusX,
     statusY,
@@ -88,25 +90,15 @@ void drawLayoutTEF6686()
     COLOR_BLACK
   );
 
-  // Äußerer Rahmen bleibt erhalten
   spr.drawRect(
     statusX,
-    statusY,
+    statusMidY,
     statusW,
-    statusH,
+    statusH - (statusMidY - statusY),
     COLOR_BLUE
   );
 
-  // Trennlinie zwischen Status und Einheit
-  spr.drawLine(
-    statusX,
-    statusMidY,
-    statusX + statusW - 1,
-    statusMidY,
-    COLOR_BLUE
-  );
-
-  // STEREO/MONO wieder fett
+  // STEREO/MONO ohne Kasten, kräftige Schrift
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_CYAN);
@@ -140,7 +132,6 @@ void drawLayoutTEF6686()
 
   if (currentMode == FM)
   {
-    // FM: z.B. 107.90 MHz
     snprintf(
       freqBuf,
       sizeof(freqBuf),
@@ -153,12 +144,10 @@ void drawLayoutTEF6686()
   }
   else if (isSSB())
   {
-    // USB/LSB: Frequenz inklusive BFO
     long long freq =
       (long long)currentFrequency * 1000LL + currentBFO;
 
     bool negative = (freq < 0);
-
     if (negative)
       freq = -freq;
 
@@ -175,7 +164,6 @@ void drawLayoutTEF6686()
   }
   else
   {
-    // AM/MW/KW/LW: drei Nachkommastellen
     snprintf(
       freqBuf,
       sizeof(freqBuf),
@@ -188,14 +176,14 @@ void drawLayoutTEF6686()
 
   // ------------------------------------------------
   // 5. Frequenz
-  // Größer, kräftig und etwas tiefer positioniert
+  // Etwas größer, normale Schrift, mittig
   // ------------------------------------------------
   const int freqX = 62;
-  const int freqY = 51;
+  const int freqY = 48;
   const int freqAvailableW = statusX - freqX - 5;
   const int freqCenterX = freqX + freqAvailableW / 2;
 
-  spr.setFont(&lgfx::fonts::FreeSansBold12pt7b);
+  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_GREEN);
 
@@ -206,24 +194,17 @@ void drawLayoutTEF6686()
     30
   );
 
-  // Leicht versetzt doppelt zeichnen für kräftigere Schrift
   spr.drawString(
     freqBuf,
     freqCenterX,
     freqY
   );
 
-  spr.drawString(
-    freqBuf,
-    freqCenterX + 1,
-    freqY
-  );
-
   spr.clearClipRect();
 
   // ------------------------------------------------
-  // 6. Einheit im unteren Teil des Statuskastens
-  // BW/Auto wird nicht angezeigt
+  // 6. Einheit immer im unteren Statusbereich
+  // Kein BW/Auto
   // ------------------------------------------------
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
@@ -280,13 +261,11 @@ void drawLayoutTEF6686()
 
   unsigned long elapsed = now - lastMeterUpdate;
 
-  // Schneller Anstieg
   if (targetW >= displayedW)
   {
     displayedW = targetW;
     lastMeterUpdate = now;
   }
-  // Verzögerter Rücklauf
   else if (elapsed >= 150)
   {
     int steps = elapsed / 150;
@@ -330,10 +309,7 @@ void drawLayoutTEF6686()
 
   if (displayedW > 0)
   {
-    int greenW = min(
-      displayedW,
-      greenEnd
-    );
+    int greenW = min(displayedW, greenEnd);
 
     if (greenW > 0)
     {
