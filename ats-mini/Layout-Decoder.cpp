@@ -29,7 +29,9 @@ void drawLayoutDecoder()
   {
     spr.setTextDatum(TR_DATUM);
     spr.setTextColor(TH.text_warn);
-    spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17, FONT_SMALL);
+    // Modernisierter Font-Aufruf für den Theme-Namen
+    spr.setFont(&lgfx::fonts::FreeSans9pt7b);
+    spr.drawString(TH.name, 319, BATT_OFFSET_Y + 17);
   }
 
   // 2. Frequenz & Einheit
@@ -56,7 +58,10 @@ void drawLayoutDecoder()
     
     spr.setTextDatum(CC_DATUM);
     spr.setTextColor(isStereo ? 0x07E0 : 0xF800); // 0x07E0 = Neongrün, 0xF800 = Neonrot
-    spr.drawString(isStereo ? "STEREO" : "MONO", boxX + boxW / 2, boxY + boxH / 2, 2);
+    
+    // Modernisierter Font-Aufruf statt veraltetem Index '2'
+    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+    spr.drawString(isStereo ? "STEREO" : "MONO", boxX + boxW / 2, boxY + boxH / 2);
   }
 
   // 3. Sendername / RDS weiter nach oben gesetzt (Y = 90)
@@ -153,7 +158,9 @@ void drawLayoutDecoder()
       spr.setTextColor(0x07E0);
       spr.setTextSize(1.0);
       spr.setTextDatum(TC_DATUM);
-      spr.drawString(rt ? rt : pi, 145, 160, 4);
+      // Modernisierter Font-Aufruf statt veraltetem Index '4'
+      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+      spr.drawString(rt ? rt : pi, 145, 160);
     }
   }
 }
