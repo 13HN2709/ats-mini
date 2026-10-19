@@ -51,6 +51,44 @@ void drawLayoutTEF6686()
     modeY + modeH / 2
   );
 
+  
+  // 4a. Mono-/Stereo-Anzeige unter dem Modusfeld
+  const int audioX = 10;
+  const int audioY = 48;
+  const int audioW = 48;
+  const int audioH = 20;
+
+  spr.drawRoundRect(
+    audioX, audioY, audioW, audioH, 3, COLOR_BLUE
+  );
+
+  bool stereoActive =
+    (currentMode == FM) &&
+    (fmStereoIdx != FM_STEREO_MONO) &&
+    rx.getCurrentPilot();
+
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setTextDatum(MC_DATUM);
+
+  if (stereoActive)
+  {
+    spr.setTextColor(COLOR_RED);
+    spr.drawString(
+      "ST",
+      audioX + audioW / 2,
+      audioY + audioH / 2
+    );
+  }
+  else
+  {
+    spr.setTextColor(TFT_WHITE);
+    spr.drawString(
+      "MO",
+      audioX + audioW / 2,
+      audioY + audioH / 2
+    );
+  }
+
   // 5. Einheit rechts oben
   // Das doppelte USB/LSB entfällt hier.
   // Die Modulationsanzeige bleibt links erhalten.
