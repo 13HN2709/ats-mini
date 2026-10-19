@@ -107,9 +107,10 @@ void drawLayoutNewUI()
     if((rt && *rt) || (pi && *pi))
     {
       spr.setTextColor(0x07E0);
-      spr.setTextSize(1.0);
       spr.setTextDatum(TC_DATUM);
-      spr.drawString(rt ? rt : pi, 145, 150, 4);
+      // Modernisierter Font-Aufruf statt veraltetem Index '4'
+      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+      spr.drawString(rt ? rt : pi, 145, 150);
     }
   }
 }
