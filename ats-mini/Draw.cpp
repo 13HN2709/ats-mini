@@ -232,12 +232,12 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
       sprintf(text, ".%3.3lu", freq % 1000);
       spr.drawString(text, 4+x, 17+y, FONT_LARGE);
     }
-    else
-    {
-      spr.drawNumber(freq, x, y, FONT_DIGITS);
-      spr.setTextDatum(ML_DATUM);
-      spr.drawString(".000", 4+x, 17+y, FONT_LARGE);
-    }
+    
+else
+{
+  // AM: Ganzzahl ohne künstliche Nachkommastellen
+  spr.drawNumber(freq, x, y, FONT_DIGITS);
+}
 
     spr.setTextColor(unitColor);
     spr.drawString("kHz", ux, uy);
