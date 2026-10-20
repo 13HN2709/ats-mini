@@ -237,7 +237,7 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
     else
     {
       // AM: Ganzzahl ohne künstliche Nachkommastellen
-      spr.drawNumber(freq / 1000, x, y, FONT_DIGITS);
+      spr.drawNumber(freq, x, y, FONT_DIGITS);
     }
 
     spr.setTextDatum(L_BASELINE);
