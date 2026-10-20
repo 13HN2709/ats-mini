@@ -15,7 +15,10 @@ void drawLayoutDecoder()
   drawSaveIndicator(SAVE_OFFSET_X, SAVE_OFFSET_Y);
   drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
   bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
-  drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
+  drawWiFiIndicator(
+    has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13,
+    WIFI_OFFSET_Y
+  );
 
   // 1. Band und Modus (mittig oben)
   spr.setFont(&lgfx::fonts::Orbitron_Light_24);
@@ -51,49 +54,37 @@ void drawLayoutDecoder()
       : 100
   );
 
-  // Stereo / Mono Status-Kasten
+  // 3. Stereo / Mono ohne Kasten
   if(currentMode == FM)
   {
     bool isStereo =
       (fmStereoIdx != FM_STEREO_MONO) && rx.getCurrentPilot();
 
-    int boxX = 237;
-    int boxY = 62;
-    int boxW = 65;
-    int boxH = 18;
-
-    // Weißer Kasten mit schwarzem Hintergrund
-    spr.drawRect(boxX, boxY, boxW, boxH, 0xFFFF);
-    spr.fillRect(
-      boxX + 1,
-      boxY + 1,
-      boxW - 2,
-      boxH - 2,
-      0x0000
-    );
-
-    spr.setTextDatum(CC_DATUM);
+    spr.setTextDatum(TL_DATUM);
     spr.setTextColor(isStereo ? 0x07E0 : 0xF800);
-
-    // Kleinere Schrift, damit STEREO/MONO in den Kasten passt
     spr.setFont(&lgfx::fonts::FreeSans9pt7b);
+
     spr.drawString(
       isStereo ? "STEREO" : "MONO",
-      boxX + boxW / 2,
-      boxY + boxH / 2
+      240,
+      62
     );
   }
 
-  // 3. Sendername (Position bleibt unverändert bei Y = 90)
+  // 4. Sendername (Position unverändert bei Y = 90)
   const char *stationName = getStationName();
 
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0x07E0);
 
   if(*stationName == 0xFF)
+  {
     drawLongStationName(stationName + 1, 145, 90);
+  }
   else if(*stationName)
+  {
     drawStationName(stationName, 145, 90);
+  }
 
   // Menü / Sidebar bei Tastendruck
   if(currentCmd != CMD_NONE &&
@@ -103,7 +94,7 @@ void drawLayoutDecoder()
     drawSideBar(currentCmd, MENU_OFFSET_X, MENU_OFFSET_Y, MENU_DELTA_X);
   }
 
-  // 4. Unten: Der Wasserfall
+  // 5. Unten: Der Wasserfall
   int wfX = 20;
   int wfY = 132;
   int wfW = 280;
@@ -111,8 +102,13 @@ void drawLayoutDecoder()
 
   spr.drawRect(wfX, wfY, wfW, wfH, 0xFFFF);
 
-  // Weiße Trennlinie am inneren oberen Rand des Wasserfalls
-  spr.drawFastHLine(wfX + 1, wfY + 1, wfW - 2, 0xFFFF);
+  // Weiße Trennlinie am inneren oberen Rand
+  spr.drawFastHLine(
+    wfX + 1,
+    wfY + 1,
+    wfW - 2,
+    0xFFFF
+  );
 
   int wfInnerW = wfW - 2;
   int wfInnerH = wfH - 3;
@@ -146,7 +142,14 @@ void drawLayoutDecoder()
   int maxRssi = (currentMode == FM) ? 35 : 45;
 
   int maxHalfWidth = 55;
-  int baseWidth = map(currentRssi, 0, maxRssi, 4, maxHalfWidth);
+  int baseWidth = map(
+    currentRssi,
+    0,
+    maxRssi,
+    4,
+    maxHalfWidth
+  );
+
   int jitter = (rand() % 5) - 2;
   int halfWidth = constrain(
     baseWidth + jitter,
@@ -218,8 +221,8 @@ void drawLayoutDecoder()
   // Wasserfall unter der weißen Trennlinie anzeigen
   wfSpr.pushSprite(&spr, wfX + 1, wfY + 2);
 
-  // 5. Statusanzeige
-  // Kein zusätzlicher RDS-Text unter dem Wasserfall mehr
+  // 6. Statusanzeige
+  // Kein zusätzlicher RDS-Text unter dem Wasserfall
   if(currentCmd == CMD_SCAN)
   {
     drawScanGraphs(
