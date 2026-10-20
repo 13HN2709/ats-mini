@@ -141,7 +141,7 @@ bool clickFreqKeypad(bool shortPress)
   return true;
 }
 
-// Zeichnen des Keypads mit angepasster, gut lesbarer Feldhöhe oben
+// Zeichnen des Keypads mit modernen IFont-Zeigern (kompatibel mit -Werror)
 void drawFreqKeypad()
 {
   int boxX = 6;
@@ -153,12 +153,13 @@ void drawFreqKeypad()
   spr.drawRoundRect(boxX, boxY, boxW, boxH, 4, 0xFCA0);
   spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, 0xFCA0);
 
-  // Titel
+  // Titel mit modernem Font
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TC_DATUM);
   spr.setTextColor(0xFD20);
-  spr.drawString("FREQUENCY INPUT MENU", boxX + boxW / 2, boxY + 3, 1);
+  spr.drawString("FREQUENCY INPUT MENU", boxX + boxW / 2, boxY + 3);
 
-  // Frequenz-Anzeigefeld (Vergrößerte Höhe auf 26 Pixel für fehlerfreie Darstellung)
+  // Frequenz-Anzeigefeld
   int displayH = 26;
   spr.fillRect(boxX + 8, boxY + 15, boxW - 100, displayH, 0x0000);
   spr.drawRoundRect(boxX + 8, boxY + 15, boxW - 100, displayH, 2, 0xFCA0);
@@ -173,9 +174,8 @@ void drawFreqKeypad()
     snprintf(displayBuf, sizeof(displayBuf), "--- %s", inputInMHz ? "MHz" : "kHz");
   }
   
-  spr.setTextSize(2);
-  spr.drawString(displayBuf, boxX + 8 + (boxW - 100) / 2, boxY + 15 + displayH / 2, 1);
-  spr.setTextSize(1);
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.drawString(displayBuf, boxX + 8 + (boxW - 100) / 2, boxY + 15 + displayH / 2);
 
   // Modus-Auswahltaste rechts oben (Index 16)
   int modeX = boxX + boxW - 88;
@@ -193,9 +193,8 @@ void drawFreqKeypad()
   }
   spr.drawRoundRect(modeX, modeY, modeW, modeH, 2, 0xFCA0);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextSize(2);
-  spr.drawString(bandModeDesc[tempMode], modeX + modeW / 2, modeY + modeH / 2, 1);
-  spr.setTextSize(1);
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.drawString(bandModeDesc[tempMode], modeX + modeW / 2, modeY + modeH / 2);
 
   // 4x4 Tastenfeld
   int startX = boxX + 8;
@@ -227,14 +226,12 @@ void drawFreqKeypad()
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.setTextSize(2);
+    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
     
     if (i == 13) {
-      spr.drawString(inputInMHz ? "MHz" : "kHz", x + btnW / 2, y + btnH / 2, 1);
+      spr.drawString(inputInMHz ? "MHz" : "kHz", x + btnW / 2, y + btnH / 2);
     } else {
-      spr.drawString(keypadLayout[i], x + btnW / 2, y + btnH / 2, 1);
+      spr.drawString(keypadLayout[i], x + btnW / 2, y + btnH / 2);
     }
-    
-    spr.setTextSize(1);
   }
 }
