@@ -117,17 +117,24 @@ void drawMessage(const char *msg)
 }
 
 //
-// Draw band and mode indicators (Farbe auf Weiß 0xFFFF angepasst)
+// Draw band and mode indicators
 //
 void drawBandAndMode(const char *band, const char *mode, int x, int y)
 {
   spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(0xFFFF);
+  spr.setTextColor(TH.band_text);
   uint16_t band_width = spr.drawString(band, x, y);
 
   spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(0xFFFF);
-  spr.drawString(mode, x + band_width / 2 + 10, y);
+  spr.setTextColor(TH.mode_text);
+  uint16_t mode_width = spr.drawString(mode, x + band_width / 2 + 12, y + 8, FONT_SMALL);
+
+  spr.drawRoundRect(x + band_width / 2 + 8, y + 7, mode_width + 8, 17, 4, TH.mode_border);
+
+  int vfoX = x + band_width / 2 + mode_width + 20;
+  spr.drawRoundRect(vfoX, y + 7, 17, 17, 4, TH.mode_border);
+  spr.setTextDatum(TC_DATUM);
+  spr.drawString(vfoIdx? "B" : "A", vfoX + 9, y + 8, FONT_SMALL);
 }
 
 //
@@ -156,7 +163,7 @@ void drawRadioText(int y, int ymax)
 }
 
 //
-// Draw frequency
+// Draw frequency (Stabile Original-Logik nach Max Arnold)
 //
 void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
 {
@@ -213,10 +220,10 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
   if(currentMode==FM)
   {
     li = hl<ITEM_COUNT(hlDigitsFM)? &hlDigitsFM[hl] : 0;
-    spr.drawFloat(freq/100.00, 2, x, y, FONT_DIGITS);
-    spr.setTextDatum(ML_DATUM);
+    spr.drawFloat(freq/1000000.0, 2, x, y, FONT_DIGITS);
+    spr.setTextDatum(L_BASELINE);
     spr.setTextColor(unitColor);
-    spr.drawString("MHz", ux, uy);
+    spr.drawString("MHz", ux, uy + 17);
   }
   else
   {
@@ -225,22 +232,22 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
     if(isSSB())
     {
       char text[32];
-      freq = freq * 1000 + currentBFO;
-      sprintf(text, "%3.3lu", freq / 1000);
+      uint32_t ssbFreq = freq * 1000 + currentBFO;
+      sprintf(text, "%3.3lu", ssbFreq / 1000);
       spr.drawString(text, x, y, FONT_DIGITS);
       spr.setTextDatum(ML_DATUM);
-      sprintf(text, ".%3.3lu", freq % 1000);
+      sprintf(text, ".%3.3lu", ssbFreq % 1000);
       spr.drawString(text, 4+x, 17+y, FONT_LARGE);
     }
     else
     {
-      spr.drawNumber(freq, x, y, FONT_DIGITS);
-      spr.setTextDatum(ML_DATUM);
-      spr.drawString(".000", 4+x, 17+y, FONT_LARGE);
+      // AM: Reine Ganzzahl ohne künstliches .000 (Crash-sicher)
+      spr.drawNumber(freq / 1000, x, y, FONT_DIGITS);
     }
 
+    spr.setTextDatum(L_BASELINE);
     spr.setTextColor(unitColor);
-    spr.drawString("kHz", ux, uy);
+    spr.drawString("kHz", ux, uy + 19);
   }
 
   if(li)
@@ -248,7 +255,7 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
     if(selectOn)
     {
       spr.fillRoundRect(li->x + 1, li->y - 1, li->w - 2, 3, 1, TH.freq_hl_sel);
-      spr.fillTriangle(li->x, li->y, li->x + 2, li->y - 2, li->x + 2, li->y - 2, TH.freq_hl_sel);
+      spr.fillTriangle(li->x, li->y, li->x + 2, li->y - 2, li->x + 2, li->y + 2, TH.freq_hl_sel);
       spr.fillTriangle(li->x + li->w - 1, li->y, li->x + li->w - 3, li->y - 2, li->x + li->w - 3, li->y + 2, TH.freq_hl_sel);
     }
     else
@@ -259,224 +266,55 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
 }
 
 //
-// Draw tuner scale Roehrenradiostyle
+// Draw tuner scale
 //
 void drawScale(uint32_t freq)
 {
-  spr.fillCircle(160, 140, 5, 0xF800);
-  spr.drawFastVLine(160, 145, 24, 0xF800);
-  spr.drawFastVLine(161, 145, 24, 0xF800);
-  spr.drawFastHLine(0, 148, 320, TH.scale_line);
-  spr.drawFastHLine(0, 169, 320, TH.scale_line);
+  spr.fillTriangle(156, 120, 160, 130, 164, 120, TH.scale_pointer);
+  spr.drawLine(160, 130, 160, 169, TH.scale_pointer);
 
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.scale_text);
 
   int16_t slack = 3;
-  int16_t offset = ((freq % 10) / 10.0 + slack) * 8;
-  freq = freq / 10 - 20 - slack;
+  const uint32_t step = currentMode == FM ? 100000 : 10000;
+  int16_t offset = (uint64_t)(freq % step) * 8 / step + slack * 8;
+  int64_t tickFreq = ((int64_t)(freq / step) - 20 - slack) * step;
 
   const Band *band = getCurrentBand();
-  uint32_t minFreq = band->minimumFreq / 10;
-  uint32_t maxFreq = band->maximumFreq / 10;
+  uint32_t minFreq = band->minimumFreq;
+  uint32_t maxFreq = band->maximumFreq;
 
-  for(int i=0 ; i<(slack + 41 + slack) ; i++, freq++)
+  for(int i=0 ; i<(slack + 41 + slack) ; i++, tickFreq+=step)
   {
     int16_t x = i * 8 - offset;
-    if(freq >= minFreq && freq <= maxFreq)
+    if(tickFreq >= minFreq && tickFreq <= maxFreq)
     {
-      uint16_t lineColor = (i==20) && (!offset || (!(freq%5) && offset==1))?
-        0xF800 : TH.scale_line;
+      uint16_t lineColor = (i==20) && (!offset || (!(tickFreq % (5 * step)) && offset==1))?
+        TH.scale_pointer : TH.scale_line;
 
-      if((freq % 10) == 0)
+      if((tickFreq % (10 * step)) == 0)
       {
-        spr.drawFastVLine(x, 149, 20, lineColor);
-        spr.drawFastVLine(x + 1, 149, 20, lineColor);
-
+        spr.drawLine(x, 169, x, 150, lineColor);
+        spr.drawLine(x + 1, 169, x + 1, 150, lineColor);
         if(currentMode == FM)
-          spr.drawFloat(freq / 10.0, 1, x, 140, FONT_SMALL);
-        else if(freq >= 100)
-          spr.drawFloat(freq / 100.0, 3, x, 140, FONT_SMALL);
+          spr.drawFloat(tickFreq / 1000000.0, 1, x, 140, FONT_SMALL);
+        else if(tickFreq >= 1000000)
+          spr.drawFloat(tickFreq / 1000000.0, 3, x, 140, FONT_SMALL);
         else
-          spr.drawNumber(freq * 10, x, 140, FONT_SMALL);
+          spr.drawNumber(tickFreq / 1000, x, 140, FONT_SMALL);
       }
-      else if((freq % 5) == 0 && (freq % 10) != 0)
+      else if((tickFreq % (5 * step)) == 0 && (tickFreq % (10 * step)) != 0)
       {
-        spr.drawFastVLine(x, 157, 12, lineColor);
+        spr.drawLine(x, 169, x, 155, lineColor);
+        spr.drawLine(x + 1, 169, x + 1, 155, lineColor);
       }
       else
       {
-        spr.drawFastVLine(x, 162, 7, lineColor);
+        spr.drawLine(x, 169, x, 160, lineColor);
       }
     }
   }
-}
-
-//
-// Standard S-Meter
-//
-void drawSMeter(int strength, int x, int y)
-{
-  static int peakBar = 0;
-  static uint32_t lastPeakTime = 0;
-  static uint32_t lastDecayTime = 0;
-
-  uint32_t now = millis();
-
-  if (strength >= peakBar) {
-    peakBar = strength;
-    lastPeakTime = now;
-    lastDecayTime = now;
-  } 
-  else if (now - lastPeakTime > 1200) {
-    if (now - lastDecayTime > 150) {
-      if (peakBar > 0) peakBar--;
-      lastDecayTime = now;
-    }
-  }
-
-  spr.drawTriangle(x + 1, y + 1, x + 11, y + 1, x + 6, y + 6, 0xFCA0);
-  spr.drawLine(x + 6, y + 1, x + 6, y + 14, 0xFCA0);
-
-  for(int i = 0; i < 17; i++)
-  {
-    int barX = 15 + x + (i * 4);
-
-    if (i == peakBar && peakBar > 0)
-    {
-      spr.fillRect(barX, 2 + y, 2, 12, 0xF800);
-    }
-    else if (i < 10 && i < strength)
-    {
-      spr.fillRect(barX, 2 + y, 2, 12, 0xFCA0);
-    }
-    else if (i < strength)
-    {
-      spr.fillRect(barX, 2 + y, 2, 12, TH.smeter_bar_plus);
-    }
-    else
-    {
-      spr.fillRect(barX, 2 + y, 2, 12, TH.smeter_bar_empty);
-    }
-  }
-}
-
-//
-// Kompaktes S-Meter im H.J. Berndt Design
-//
-void drawCompactSMeter(int strength, int x, int y)
-{
-  int smeterX = x;
-  int smeterY = y;
-
-  spr.drawRoundRect(smeterX, smeterY, 96, 22, 2, 0xFFFF);
-  
-  spr.fillTriangle(smeterX + 6, smeterY + 11, smeterX + 12, smeterY + 6, smeterX + 12, smeterY + 16, 0xFFFF);
-  spr.fillTriangle(smeterX + 90, smeterY + 11, smeterX + 84, smeterY + 6, smeterX + 84, smeterY + 16, 0xFFFF);
-
-  spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(0xFFFF);
-  char sigText[16];
-  sprintf(sigText, "SIG %02d/%02d", rx.getCurrentRSSI(), rx.getCurrentSNR());
-  spr.drawString(sigText, smeterX + 48, smeterY + 3, FONT_SMALL);
-
-  int bars = map(strength, 0, 60, 0, 10);
-  bars = constrain(bars, 0, 10);
-  for (int i = 0; i < 10; i++) {
-    uint16_t color = (i < bars) ? 0x07E0 : TH.smeter_bar_empty;
-    spr.fillRect(smeterX + 16 + (i * 6), smeterY + 14, 4, 6, color);
-  }
-}
-
-//
-// Draw stereo indicator
-//
-void drawStereoIndicator(int x, int y, bool stereo)
-{
-  if(stereo)
-  {
-    spr.fillRect(15 + x, 7 + y, 4 * 17 - 2, 2, TH.bg);
-  }
-}
-
-//
-// Draw RDS station name
-//
-void drawStationName(const char *name, int x, int y)
-{
-  spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(TH.rds_text);
-  spr.drawString(name, x, y, FONT_LARGE);
-}
-
-//
-// Draw long (EIBI) station name
-//
-void drawLongStationName(const char *name, int x, int y)
-{
-  int width = spr.textWidth(name, FONT_SMALL);
-  spr.setTextColor(TH.rds_text);
-
-  if((x + width) >= 320)
-  {
-    spr.setTextDatum(TL_DATUM);
-    spr.drawString(name, x, y, FONT_SMALL);
-  }
-  else if(width <= 60)
-  {
-    spr.setTextDatum(TC_DATUM);
-    spr.drawString(name, x + (320 - x) / 3, y, FONT_SMALL);
-  }
-  else
-  {
-    spr.setTextDatum(TC_DATUM);
-    spr.drawString(name, x + (320 - x + width) / 4, y, FONT_SMALL);
-  }
-}
-
-//
-// Draw scan graphs
-//
-void drawScanGraphs(uint32_t freq)
-{
-  int16_t offset = (freq % 10) / 10.0 * 8;
-  freq = freq / 10 - 20;
-
-  const Band *band = getCurrentBand();
-  uint32_t minFreq = band->minimumFreq / 10;
-  uint32_t maxFreq = band->maximumFreq / 10;
-
-  for(int i=0 ; i<41 ; i++, freq++)
-  {
-    int16_t x = i * 8 - offset;
-
-    if(freq >= minFreq && freq <= maxFreq)
-    {
-      if((freq % 5) == 0) {
-        for(int y=0; y<42; y+=2) {
-          spr.drawPixel(x, 169-y, TH.scan_grid);
-        }
-      }
-
-      if((freq+1) <= maxFreq) {
-        for(int xd=x; xd<(x+8); xd+=2) {
-          spr.drawPixel(xd, 169-40, TH.scan_grid);
-          spr.drawPixel(xd, 169-30, TH.scan_grid);
-          spr.drawPixel(xd, 169-20, TH.scan_grid);
-          spr.drawPixel(xd, 169-10, TH.scan_grid);
-          spr.drawPixel(xd, 169-0, TH.scan_grid);
-        }
-        int snr1 = 40 * scanGetSNR(freq * 10);
-        int snr2 = 40 * scanGetSNR((freq+1) * 10);
-        spr.drawLine(x, 169-snr1, x+8, 169-snr2, TH.scan_snr);
-        int rssi1 = 40 * scanGetRSSI(freq * 10);
-        int rssi2 = 40 * scanGetRSSI((freq+1) * 10);
-        spr.drawLine(x, 169-rssi1, x+8, 169-rssi2, TH.scan_rssi);
-      }
-    }
-  }
-  spr.fillTriangle(156, 125, 160, 130, 164, 125, TH.scale_pointer);
-  spr.drawLine(160, 130, 160, 169, TH.scale_pointer);
 }
 
 //
@@ -486,7 +324,6 @@ void drawScreen()
 {
   if(sleepOn()) return;
 
-  // Keypad-Overlay sofort zeichnen und anzeigen, wenn aktiv
   if(currentCmd == CMD_FREQ_KEYPAD)
   {
     drawFreqKeypad();
@@ -502,7 +339,7 @@ void drawScreen()
     return;
   }
 
-    switch(uiLayoutIdx)
+  switch(uiLayoutIdx)
   {
     case 1:
       drawLayoutSmeter();
