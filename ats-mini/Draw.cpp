@@ -1,3 +1,4 @@
+
 #include "Common.h"
 #include "Themes.h"
 #include "Storage.h"
@@ -5,7 +6,7 @@
 #include "Menu.h"
 #include "BleMode.h"
 #include "Draw.h"
-#include "FreqKeypad.h" // <--- Eingebundenes Keypad-Modul
+#include "FreqKeypad.h" // Eingebundenes Keypad-Modul
 
 // Layout-Prototypen
 void drawLayoutSmeter();
@@ -130,11 +131,6 @@ void drawBandAndMode(const char *band, const char *mode, int x, int y)
   uint16_t mode_width = spr.drawString(mode, x + band_width / 2 + 12, y + 8, FONT_SMALL);
 
   spr.drawRoundRect(x + band_width / 2 + 8, y + 7, mode_width + 8, 17, 4, TH.mode_border);
-
-  int vfoX = x + band_width / 2 + mode_width + 20;
-  spr.drawRoundRect(vfoX, y + 7, 17, 17, 4, TH.mode_border);
-  spr.setTextDatum(TC_DATUM);
-  spr.drawString(vfoIdx? "B" : "A", vfoX + 9, y + 8, FONT_SMALL);
 }
 
 //
@@ -143,16 +139,16 @@ void drawBandAndMode(const char *band, const char *mode, int x, int y)
 void drawRadioText(int y, int ymax)
 {
   const char *rt = getRadioText();
-  
+
   spr.setTextColor(0x07E0);
   spr.setTextSize(1.0);
 
-  if (rt && *rt) 
+  if (rt && *rt)
   {
     spr.setTextDatum(TC_DATUM);
     spr.drawString(rt, 160, y, 4);
-  } 
-  else 
+  }
+  else
   {
     spr.setTextDatum(TL_DATUM);
 
@@ -351,10 +347,10 @@ void drawScreen()
       drawLayoutDecoder();
       break;
     case 4:
-      drawLayoutClean(); 
+      drawLayoutClean();
       break;
     case 5:
-      drawLayoutTEF6686(); 
+      drawLayoutTEF6686();
       break;
     default:
       drawLayoutDefault();
