@@ -141,8 +141,8 @@ void drawLayoutTEF6686()
   const int barW = 250;
   const int barH = 7;
 
-  int signal = constrain((int)rx.getCurrentRSSI(), 0, 60);
-  int targetW = map(signal, 0, 60, 0, barW);
+  int signal = constrain((int)rx.getCurrentRSSI(), 0, 45);
+  int targetW = map(signal, 0, 45, 0, barW);
 
   static int displayedW = 0;
   static unsigned long lastMeterUpdate = 0;
