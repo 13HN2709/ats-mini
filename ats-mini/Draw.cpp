@@ -13,7 +13,6 @@ void drawLayoutNewUI();
 void drawLayoutDecoder();
 void drawLayoutDefault();
 void drawLayoutClean();
-void drawLayoutTEF6686();
 
 uint32_t lastTuneTime = 0;
 
@@ -122,14 +121,12 @@ void drawMessage(const char *msg)
 void drawBandAndMode(const char *band, const char *mode, int x, int y)
 {
   spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(TH.band_text);
+  spr.setTextColor(0xFFFF);
   uint16_t band_width = spr.drawString(band, x, y);
 
   spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(TH.mode_text);
-  uint16_t mode_width = spr.drawString(mode, x + band_width / 2 + 12, y + 8, FONT_SMALL);
-
-  spr.drawRoundRect(x + band_width / 2 + 8, y + 7, mode_width + 8, 17, 4, TH.mode_border);
+  spr.setTextColor(0xFFFF);
+  spr.drawString(mode, x + band_width / 2 + 10, y);
 }
 
 //
@@ -215,10 +212,10 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
   if(currentMode==FM)
   {
     li = hl<ITEM_COUNT(hlDigitsFM)? &hlDigitsFM[hl] : 0;
-    spr.drawFloat(freq/1000000.0, 2, x, y, FONT_DIGITS);
-    spr.setTextDatum(L_BASELINE);
+    spr.drawFloat(freq/100.00, 2, x, y, FONT_DIGITS);
+    spr.setTextDatum(ML_DATUM);
     spr.setTextColor(unitColor);
-    spr.drawString("MHz", ux, uy + 17);
+    spr.drawString("MHz", ux, uy);
   }
   else
   {
@@ -227,22 +224,22 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
     if(isSSB())
     {
       char text[32];
-      uint32_t ssbFreq = freq * 1000 + currentBFO;
-      sprintf(text, "%3.3lu", ssbFreq / 1000);
+      freq = freq * 1000 + currentBFO;
+      sprintf(text, "%3.3lu", freq / 1000);
       spr.drawString(text, x, y, FONT_DIGITS);
       spr.setTextDatum(ML_DATUM);
-      sprintf(text, ".%3.3lu", ssbFreq % 1000);
+      sprintf(text, ".%3.3lu", freq % 1000);
       spr.drawString(text, 4+x, 17+y, FONT_LARGE);
     }
     else
     {
-      // AM: Ganzzahl ohne künstliche Nachkommastellen
       spr.drawNumber(freq, x, y, FONT_DIGITS);
+      spr.setTextDatum(ML_DATUM);
+      spr.drawString(".000", 4+x, 17+y, FONT_LARGE);
     }
 
-    spr.setTextDatum(L_BASELINE);
     spr.setTextColor(unitColor);
-    spr.drawString("kHz", ux, uy + 19);
+    spr.drawString("kHz", ux, uy);
   }
 
   if(li)
@@ -250,7 +247,7 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
     if(selectOn)
     {
       spr.fillRoundRect(li->x + 1, li->y - 1, li->w - 2, 3, 1, TH.freq_hl_sel);
-      spr.fillTriangle(li->x, li->y, li->x + 2, li->y - 2, li->x + 2, li->y + 2, TH.freq_hl_sel);
+      spr.fillTriangle(li->x, li->y, li->x + 2, li->y - 2, li->x + 2, li->y - 2, TH.freq_hl_sel);
       spr.fillTriangle(li->x + li->w - 1, li->y, li->x + li->w - 3, li->y - 2, li->x + li->w - 3, li->y + 2, TH.freq_hl_sel);
     }
     else
@@ -265,48 +262,50 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
 //
 void drawScale(uint32_t freq)
 {
-  spr.fillTriangle(156, 120, 160, 130, 164, 120, TH.scale_pointer);
-  spr.drawLine(160, 130, 160, 169, TH.scale_pointer);
+  spr.fillCircle(160, 140, 5, 0xF800);
+  spr.drawFastVLine(160, 145, 24, 0xF800);
+  spr.drawFastVLine(161, 145, 24, 0xF800);
+  spr.drawFastHLine(0, 148, 320, TH.scale_line);
+  spr.drawFastHLine(0, 169, 320, TH.scale_line);
 
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.scale_text);
 
   int16_t slack = 3;
-  const uint32_t step = currentMode == FM ? 100000 : 10000;
-  int16_t offset = (uint64_t)(freq % step) * 8 / step + slack * 8;
-  int64_t tickFreq = ((int64_t)(freq / step) - 20 - slack) * step;
+  int16_t offset = ((freq % 10) / 10.0 + slack) * 8;
+  freq = freq / 10 - 20 - slack;
 
   const Band *band = getCurrentBand();
-  uint32_t minFreq = band->minimumFreq;
-  uint32_t maxFreq = band->maximumFreq;
+  uint32_t minFreq = band->minimumFreq / 10;
+  uint32_t maxFreq = band->maximumFreq / 10;
 
-  for(int i=0 ; i<(slack + 41 + slack) ; i++, tickFreq+=step)
+  for(int i=0 ; i<(slack + 41 + slack) ; i++, freq++)
   {
     int16_t x = i * 8 - offset;
-    if(tickFreq >= minFreq && tickFreq <= maxFreq)
+    if(freq >= minFreq && freq <= maxFreq)
     {
-      uint16_t lineColor = (i==20) && (!offset || (!(tickFreq % (5 * step)) && offset==1))?
-        TH.scale_pointer : TH.scale_line;
+      uint16_t lineColor = (i==20) && (!offset || (!(freq%5) && offset==1))?
+        0xF800 : TH.scale_line;
 
-      if((tickFreq % (10 * step)) == 0)
+      if((freq % 10) == 0)
       {
-        spr.drawLine(x, 169, x, 150, lineColor);
-        spr.drawLine(x + 1, 169, x + 1, 150, lineColor);
+        spr.drawFastVLine(x, 149, 20, lineColor);
+        spr.drawFastVLine(x + 1, 149, 20, lineColor);
+
         if(currentMode == FM)
-          spr.drawFloat(tickFreq / 1000000.0, 1, x, 140, FONT_SMALL);
-        else if(tickFreq >= 1000000)
-          spr.drawFloat(tickFreq / 1000000.0, 3, x, 140, FONT_SMALL);
+          spr.drawFloat(freq / 10.0, 1, x, 140, FONT_SMALL);
+        else if(freq >= 100)
+          spr.drawFloat(freq / 100.0, 3, x, 140, FONT_SMALL);
         else
-          spr.drawNumber(tickFreq / 1000, x, 140, FONT_SMALL);
+          spr.drawNumber(freq * 10, x, 140, FONT_SMALL);
       }
-      else if((tickFreq % (5 * step)) == 0 && (tickFreq % (10 * step)) != 0)
+      else if((freq % 5) == 0 && (freq % 10) != 0)
       {
-        spr.drawLine(x, 169, x, 155, lineColor);
-        spr.drawLine(x + 1, 169, x + 1, 155, lineColor);
+        spr.drawFastVLine(x, 157, 12, lineColor);
       }
       else
       {
-        spr.drawLine(x, 169, x, 160, lineColor);
+        spr.drawFastVLine(x, 162, 7, lineColor);
       }
     }
   }
@@ -486,6 +485,7 @@ void drawScreen()
 {
   if(sleepOn()) return;
 
+  // Keypad-Overlay sofort zeichnen und anzeigen, wenn aktiv
   if(currentCmd == CMD_FREQ_KEYPAD)
   {
     drawFreqKeypad();
@@ -501,7 +501,7 @@ void drawScreen()
     return;
   }
 
-  switch(uiLayoutIdx)
+    switch(uiLayoutIdx)
   {
     case 1:
       drawLayoutSmeter();
@@ -513,10 +513,7 @@ void drawScreen()
       drawLayoutDecoder();
       break;
     case 4:
-      drawLayoutClean();
-      break;
-    case 5:
-      drawLayoutTEF6686();
+      drawLayoutClean(); 
       break;
     default:
       drawLayoutDefault();
