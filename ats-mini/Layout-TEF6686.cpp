@@ -30,7 +30,7 @@ void drawLayoutTEF6686()
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(COLOR_GREEN);
-  spr.drawString(getCurrentBand()->bandName, 10, 3);
+  spr.drawString(getCurrentBand()->bandName, 34, 3);
 
   // 4. Modusfeld links
   const int modeX = 10;
