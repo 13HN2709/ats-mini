@@ -13,6 +13,7 @@ void drawLayoutNewUI();
 void drawLayoutDecoder();
 void drawLayoutDefault();
 void drawLayoutClean();
+void drawLayoutTEF6686();
 
 uint32_t lastTuneTime = 0;
 
@@ -501,7 +502,8 @@ void drawScreen()
     return;
   }
 
-    switch(uiLayoutIdx)
+    
+  switch(uiLayoutIdx)
   {
     case 1:
       drawLayoutSmeter();
@@ -513,12 +515,16 @@ void drawScreen()
       drawLayoutDecoder();
       break;
     case 4:
-      drawLayoutClean(); 
+      drawLayoutClean();
+      break;
+    case 5:
+      drawLayoutTEF6686();
       break;
     default:
       drawLayoutDefault();
       break;
   }
+
 
   spr.pushSprite(0, 0);
 }
