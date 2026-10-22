@@ -7,60 +7,125 @@
 // --------------------------------------------------
 // ATS Mini V4 - Clean Layout
 // Display: 320 x 170 Pixel
-// Frequenz: originale FONT_DIGITS / drawFrequency()
 // Bandplan-Hinweis: frequenzabhaengig, Modus-unabhaengig
+//
+// WICHTIG:
+// - Keine automatische Umschaltung der Empfangsart.
+// - UKW/FM: RDS-Radiotext bleibt erhalten.
+// - KW/MW: Bandplan, Betriebsart-Empfehlung und Ziel-QRG.
+// - Eintraege sind Empfangshinweise, keine Sendefreigabe.
 // --------------------------------------------------
 
-// Frequenzen in currentFrequency werden hier in kHz ausgewertet.
-// Diese Regeln sind eine erste Orientierung fuer den Empfang,
-// keine Sendefreigabe. Spezialbereiche (FT8/FT4/CW) haben Vorrang
-// vor der allgemeinen QSO-Anzeige.
-static const char *getBandplanHint()
+struct BandplanHint
+{
+  const char *label;
+  int targetKHz;
+};
+
+static BandplanHint getBandplanHint()
 {
   const int32_t freq = currentFrequency;
 
-  // 1. FT8 - genaue Frequenzpunkte, unabhaengig vom eingestellten Modus.
-  if (abs(freq - 1840) <= 1 ||
-      abs(freq - 3573) <= 1 ||
-      abs(freq - 5357) <= 1 ||
-      abs(freq - 7074) <= 1 ||
-      abs(freq - 10136) <= 1 ||
-      abs(freq - 14074) <= 1 ||
-      abs(freq - 18100) <= 1 ||
-      abs(freq - 21074) <= 1 ||
-      abs(freq - 24915) <= 1 ||
-      abs(freq - 28074) <= 1)
-  {
-    return "FT8 - USB";
-  }
+  // 1. FT8
+  // Bereiche zeigen die empfohlene Dialfrequenz.
+  if (freq >= 1839 && freq <= 1841)
+    return {"FT8 - USB", 1840};
 
-  // 2. FT4 - genaue Frequenzpunkte, unabhaengig vom eingestellten Modus.
-  if (abs(freq - 3575) <= 1 ||
-      abs(freq - 7047) <= 1 ||
-      abs(freq - 10140) <= 1 ||
-      abs(freq - 14080) <= 1 ||
-      abs(freq - 18104) <= 1 ||
-      abs(freq - 21140) <= 1 ||
-      abs(freq - 24919) <= 1 ||
-      abs(freq - 28180) <= 1)
-  {
-    return "FT4 - USB";
-  }
+  if (freq >= 3572 && freq <= 3574)
+    return {"FT8 - USB", 3573};
 
-  // 3. SSTV - typische Anruffrequenzen.
-  if (abs(freq - 7165) <= 3 ||
-      abs(freq - 7171) <= 3 ||
-      abs(freq - 14230) <= 3 ||
-      abs(freq - 27700) <= 3 ||
-      abs(freq - 28680) <= 3)
-  {
-    return "SSTV";
-  }
+  if (freq >= 5356 && freq <= 5358)
+    return {"FT8 - USB", 5357};
 
-  // 4. Typische CW-Abschnitte.
-  if ((freq >= 1800  && freq < 1843) ||
-      (freq >= 3500  && freq < 3600) ||
-      (freq >= 7000  && freq < 7060) ||
+  if (freq >= 7073 && freq <= 7075)
+    return {"FT8 - USB", 7074};
+
+  if (freq >= 10135 && freq <= 10137)
+    return {"FT8 - USB", 10136};
+
+  if (freq >= 14070 && freq <= 14077)
+    return {"FT8 - USB", 14074};
+
+  if (freq >= 18099 && freq <= 18101)
+    return {"FT8 - USB", 18100};
+
+  if (freq >= 21073 && freq <= 21075)
+    return {"FT8 - USB", 21074};
+
+  if (freq >= 24914 && freq <= 24916)
+    return {"FT8 - USB", 24915};
+
+  if (freq >= 28070 && freq <= 28080)
+    return {"FT8 - USB", 28074};
+
+  // 2. FT4
+  // FT4 wird vor den allgemeinen Bereichen geprueft.
+  if (abs(freq - 3575) <= 1)
+    return {"FT4 - USB", 3575};
+
+  if (abs(freq - 7047) <= 1)
+    return {"FT4 - USB", 7047};
+
+  if (abs(freq - 10140) <= 1)
+    return {"FT4 - USB", 10140};
+
+  if (freq >= 14078 && freq <= 14082)
+    return {"FT4 - USB", 14080};
+
+  if (abs(freq - 18104) <= 1)
+    return {"FT4 - USB", 18104};
+
+  if (abs(freq - 21140) <= 1)
+    return {"FT4 - USB", 21140};
+
+  if (abs(freq - 24919) <= 1)
+    return {"FT4 - USB", 24919};
+
+  if (abs(freq - 28180) <= 1)
+    return {"FT4 - USB", 28180};
+
+  // 3. SSTV
+  if (abs(freq - 7165) <= 3)
+    return {"SSTV - USB", 7165};
+
+  if (abs(freq - 7171) <= 3)
+    return {"SSTV - USB", 7171};
+
+  if (abs(freq - 14230) <= 3)
+    return {"SSTV - USB", 14230};
+
+  if (abs(freq - 27700) <= 3)
+    return {"SSTV - USB", 27700};
+
+  if (abs(freq - 28680) <= 3)
+    return {"SSTV - USB", 28680};
+
+  // 4. RTTY / Wetterfunk
+  // Orientierung an typischen Wetterfunkfrequenzen.
+  // Frequenzauflosung und Betriebszeiten bitte am aktuellen
+  // Sendeplan pruefen; keine Rufzeichen werden angezeigt.
+  if (abs(freq - 147) <= 1)
+    return {"WETTER - RTTY", 147};
+
+  if (abs(freq - 4583) <= 2)
+    return {"RTTY - USB", 4583};
+
+  if (abs(freq - 7646) <= 2)
+    return {"RTTY - USB", 7646};
+
+  if (abs(freq - 10101) <= 2)
+    return {"RTTY - USB", 10101};
+
+  if (abs(freq - 11039) <= 2)
+    return {"RTTY - USB", 11039};
+
+  if (abs(freq - 14467) <= 2)
+    return {"RTTY - USB", 14467};
+
+  // 5. Typische CW-Abschnitte
+  if ((freq >= 1800  && freq < 1843)  ||
+      (freq >= 3500  && freq < 3600)  ||
+      (freq >= 7000  && freq < 7060)  ||
       (freq >= 10100 && freq < 10140) ||
       (freq >= 14000 && freq < 14100) ||
       (freq >= 18068 && freq < 18110) ||
@@ -68,50 +133,46 @@ static const char *getBandplanHint()
       (freq >= 24890 && freq < 24931) ||
       (freq >= 28000 && freq < 28300))
   {
-    return "CW - MORSE";
+    return {"CW - MORSE", 0};
   }
 
-  // 5. CB-Funk: ungefaehr 26.565 bis 27.405 MHz.
+  // 6. CB-Funk
   if (freq >= 26565 && freq <= 27405)
-  {
-    return "CB - AM/FM/SSB";
-  }
+    return {"CB - AM/FM/SSB", 0};
 
-  // 6. Typische Sprach-QSO-Bereiche.
-  // DAY/NIGHT sind Orientierungshinweise, keine Live-Erkennung.
+  // 7. Typische Sprach-QSO-Bereiche
+  // DAY/NIGHT sind Hinweise, keine automatische Berechnung.
   if (freq >= 1843 && freq <= 2000)
-    return "QSO - LSB NIGHT";
+    return {"QSO - LSB NIGHT", 0};
 
   if (freq >= 3600 && freq <= 3800)
-    return "QSO - LSB NIGHT";
+    return {"QSO - LSB NIGHT", 0};
 
   if (freq >= 5354 && freq <= 5366)
-    return "QSO - USB DAY/NIGHT";
+    return {"QSO - USB DAY/NIGHT", 0};
 
   if (freq >= 7060 && freq <= 7200)
-    return "QSO - LSB DAY/NIGHT";
+    return {"QSO - LSB DAY/NIGHT", 0};
 
   if (freq >= 14100 && freq <= 14350)
-    return "QSO - USB DAY";
+    return {"QSO - USB DAY", 0};
 
   if (freq >= 18110 && freq <= 18168)
-    return "QSO - USB DAY";
+    return {"QSO - USB DAY", 0};
 
   if (freq >= 21150 && freq <= 21450)
-    return "QSO - USB DAY";
+    return {"QSO - USB DAY", 0};
 
   if (freq >= 24931 && freq <= 24990)
-    return "QSO - USB DAY";
+    return {"QSO - USB DAY", 0};
 
-  // 10 m: SSB-Sprachfunk und FM-Bereich.
   if (freq >= 28300 && freq < 29100)
-    return "QSO - USB DAY";
+    return {"QSO - USB DAY", 0};
 
   if (freq >= 29100 && freq <= 29700)
-    return "QSO - FM DAY";
+    return {"QSO - FM DAY", 0};
 
-  // 7. Kurzwellenrundfunk - typische internationale Rundfunksegmente.
-  // Spezifische Digital-, CW-, QSO- und SSTV-Regeln haben Vorrang.
+  // 8. Kurzwellenrundfunk
   if ((freq >= 3950  && freq <= 4000)  ||
       (freq >= 5900  && freq <= 6200)  ||
       (freq >= 7200  && freq <= 7450)  ||
@@ -124,11 +185,10 @@ static const char *getBandplanHint()
       (freq >= 21450 && freq <= 21850) ||
       (freq >= 25670 && freq <= 26100))
   {
-    return "SW-RADIO AM";
+    return {"SW-RADIO AM", 0};
   }
 
-  // 8. Utility-Funk - vorlaeufige Orientierung in typischen HF-Segmenten.
-  // Utility ist vielfaeltig; die Zuordnung muss spaeter noch verfeinert werden.
+  // 9. Utility-Funk - vorlaeufige Orientierung
   if ((freq >= 4000  && freq < 4438)  ||
       (freq >= 6200  && freq < 6525)  ||
       (freq >= 8800  && freq < 9040)  ||
@@ -138,10 +198,10 @@ static const char *getBandplanHint()
       (freq >= 17900 && freq < 18030) ||
       (freq >= 21870 && freq < 21924))
   {
-    return "UTILITY - USB";
+    return {"UTILITY - USB", 0};
   }
 
-  return "GEMISCHT";
+  return {"GEMISCHT", 0};
 }
 
 void drawLayoutClean()
@@ -151,16 +211,17 @@ void drawLayoutClean()
   const uint16_t COLOR_BLACK = 0x0000;
   const uint16_t COLOR_GREY  = 0x2104;
 
-  // 1. Batterie oben rechts
+  // 1. Batterie
   drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
 
-  // 2. Bandname oben links
+  // 2. Bandname
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(COLOR_GREEN);
   spr.drawString(getCurrentBand()->bandName, 15, 2);
 
-  // 3. Modusfeld
+  // 3. Aktuell eingestellter Modus.
+  // Dieser Bereich wird vom Bandplan nicht veraendert.
   const int modeX = 10;
   const int modeY = 20;
   const int modeW = 48;
@@ -179,7 +240,7 @@ void drawLayoutClean()
     modeY + modeH / 2
   );
 
-  // 4. Sendername oberhalb der Frequenz
+  // 4. Sendername bei UKW
   if (currentMode == FM)
   {
     const char *stationName = getStationName();
@@ -189,24 +250,18 @@ void drawLayoutClean()
       spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
       spr.setTextDatum(TC_DATUM);
       spr.setTextColor(COLOR_GREEN);
-
       spr.setClipRect(65, 15, 185, 20);
 
       if ((uint8_t)*stationName == 0xFF)
-      {
         drawLongStationName(stationName + 1, 65, 17);
-      }
       else
-      {
         spr.drawString(stationName, 157, 17);
-      }
 
       spr.clearClipRect();
     }
   }
 
   // 5. Frequenz mit Originalfunktion und Cursor
-  // MHz/kHz um 15 Pixel nach rechts verschoben.
   drawFrequency(
     currentFrequency,
     FREQ_OFFSET_X, FREQ_OFFSET_Y,
@@ -216,7 +271,9 @@ void drawLayoutClean()
       : 100
   );
 
-  // 6. Bandplan-Hinweis im bisherigen RDS-Feld
+  // 6. Unteres Feld:
+  // UKW = RDS-Radiotext
+  // KW/MW = Bandplan-Hinweis und optionale Ziel-QRG
   const int rtX = 20;
   const int rtY = 105;
   const int rtW = 280;
@@ -229,26 +286,56 @@ void drawLayoutClean()
     rtX, rtY, rtW, rtH, 5, COLOR_GREEN
   );
 
-  const char *hint = getBandplanHint();
-
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.setTextDatum(MC_DATUM);
   spr.setTextColor(COLOR_WHITE);
-
   spr.setClipRect(
     rtX + 5, rtY + 3,
     rtW - 10, rtH - 6
   );
 
-  spr.drawString(
-    hint,
-    rtX + rtW / 2,
-    rtY + rtH / 2
-  );
+  if (currentMode == FM)
+  {
+    // RDS bleibt bei UKW aktiv.
+    const char *rt = getRadioText();
+
+    if (rt != nullptr && *rt)
+    {
+      spr.setTextDatum(ML_DATUM);
+      spr.drawString(rt, rtX + 8, rtY + rtH / 2);
+    }
+  }
+  else
+  {
+    BandplanHint hint = getBandplanHint();
+    char hintText[48];
+
+    if (hint.targetKHz > 0)
+    {
+      snprintf(
+        hintText, sizeof(hintText),
+        "%s  ZIEL: %d kHz",
+        hint.label, hint.targetKHz
+      );
+    }
+    else
+    {
+      snprintf(
+        hintText, sizeof(hintText),
+        "%s", hint.label
+      );
+    }
+
+    spr.setTextDatum(MC_DATUM);
+    spr.drawString(
+      hintText,
+      rtX + rtW / 2,
+      rtY + rtH / 2
+    );
+  }
 
   spr.clearClipRect();
 
-  // 7. S-Meter unten
+  // 7. S-Meter
   const int barX = 50;
   const int barY = 157;
   const int barW = 220;
