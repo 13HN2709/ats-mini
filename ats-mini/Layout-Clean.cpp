@@ -69,7 +69,7 @@ static BandplanHint getBandplanHint()
   if (abs(freq - 10140) <= 1)
     return {"FT4 - USB", 10140};
 
-  if (abs(freq - 14080) <= 1)
+  if (freq >= 14079 && freq <= 14081)
     return {"FT4 - USB", 14080};
 
   if (abs(freq - 18104) <= 1)
