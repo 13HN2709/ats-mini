@@ -7,7 +7,182 @@
 // --------------------------------------------------
 // ATS Mini V4 - TEF6686 Layout
 // Display: 320 x 170 Pixel
-// Frequenz: originale FONT_DIGITS / drawFrequency()
+//
+// Erweiterungen:
+// - FM: Sendername (PS) und Radiotext (RT) bleiben erhalten
+// - KW/MW: Bandplan-Hinweise mit empfohlener Zielfrequenz
+// - FT8 / FT4 / SSTV / CW / RTTY / Wetterfunk
+// - Keine automatische Frequenz- oder Modusumschaltung
+// --------------------------------------------------
+
+struct TEFBandplanHint
+{
+  const char *label;
+  int targetKHz;
+};
+
+static TEFBandplanHint getTEFBandplanHint()
+{
+  const int32_t f = currentFrequency;
+
+  // ------------------------------------------------
+  // FT8 - Frequenzbereiche und Zielfrequenzen
+  // ------------------------------------------------
+
+  if (f >= 1838 && f <= 1842)
+    return {"FT8 - USB", 1840};
+
+  if (f >= 3568 && f <= 3578)
+    return {"FT8 - USB", 3573};
+
+  if (f >= 5355 && f <= 5359)
+    return {"FT8 - USB", 5357};
+
+  if (f >= 7069 && f <= 7079)
+    return {"FT8 - USB", 7074};
+
+  if (f >= 10132 && f <= 10140)
+    return {"FT8 - USB", 10136};
+
+  if (f >= 14070 && f <= 14077)
+    return {"FT8 - USB", 14074};
+
+  if (f >= 18096 && f <= 18104)
+    return {"FT8 - USB", 18100};
+
+  if (f >= 21070 && f <= 21078)
+    return {"FT8 - USB", 21074};
+
+  if (f >= 24911 && f <= 24919)
+    return {"FT8 - USB", 24915};
+
+  if (f >= 28070 && f <= 28080)
+    return {"FT8 - USB", 28074};
+
+  // ------------------------------------------------
+  // FT4 - typische Zielfrequenzen
+  // ------------------------------------------------
+
+  if (f >= 3574 && f <= 3577)
+    return {"FT4 - USB", 3575};
+
+  if (f >= 7045 && f <= 7050)
+    return {"FT4 - USB", 7047};
+
+  if (f >= 10138 && f <= 10142)
+    return {"FT4 - USB", 10140};
+
+  if (f >= 14078 && f <= 14083)
+    return {"FT4 - USB", 14080};
+
+  if (f >= 21138 && f <= 21143)
+    return {"FT4 - USB", 21140};
+
+  if (f >= 28177 && f <= 28183)
+    return {"FT4 - USB", 28180};
+
+  // ------------------------------------------------
+  // SSTV - typische Anruffrequenzen
+  // ------------------------------------------------
+
+  if (f >= 7160 && f <= 7175)
+    return {"SSTV - USB", 7165};
+
+  if (f >= 14225 && f <= 14235)
+    return {"SSTV - USB", 14230};
+
+  if (f >= 27695 && f <= 27705)
+    return {"SSTV - USB", 27700};
+
+  if (f >= 28675 && f <= 28685)
+    return {"SSTV - USB", 28680};
+
+  // ------------------------------------------------
+  // CW - typische CW-Bereiche
+  // ------------------------------------------------
+
+  if (f >= 1830 && f <= 1840)
+    return {"CW - LSB", 1835};
+
+  if (f >= 3500 && f <= 3560)
+    return {"CW - LSB", 3530};
+
+  if (f >= 7000 && f <= 7040)
+    return {"CW - LSB", 7020};
+
+  if (f >= 10100 && f <= 10130)
+    return {"CW - USB", 10120};
+
+  if (f >= 14000 && f <= 14070)
+    return {"CW - USB", 14030};
+
+  if (f >= 18068 && f <= 18095)
+    return {"CW - USB", 18080};
+
+  if (f >= 21000 && f <= 21070)
+    return {"CW - USB", 21030};
+
+  if (f >= 24890 && f <= 24915)
+    return {"CW - USB", 24900};
+
+  if (f >= 28000 && f <= 28070)
+    return {"CW - USB", 28030};
+
+  // ------------------------------------------------
+  // RTTY / Wetterfunk
+  // Hinweis: Frequenzen sind gerundete kHz-Werte.
+  // Die tatsächliche Betriebsart kann je nach
+  // Aussendung abweichen.
+  // ------------------------------------------------
+
+  if (f >= 145 && f <= 150)
+    return {"WETTER / RTTY", 147};
+
+  if (f >= 4580 && f <= 4586)
+    return {"WETTERFUNK", 4583};
+
+  if (f >= 7643 && f <= 7649)
+    return {"WETTERFUNK", 7646};
+
+  if (f >= 10098 && f <= 10104)
+    return {"DIGITAL / RTTY", 10101};
+
+  if (f >= 11036 && f <= 11042)
+    return {"WETTERFUNK", 11039};
+
+  if (f >= 14464 && f <= 14470)
+    return {"WETTERFUNK", 14467};
+
+  // ------------------------------------------------
+  // 12 m Band - weitere Bereiche
+  // ------------------------------------------------
+
+  if (f >= 24940 && f <= 24990)
+    return {"QSO - USB", 24950};
+
+  // ------------------------------------------------
+  // 10 m Band - weitere Bereiche
+  // ------------------------------------------------
+
+  if (f >= 28300 && f <= 29000)
+    return {"QSO - USB", 28360};
+
+  if (f >= 29000 && f <= 29100)
+    return {"AM", 29000};
+
+  if (f >= 29100 && f <= 29200)
+    return {"FM", 29600};
+
+  // ------------------------------------------------
+  // Keine passende Empfehlung
+  // ------------------------------------------------
+
+  return {"BANDPLAN", 0};
+}
+
+
+// --------------------------------------------------
+// Hauptlayout
 // --------------------------------------------------
 
 void drawLayoutTEF6686()
@@ -51,8 +226,7 @@ void drawLayoutTEF6686()
     modeY + modeH / 2
   );
 
-  
-  // 4a. Mono-/Stereo-Anzeige unter dem Modusfeld
+  // 4a. Mono-/Stereo-Anzeige
   const int audioX = 10;
   const int audioY = 48;
   const int audioW = 48;
@@ -90,8 +264,6 @@ void drawLayoutTEF6686()
   }
 
   // 5. Einheit rechts oben
-  // Das doppelte USB/LSB entfällt hier.
-  // Die Modulationsanzeige bleibt links erhalten.
   const int statusX = 242;
   const int statusY = 24;
   const int statusW = 68;
@@ -110,7 +282,7 @@ void drawLayoutTEF6686()
     statusY + statusH / 2
   );
 
-  // 6. Frequenz mit originaler Digits-Schrift und Cursor
+  // 6. Frequenz - Originaldarstellung beibehalten
   const int freqX = 230;
   const int freqY = 45;
 
@@ -119,8 +291,6 @@ void drawLayoutTEF6686()
       ? getFreqInputPos() + (pushAndRotate ? 0x80 : 0)
       : 100;
 
-  // Einheit wird separat rechts oben gezeichnet.
-  // Frequenz- und Cursorlogik bleiben unverändert.
   drawFrequency(
     currentFrequency,
     freqX,
@@ -227,7 +397,9 @@ void drawLayoutTEF6686()
     );
   }
 
-  // 8. PS-Feld (Sendername)
+  // 8. PS-Feld
+  // FM: Sendername bleibt sichtbar.
+  // KW/MW: Anzeige der empfohlenen Betriebsart.
   const int psX = 10;
   const int psY = 116;
   const int psW = 300;
@@ -238,10 +410,11 @@ void drawLayoutTEF6686()
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(COLOR_CYAN);
-  spr.drawString("PS:", psX + 5, psY + 2);
 
   if (currentMode == FM)
   {
+    spr.drawString("PS:", psX + 5, psY + 2);
+
     const char *stationName = getStationName();
 
     if (stationName != nullptr && *stationName)
@@ -257,8 +430,23 @@ void drawLayoutTEF6686()
       spr.clearClipRect();
     }
   }
+  else
+  {
+    TEFBandplanHint hint = getTEFBandplanHint();
 
-  // 9. RT-Feld (Radiotext)
+    spr.drawString("HINWEIS:", psX + 5, psY + 2);
+
+    spr.setTextColor(COLOR_GREEN);
+    spr.setClipRect(
+      psX + 70, psY + 1, psW - 75, psH - 2
+    );
+    spr.drawString(hint.label, psX + 73, psY + 2);
+    spr.clearClipRect();
+  }
+
+  // 9. RT-Feld
+  // FM: Originaler Radiotext.
+  // KW/MW: Zielfrequenz zur Bandplan-Empfehlung.
   const int rtX = 10;
   const int rtY = 141;
   const int rtW = 300;
@@ -269,10 +457,11 @@ void drawLayoutTEF6686()
   spr.setFont(&lgfx::fonts::FreeSans9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(COLOR_CYAN);
-  spr.drawString("RT:", rtX + 5, rtY + 2);
 
   if (currentMode == FM)
   {
+    spr.drawString("RT:", rtX + 5, rtY + 2);
+
     const char *rt = getRadioText();
 
     if (rt != nullptr && *rt)
@@ -283,6 +472,35 @@ void drawLayoutTEF6686()
       );
       spr.drawString(rt, rtX + 40, rtY + 2);
       spr.clearClipRect();
+    }
+  }
+  else
+  {
+    TEFBandplanHint hint = getTEFBandplanHint();
+
+    if (hint.targetKHz > 0)
+    {
+      char targetText[32];
+
+      snprintf(
+        targetText,
+        sizeof(targetText),
+        "ZIEL: %d kHz",
+        hint.targetKHz
+      );
+
+      spr.drawString("FREQ:", rtX + 5, rtY + 2);
+
+      spr.setTextColor(COLOR_GREEN);
+      spr.drawString(targetText, rtX + 57, rtY + 2);
+    }
+    else
+    {
+      spr.drawString(
+        "Kein spezieller Hinweis",
+        rtX + 5,
+        rtY + 2
+      );
     }
   }
 
