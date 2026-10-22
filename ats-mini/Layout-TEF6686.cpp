@@ -188,7 +188,7 @@ static TEFBandplanHint getTEFBandplanHint()
   // 8. No specific recommendation
   // ------------------------------------------------
 
-  return {"BANDPLAN", 0};
+  return {"MIXED", 0};
 }
 
 
