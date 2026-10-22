@@ -206,6 +206,10 @@ void drawLayoutTEF6686()
   const uint16_t COLOR_RED    = 0xF800;
   const uint16_t COLOR_BLACK  = 0x0000;
 
+  // Calculate the bandplan hint once per frame so MODE and TARGET
+  // always use the same frequency snapshot during this redraw.
+  const TEFBandplanHint bandplanHint = getTEFBandplanHint();
+
   // 1. Background
   spr.fillSprite(COLOR_BLACK);
 
@@ -443,7 +447,6 @@ void drawLayoutTEF6686()
   }
   else
   {
-    TEFBandplanHint hint = getTEFBandplanHint();
 
     spr.drawString("MODE:", psX + 5, psY + 2);
 
@@ -456,7 +459,7 @@ void drawLayoutTEF6686()
     spr.setClipRect(
       hintClipX, psY + 1, hintClipW, psH - 2
     );
-    spr.drawString(hint.label, hintX, psY + 2);
+    spr.drawString(bandplanHint.label, hintX, psY + 2);
     spr.clearClipRect();
   }
 
@@ -492,17 +495,16 @@ void drawLayoutTEF6686()
   }
   else
   {
-    TEFBandplanHint hint = getTEFBandplanHint();
 
     char targetText[40];
 
-    if (hint.targetKHz > 0)
+    if (bandplanHint.targetKHz > 0)
     {
       snprintf(
         targetText,
         sizeof(targetText),
         "TARGET: %d kHz",
-        hint.targetKHz
+        bandplanHint.targetKHz
       );
     }
     else
