@@ -657,6 +657,17 @@ bool processRssiSnr()
 
 void loop()
 {
+  // Keep frequency-dependent layout hints (e.g. TEF6686 bandplan MODE)
+  // synchronized with the tuned frequency, even if a tuning path forgets
+  // to request a full redraw.
+  static uint32_t lastBandplanDisplayFrequency = UINT32_MAX;
+  const uint32_t bandplanDisplayFrequency =
+    currentFrequency + currentBFO / 1000;
+  if (bandplanDisplayFrequency != lastBandplanDisplayFrequency)
+  {
+    lastBandplanDisplayFrequency = bandplanDisplayFrequency;
+    needRedraw = true;
+  }
   uint32_t currentTime = millis();
   bool needRedraw = false;
 
