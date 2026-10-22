@@ -31,7 +31,9 @@ struct TEFBandplanHint
 
 static TEFBandplanHint getTEFBandplanHint()
 {
-  const int32_t f = currentFrequency;
+  // Match the effective tuned frequency used by the rest of the radio logic.
+  // In SSB, currentBFO can move the effective frequency across a bandplan boundary.
+  const int32_t f = currentFrequency + currentBFO / 1000;
 
   // ------------------------------------------------
   // 1. FT8 frequency ranges (IARU Region 1 guidance)
