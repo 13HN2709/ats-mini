@@ -38,28 +38,28 @@ static TEFBandplanHint getTEFBandplanHint()
   // ------------------------------------------------
 
   if (abs(f - 3575) <= 1)
-    return {"FT4 - USB", 3575};
+    return {"FT4 - USB", 0};
 
   if (abs(f - 7047) <= 1)
-    return {"FT4 - USB", 7047};
+    return {"FT4 - USB", 0};
 
   if (abs(f - 10140) <= 1)
-    return {"FT4 - USB", 10140};
+    return {"FT4 - USB", 0};
 
-  if (f >= 14079 && f <= 14081)
-    return {"FT4 - USB", 14080};
+  if (f == 14080)
+    return {"FT4 - USB", 0};
 
   if (abs(f - 18104) <= 1)
-    return {"FT4 - USB", 18104};
+    return {"FT4 - USB", 0};
 
   if (abs(f - 21140) <= 1)
-    return {"FT4 - USB", 21140};
+    return {"FT4 - USB", 0};
 
   if (abs(f - 24919) <= 1)
-    return {"FT4 - USB", 24919};
+    return {"FT4 - USB", 0};
 
   if (abs(f - 28180) <= 1)
-    return {"FT4 - USB", 28180};
+    return {"FT4 - USB", 0};
 
   // ------------------------------------------------
   // 2. FT8
@@ -507,7 +507,7 @@ void drawLayoutTEF6686()
         bandplanHint.targetKHz
       );
     }
-    else
+    else if (strcmp(bandplanHint.label, "FT4 - USB") != 0)
     {
       snprintf(
         targetText,
@@ -516,12 +516,15 @@ void drawLayoutTEF6686()
       );
     }
 
-    spr.setTextColor(COLOR_GREEN);
-    spr.setClipRect(
-      rtX + 5, rtY + 1, rtW - 10, rtH - 2
-    );
-    spr.drawString(targetText, rtX + 7, rtY + 2);
-    spr.clearClipRect();
+    if (bandplanHint.targetKHz > 0 || strcmp(bandplanHint.label, "FT4 - USB") != 0)
+    {
+      spr.setTextColor(COLOR_GREEN);
+      spr.setClipRect(
+        rtX + 5, rtY + 1, rtW - 10, rtH - 2
+      );
+      spr.drawString(targetText, rtX + 7, rtY + 2);
+      spr.clearClipRect();
+    }
   }
 
   // 10. Menu
