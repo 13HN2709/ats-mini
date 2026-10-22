@@ -34,31 +34,31 @@ static TEFBandplanHint getTEFBandplanHint()
   const int32_t f = currentFrequency;
 
   // ------------------------------------------------
-  // 1. FT4 - checked before overlapping FT8 ranges
+  // 1. FT4 - fixed target frequencies with +/- 1 kHz tolerance
   // ------------------------------------------------
 
-  if (f >= 3574 && f <= 3577)
+  if (abs(f - 3575) <= 1)
     return {"FT4 - USB", 3575};
 
-  if (f >= 7045 && f <= 7050)
+  if (abs(f - 7047) <= 1)
     return {"FT4 - USB", 7047};
 
-  if (f >= 10138 && f <= 10142)
+  if (abs(f - 10140) <= 1)
     return {"FT4 - USB", 10140};
 
-  if (f >= 14078 && f <= 14083)
+  if (abs(f - 14080) <= 1)
     return {"FT4 - USB", 14080};
 
-  if (f >= 18103 && f <= 18105)
+  if (abs(f - 18104) <= 1)
     return {"FT4 - USB", 18104};
 
-  if (f >= 21138 && f <= 21143)
+  if (abs(f - 21140) <= 1)
     return {"FT4 - USB", 21140};
 
-  if (f >= 24917 && f <= 24921)
+  if (abs(f - 24919) <= 1)
     return {"FT4 - USB", 24919};
 
-  if (f >= 28177 && f <= 28183)
+  if (abs(f - 28180) <= 1)
     return {"FT4 - USB", 28180};
 
   // ------------------------------------------------
