@@ -120,15 +120,15 @@ static BandplanHint getBandplanHint()
     return {"RTTY - USB", 14467};
 
   // 5. Typical CW sections
-  if ((freq >= 1800  && freq < 1843)  ||
-      (freq >= 3500  && freq < 3600)  ||
-      (freq >= 7000  && freq < 7060)  ||
-      (freq >= 10100 && freq < 10140) ||
-      (freq >= 14000 && freq < 14100) ||
-      (freq >= 18068 && freq < 18110) ||
-      (freq >= 21000 && freq < 21150) ||
-      (freq >= 24890 && freq < 24931) ||
-      (freq >= 28000 && freq < 28300))
+  if ((freq >= 1800  && freq <= 1837)  ||
+      (freq >= 3500  && freq <= 3560)  ||
+      (freq >= 7000  && freq <= 7040)  ||
+      (freq >= 10100 && freq <= 10130) ||
+      (freq >= 14000 && freq <= 14069) ||
+      (freq >= 18068 && freq <= 18095) ||
+      (freq >= 21000 && freq <= 21069) ||
+      (freq >= 24890 && freq <= 24910) ||
+      (freq >= 28000 && freq <= 28069))
   {
     return {"CW - MORSE", 0};
   }
