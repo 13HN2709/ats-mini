@@ -61,28 +61,28 @@ static BandplanHint getBandplanHint()
 
   // 2. FT4 - fixed target frequencies with +/- 1 kHz tolerance
   if (abs(freq - 3575) <= 1)
-    return {"FT4 - USB", 3575};
+    return {"FT4 - USB", 0};
 
   if (abs(freq - 7047) <= 1)
-    return {"FT4 - USB", 7047};
+    return {"FT4 - USB", 0};
 
   if (abs(freq - 10140) <= 1)
-    return {"FT4 - USB", 10140};
+    return {"FT4 - USB", 0};
 
-  if (freq >= 14079 && freq <= 14081)
-    return {"FT4 - USB", 14080};
+  if (freq == 14080)
+    return {"FT4 - USB", 0};
 
   if (abs(freq - 18104) <= 1)
-    return {"FT4 - USB", 18104};
+    return {"FT4 - USB", 0};
 
   if (abs(freq - 21140) <= 1)
-    return {"FT4 - USB", 21140};
+    return {"FT4 - USB", 0};
 
   if (abs(freq - 24919) <= 1)
-    return {"FT4 - USB", 24919};
+    return {"FT4 - USB", 0};
 
   if (abs(freq - 28180) <= 1)
-    return {"FT4 - USB", 28180};
+    return {"FT4 - USB", 0};
 
   // 3. SSTV
   if (abs(freq - 7165) <= 3)
