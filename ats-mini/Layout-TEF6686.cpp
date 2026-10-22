@@ -1,3 +1,4 @@
+
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
@@ -14,12 +15,12 @@
 //
 // SW/MW:
 // - Bandplan hints in English
-// - Temporary debug information in RT field
+// - Recommended target frequency in RT field
 //
 // IMPORTANT:
 // - No automatic frequency changes.
 // - No automatic reception mode changes.
-// - Debug display is temporary.
+// - Target frequency is a recommendation only.
 // --------------------------------------------------
 
 struct TEFBandplanHint
@@ -446,10 +447,10 @@ void drawLayoutTEF6686()
 
     spr.drawString("MODE:", psX + 5, psY + 2);
 
-    // Extra spacing prevents MODE and FT8/FT4 from overlapping.
-    const int hintX = psX + 62;
-    const int hintClipX = psX + 59;
-    const int hintClipW = psW - 64;
+    // Extra spacing between MODE: and FT4/FT8.
+    const int hintX = psX + 76;
+    const int hintClipX = psX + 73;
+    const int hintClipW = psW - 78;
 
     spr.setTextColor(COLOR_GREEN);
     spr.setClipRect(
@@ -461,7 +462,7 @@ void drawLayoutTEF6686()
 
   // 9. RT field
   // FM: original RDS radio text.
-  // Non-FM: temporary debug information.
+  // Non-FM: recommended target frequency.
   const int rtX = 10;
   const int rtY = 141;
   const int rtW = 300;
@@ -493,37 +494,31 @@ void drawLayoutTEF6686()
   {
     TEFBandplanHint hint = getTEFBandplanHint();
 
-    char debugText[48];
+    char targetText[40];
 
-    // Show actual frequency, mode, detected label and target.
-    // This helps identify why a frequency is classified incorrectly.
     if (hint.targetKHz > 0)
     {
       snprintf(
-        debugText,
-        sizeof(debugText),
-        "F:%ld M:%u T:%d",
-        (long)currentFrequency,
-        (unsigned int)currentMode,
+        targetText,
+        sizeof(targetText),
+        "TARGET: %d kHz",
         hint.targetKHz
       );
     }
     else
     {
       snprintf(
-        debugText,
-        sizeof(debugText),
-        "F:%ld M:%u NO TARGET",
-        (long)currentFrequency,
-        (unsigned int)currentMode
+        targetText,
+        sizeof(targetText),
+        "NO TARGET FREQUENCY"
       );
     }
 
-    spr.setTextColor(COLOR_YELLOW);
+    spr.setTextColor(COLOR_GREEN);
     spr.setClipRect(
       rtX + 5, rtY + 1, rtW - 10, rtH - 2
     );
-    spr.drawString(debugText, rtX + 7, rtY + 2);
+    spr.drawString(targetText, rtX + 7, rtY + 2);
     spr.clearClipRect();
   }
 
