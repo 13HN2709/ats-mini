@@ -611,6 +611,9 @@ bool clickFreq(bool shortPress)
 bool processRssiSnr()
 {
   static uint32_t updateCounter = 0;
+  // Remember the last frequency used for frequency-dependent layout hints.
+  static uint32_t lastBandplanDisplayFrequency = UINT32_MAX;
+
   bool needRedraw = false;
 
   rx.getCurrentReceivedSignalQuality();
@@ -853,6 +856,15 @@ void loop()
   {
     needRedraw |= identifyFrequency(currentFrequency + currentBFO / 1000, true);
     lastScheduleCheck = currentTime;
+  }
+
+  // Refresh frequency-dependent hints immediately after tuning changes.
+  const uint32_t bandplanDisplayFrequency =
+    currentFrequency + currentBFO / 1000;
+  if(bandplanDisplayFrequency != lastBandplanDisplayFrequency)
+  {
+    lastBandplanDisplayFrequency = bandplanDisplayFrequency;
+    needRedraw = true;
   }
 
   if((currentTime - lastNTPCheck) > NTP_CHECK_TIME)
