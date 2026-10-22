@@ -46,7 +46,7 @@ static TEFBandplanHint getTEFBandplanHint()
   if (abs(f - 10140) <= 1)
     return {"FT4 - USB", 10140};
 
-  if (abs(f - 14080) <= 1)
+  if (f >= 14079 && f <= 14081)
     return {"FT4 - USB", 14080};
 
   if (abs(f - 18104) <= 1)
