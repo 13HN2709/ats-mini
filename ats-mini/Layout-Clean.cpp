@@ -7,13 +7,14 @@
 // --------------------------------------------------
 // ATS Mini V4 - Clean Layout
 // Display: 320 x 170 Pixel
-// Bandplan-Hinweis: frequenzabhaengig, Modus-unabhaengig
+// Frequency-dependent bandplan hints
 //
-// WICHTIG:
-// - Keine automatische Umschaltung der Empfangsart.
-// - UKW/FM: RDS-Radiotext bleibt erhalten.
-// - KW/MW: Bandplan, Betriebsart-Empfehlung und Ziel-QRG.
-// - Eintraege sind Empfangshinweise, keine Sendefreigabe.
+// IMPORTANT:
+// - No automatic mode switching.
+// - No automatic frequency changes.
+// - FM: existing station name and RDS text remain.
+// - SW/MW: bandplan hints and optional target frequency.
+// - Hints are for reception guidance only.
 // --------------------------------------------------
 
 struct BandplanHint
@@ -24,10 +25,10 @@ struct BandplanHint
 
 static BandplanHint getBandplanHint()
 {
+  // SW/MW frequencies are represented in kHz.
   const int32_t freq = currentFrequency;
 
   // 1. FT8
-  // Bereiche zeigen die empfohlene Dialfrequenz.
   if (freq >= 1839 && freq <= 1841)
     return {"FT8 - USB", 1840};
 
@@ -59,7 +60,6 @@ static BandplanHint getBandplanHint()
     return {"FT8 - USB", 28074};
 
   // 2. FT4
-  // FT4 wird vor den allgemeinen Bereichen geprueft.
   if (abs(freq - 3575) <= 1)
     return {"FT4 - USB", 3575};
 
@@ -100,12 +100,9 @@ static BandplanHint getBandplanHint()
   if (abs(freq - 28680) <= 3)
     return {"SSTV - USB", 28680};
 
-  // 4. RTTY / Wetterfunk
-  // Orientierung an typischen Wetterfunkfrequenzen.
-  // Frequenzauflosung und Betriebszeiten bitte am aktuellen
-  // Sendeplan pruefen; keine Rufzeichen werden angezeigt.
+  // 4. RTTY / weather information
   if (abs(freq - 147) <= 1)
-    return {"WETTER - RTTY", 147};
+    return {"WEATHER - RTTY", 147};
 
   if (abs(freq - 4583) <= 2)
     return {"RTTY - USB", 4583};
@@ -122,7 +119,7 @@ static BandplanHint getBandplanHint()
   if (abs(freq - 14467) <= 2)
     return {"RTTY - USB", 14467};
 
-  // 5. Typische CW-Abschnitte
+  // 5. Typical CW sections
   if ((freq >= 1800  && freq < 1843)  ||
       (freq >= 3500  && freq < 3600)  ||
       (freq >= 7000  && freq < 7060)  ||
@@ -136,12 +133,11 @@ static BandplanHint getBandplanHint()
     return {"CW - MORSE", 0};
   }
 
-  // 6. CB-Funk
+  // 6. CB radio
   if (freq >= 26565 && freq <= 27405)
     return {"CB - AM/FM/SSB", 0};
 
-  // 7. Typische Sprach-QSO-Bereiche
-  // DAY/NIGHT sind Hinweise, keine automatische Berechnung.
+  // 7. Typical voice communication ranges
   if (freq >= 1843 && freq <= 2000)
     return {"QSO - LSB NIGHT", 0};
 
@@ -172,7 +168,7 @@ static BandplanHint getBandplanHint()
   if (freq >= 29100 && freq <= 29700)
     return {"QSO - FM DAY", 0};
 
-  // 8. Kurzwellenrundfunk
+  // 8. Shortwave broadcasting
   if ((freq >= 3950  && freq <= 4000)  ||
       (freq >= 5900  && freq <= 6200)  ||
       (freq >= 7200  && freq <= 7450)  ||
@@ -188,7 +184,7 @@ static BandplanHint getBandplanHint()
     return {"SW-RADIO AM", 0};
   }
 
-  // 9. Utility-Funk - vorlaeufige Orientierung
+  // 9. Utility radio - general guidance
   if ((freq >= 4000  && freq < 4438)  ||
       (freq >= 6200  && freq < 6525)  ||
       (freq >= 8800  && freq < 9040)  ||
@@ -201,7 +197,8 @@ static BandplanHint getBandplanHint()
     return {"UTILITY - USB", 0};
   }
 
-  return {"GEMISCHT", 0};
+  // 10. No specific recommendation found
+  return {"MIXED", 0};
 }
 
 void drawLayoutClean()
@@ -211,17 +208,17 @@ void drawLayoutClean()
   const uint16_t COLOR_BLACK = 0x0000;
   const uint16_t COLOR_GREY  = 0x2104;
 
-  // 1. Batterie
+  // 1. Battery
   drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
 
-  // 2. Bandname
+  // 2. Band name
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(COLOR_GREEN);
   spr.drawString(getCurrentBand()->bandName, 15, 2);
 
-  // 3. Aktuell eingestellter Modus.
-  // Dieser Bereich wird vom Bandplan nicht veraendert.
+  // 3. Current reception mode
+  // This mode is never changed by the bandplan.
   const int modeX = 10;
   const int modeY = 20;
   const int modeW = 48;
@@ -240,7 +237,7 @@ void drawLayoutClean()
     modeY + modeH / 2
   );
 
-  // 4. Sendername bei UKW
+  // 4. FM station name
   if (currentMode == FM)
   {
     const char *stationName = getStationName();
@@ -261,7 +258,7 @@ void drawLayoutClean()
     }
   }
 
-  // 5. Frequenz mit Originalfunktion und Cursor
+  // 5. Frequency with original display function and cursor
   drawFrequency(
     currentFrequency,
     FREQ_OFFSET_X, FREQ_OFFSET_Y,
@@ -271,9 +268,9 @@ void drawLayoutClean()
       : 100
   );
 
-  // 6. Unteres Feld:
-  // UKW = RDS-Radiotext
-  // KW/MW = Bandplan-Hinweis und optionale Ziel-QRG
+  // 6. Lower information box
+  // FM: existing RDS radio text
+  // SW/MW: bandplan hint and optional target frequency
   const int rtX = 20;
   const int rtY = 105;
   const int rtW = 280;
@@ -282,6 +279,7 @@ void drawLayoutClean()
   spr.fillRoundRect(
     rtX, rtY, rtW, rtH, 5, COLOR_BLACK
   );
+
   spr.drawRoundRect(
     rtX, rtY, rtW, rtH, 5, COLOR_GREEN
   );
@@ -295,7 +293,7 @@ void drawLayoutClean()
 
   if (currentMode == FM)
   {
-    // RDS bleibt bei UKW aktiv.
+    // Preserve existing FM RDS behavior.
     const char *rt = getRadioText();
 
     if (rt != nullptr && *rt)
@@ -313,7 +311,7 @@ void drawLayoutClean()
     {
       snprintf(
         hintText, sizeof(hintText),
-        "%s  ZIEL: %d kHz",
+        "%s  TARGET: %d kHz",
         hint.label, hint.targetKHz
       );
     }
@@ -355,7 +353,7 @@ void drawLayoutClean()
     );
   }
 
-  // 8. Menueanzeige
+  // 8. Menu
   if (currentCmd != CMD_NONE &&
       currentCmd != CMD_SCAN &&
       currentCmd != CMD_FREQ)
