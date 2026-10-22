@@ -658,6 +658,8 @@ bool processRssiSnr()
 void loop()
 {
   uint32_t currentTime = millis();
+  // Remember the last frequency used for frequency-dependent layout hints.
+  static uint32_t lastBandplanDisplayFrequency = UINT32_MAX;
   bool needRedraw = false;
 
   uint32_t encCounts = consumeEncoderCounts();
@@ -853,6 +855,15 @@ void loop()
   {
     needRedraw |= identifyFrequency(currentFrequency + currentBFO / 1000, true);
     lastScheduleCheck = currentTime;
+  }
+
+  // Refresh frequency-dependent hints immediately after tuning changes.
+  const uint32_t bandplanDisplayFrequency =
+    currentFrequency + currentBFO / 1000;
+  if(bandplanDisplayFrequency != lastBandplanDisplayFrequency)
+  {
+    lastBandplanDisplayFrequency = bandplanDisplayFrequency;
+    needRedraw = true;
   }
 
   if((currentTime - lastNTPCheck) > NTP_CHECK_TIME)

@@ -59,32 +59,7 @@ static BandplanHint getBandplanHint()
   if (freq >= 28070 && freq <= 28080)
     return {"FT8 - USB", 28074};
 
-  // 2. FT4
-  if (abs(freq - 3575) <= 1)
-    return {"FT4 - USB", 3575};
-
-  if (abs(freq - 7047) <= 1)
-    return {"FT4 - USB", 7047};
-
-  if (abs(freq - 10140) <= 1)
-    return {"FT4 - USB", 10140};
-
-  if (freq >= 14078 && freq <= 14082)
-    return {"FT4 - USB", 14080};
-
-  if (abs(freq - 18104) <= 1)
-    return {"FT4 - USB", 18104};
-
-  if (abs(freq - 21140) <= 1)
-    return {"FT4 - USB", 21140};
-
-  if (abs(freq - 24919) <= 1)
-    return {"FT4 - USB", 24919};
-
-  if (abs(freq - 28180) <= 1)
-    return {"FT4 - USB", 28180};
-
-  // 3. SSTV
+  // 2. SSTV frequency ranges
   if (abs(freq - 7165) <= 3)
     return {"SSTV - USB", 7165};
 
@@ -120,15 +95,15 @@ static BandplanHint getBandplanHint()
     return {"RTTY - USB", 14467};
 
   // 5. Typical CW sections
-  if ((freq >= 1800  && freq < 1843)  ||
-      (freq >= 3500  && freq < 3600)  ||
-      (freq >= 7000  && freq < 7060)  ||
-      (freq >= 10100 && freq < 10140) ||
-      (freq >= 14000 && freq < 14100) ||
-      (freq >= 18068 && freq < 18110) ||
-      (freq >= 21000 && freq < 21150) ||
-      (freq >= 24890 && freq < 24931) ||
-      (freq >= 28000 && freq < 28300))
+  if ((freq >= 1800  && freq <= 1837)  ||
+      (freq >= 3500  && freq <= 3560)  ||
+      (freq >= 7000  && freq <= 7040)  ||
+      (freq >= 10100 && freq <= 10130) ||
+      (freq >= 14000 && freq <= 14069) ||
+      (freq >= 18068 && freq <= 18095) ||
+      (freq >= 21000 && freq <= 21069) ||
+      (freq >= 24890 && freq <= 24910) ||
+      (freq >= 28000 && freq <= 28069))
   {
     return {"CW - MORSE", 0};
   }
@@ -305,27 +280,9 @@ void drawLayoutClean()
   else
   {
     BandplanHint hint = getBandplanHint();
-    char hintText[48];
-
-    if (hint.targetKHz > 0)
-    {
-      snprintf(
-        hintText, sizeof(hintText),
-        "%s  TARGET: %d kHz",
-        hint.label, hint.targetKHz
-      );
-    }
-    else
-    {
-      snprintf(
-        hintText, sizeof(hintText),
-        "%s", hint.label
-      );
-    }
-
     spr.setTextDatum(MC_DATUM);
     spr.drawString(
-      hintText,
+      hint.label,
       rtX + rtW / 2,
       rtY + rtH / 2
     );

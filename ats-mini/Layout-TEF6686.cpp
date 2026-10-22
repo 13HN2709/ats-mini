@@ -31,38 +31,12 @@ struct TEFBandplanHint
 
 static TEFBandplanHint getTEFBandplanHint()
 {
-  const int32_t f = currentFrequency;
+  // Match the effective tuned frequency used by the rest of the radio logic.
+  // In SSB, currentBFO can move the effective frequency across a bandplan boundary.
+  const int32_t f = currentFrequency + currentBFO / 1000;
 
   // ------------------------------------------------
-  // 1. FT4 - checked before overlapping FT8 ranges
-  // ------------------------------------------------
-
-  if (f >= 3574 && f <= 3577)
-    return {"FT4 - USB", 3575};
-
-  if (f >= 7045 && f <= 7050)
-    return {"FT4 - USB", 7047};
-
-  if (f >= 10138 && f <= 10142)
-    return {"FT4 - USB", 10140};
-
-  if (f >= 14078 && f <= 14083)
-    return {"FT4 - USB", 14080};
-
-  if (f >= 18103 && f <= 18105)
-    return {"FT4 - USB", 18104};
-
-  if (f >= 21138 && f <= 21143)
-    return {"FT4 - USB", 21140};
-
-  if (f >= 24917 && f <= 24921)
-    return {"FT4 - USB", 24919};
-
-  if (f >= 28177 && f <= 28183)
-    return {"FT4 - USB", 28180};
-
-  // ------------------------------------------------
-  // 2. FT8
+  // 1. FT8 frequency ranges (IARU Region 1 guidance)
   // ------------------------------------------------
 
   if (f >= 1838 && f <= 1842)
@@ -188,7 +162,7 @@ static TEFBandplanHint getTEFBandplanHint()
   // 8. No specific recommendation
   // ------------------------------------------------
 
-  return {"BANDPLAN", 0};
+  return {"MIXED", 0};
 }
 
 
@@ -205,6 +179,10 @@ void drawLayoutTEF6686()
   const uint16_t COLOR_YELLOW = 0xFFE0;
   const uint16_t COLOR_RED    = 0xF800;
   const uint16_t COLOR_BLACK  = 0x0000;
+
+  // Calculate the bandplan hint once per frame so MODE and TARGET
+  // always use the same frequency snapshot during this redraw.
+  const TEFBandplanHint bandplanHint = getTEFBandplanHint();
 
   // 1. Background
   spr.fillSprite(COLOR_BLACK);
@@ -443,7 +421,6 @@ void drawLayoutTEF6686()
   }
   else
   {
-    TEFBandplanHint hint = getTEFBandplanHint();
 
     spr.drawString("MODE:", psX + 5, psY + 2);
 
@@ -456,13 +433,12 @@ void drawLayoutTEF6686()
     spr.setClipRect(
       hintClipX, psY + 1, hintClipW, psH - 2
     );
-    spr.drawString(hint.label, hintX, psY + 2);
+    spr.drawString(bandplanHint.label, hintX, psY + 2);
     spr.clearClipRect();
   }
 
   // 9. RT field
-  // FM: original RDS radio text.
-  // Non-FM: recommended target frequency.
+  // FM: original RDS radio text. Non-FM: left unused.
   const int rtX = 10;
   const int rtY = 141;
   const int rtW = 300;
@@ -490,37 +466,7 @@ void drawLayoutTEF6686()
       spr.clearClipRect();
     }
   }
-  else
-  {
-    TEFBandplanHint hint = getTEFBandplanHint();
-
-    char targetText[40];
-
-    if (hint.targetKHz > 0)
-    {
-      snprintf(
-        targetText,
-        sizeof(targetText),
-        "TARGET: %d kHz",
-        hint.targetKHz
-      );
-    }
-    else
-    {
-      snprintf(
-        targetText,
-        sizeof(targetText),
-        "NO TARGET FREQUENCY"
-      );
-    }
-
-    spr.setTextColor(COLOR_GREEN);
-    spr.setClipRect(
-      rtX + 5, rtY + 1, rtW - 10, rtH - 2
-    );
-    spr.drawString(targetText, rtX + 7, rtY + 2);
-    spr.clearClipRect();
-  }
+  // Non-FM bandplan categories are shown in the MODE field above.
 
   // 10. Menu
   if (currentCmd != CMD_NONE &&
