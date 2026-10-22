@@ -657,6 +657,9 @@ bool processRssiSnr()
 
 void loop()
 {
+  uint32_t currentTime = millis();
+  bool needRedraw = false;
+
   // Keep frequency-dependent layout hints (e.g. TEF6686 bandplan MODE)
   // synchronized with the tuned frequency, even if a tuning path forgets
   // to request a full redraw.
@@ -668,8 +671,6 @@ void loop()
     lastBandplanDisplayFrequency = bandplanDisplayFrequency;
     needRedraw = true;
   }
-  uint32_t currentTime = millis();
-  bool needRedraw = false;
 
   uint32_t encCounts = consumeEncoderCounts();
   int16_t encCount = (int16_t)(encCounts & 0xFFFF);
