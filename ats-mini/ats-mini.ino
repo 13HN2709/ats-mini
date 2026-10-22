@@ -611,9 +611,6 @@ bool clickFreq(bool shortPress)
 bool processRssiSnr()
 {
   static uint32_t updateCounter = 0;
-  // Remember the last frequency used for frequency-dependent layout hints.
-  static uint32_t lastBandplanDisplayFrequency = UINT32_MAX;
-
   bool needRedraw = false;
 
   rx.getCurrentReceivedSignalQuality();
@@ -661,6 +658,8 @@ bool processRssiSnr()
 void loop()
 {
   uint32_t currentTime = millis();
+  // Remember the last frequency used for frequency-dependent layout hints.
+  static uint32_t lastBandplanDisplayFrequency = UINT32_MAX;
   bool needRedraw = false;
 
   uint32_t encCounts = consumeEncoderCounts();
