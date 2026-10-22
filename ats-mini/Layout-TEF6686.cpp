@@ -34,35 +34,7 @@ static TEFBandplanHint getTEFBandplanHint()
   const int32_t f = currentFrequency;
 
   // ------------------------------------------------
-  // 1. FT4 - fixed target frequencies with +/- 1 kHz tolerance
-  // ------------------------------------------------
-
-  if (abs(f - 3575) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(f - 7047) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(f - 10140) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (f == 14080)
-    return {"FT4 - USB", 0};
-
-  if (abs(f - 18104) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(f - 21140) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(f - 24919) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(f - 28180) <= 1)
-    return {"FT4 - USB", 0};
-
-  // ------------------------------------------------
-  // 2. FT8
+  // 1. FT8 frequency ranges (IARU Region 1 guidance)
   // ------------------------------------------------
 
   if (f >= 1838 && f <= 1842)
@@ -464,8 +436,7 @@ void drawLayoutTEF6686()
   }
 
   // 9. RT field
-  // FM: original RDS radio text.
-  // Non-FM: recommended target frequency.
+  // FM: original RDS radio text. Non-FM: left unused.
   const int rtX = 10;
   const int rtY = 141;
   const int rtW = 300;
@@ -493,39 +464,7 @@ void drawLayoutTEF6686()
       spr.clearClipRect();
     }
   }
-  else
-  {
-
-    char targetText[40];
-
-    if (bandplanHint.targetKHz > 0)
-    {
-      snprintf(
-        targetText,
-        sizeof(targetText),
-        "TARGET: %d kHz",
-        bandplanHint.targetKHz
-      );
-    }
-    else if (strcmp(bandplanHint.label, "FT4 - USB") != 0)
-    {
-      snprintf(
-        targetText,
-        sizeof(targetText),
-        "NO TARGET FREQUENCY"
-      );
-    }
-
-    if (bandplanHint.targetKHz > 0 || strcmp(bandplanHint.label, "FT4 - USB") != 0)
-    {
-      spr.setTextColor(COLOR_GREEN);
-      spr.setClipRect(
-        rtX + 5, rtY + 1, rtW - 10, rtH - 2
-      );
-      spr.drawString(targetText, rtX + 7, rtY + 2);
-      spr.clearClipRect();
-    }
-  }
+  // Non-FM bandplan categories are shown in the MODE field above.
 
   // 10. Menu
   if (currentCmd != CMD_NONE &&
