@@ -1,4 +1,3 @@
-
 #include "Common.h"
 #include "Themes.h"
 #include "Utils.h"
@@ -15,12 +14,12 @@
 //
 // SW/MW:
 // - Bandplan hints in English
-// - Recommended target frequency
+// - Temporary debug information in RT field
 //
 // IMPORTANT:
 // - No automatic frequency changes.
 // - No automatic reception mode changes.
-// - Existing layout elements are preserved.
+// - Debug display is temporary.
 // --------------------------------------------------
 
 struct TEFBandplanHint
@@ -34,7 +33,7 @@ static TEFBandplanHint getTEFBandplanHint()
   const int32_t f = currentFrequency;
 
   // ------------------------------------------------
-  // 1. FT4 - check before overlapping FT8 ranges
+  // 1. FT4 - checked before overlapping FT8 ranges
   // ------------------------------------------------
 
   if (f >= 3574 && f <= 3577)
@@ -410,7 +409,7 @@ void drawLayoutTEF6686()
 
   // 8. PS field
   // FM: original station name.
-  // SW/MW: bandplan operating hint.
+  // Non-FM: bandplan hint.
   const int psX = 10;
   const int psY = 116;
   const int psW = 300;
@@ -447,17 +446,22 @@ void drawLayoutTEF6686()
 
     spr.drawString("MODE:", psX + 5, psY + 2);
 
+    // Extra spacing prevents MODE and FT8/FT4 from overlapping.
+    const int hintX = psX + 62;
+    const int hintClipX = psX + 59;
+    const int hintClipW = psW - 64;
+
     spr.setTextColor(COLOR_GREEN);
     spr.setClipRect(
-      psX + 48, psY + 1, psW - 53, psH - 2
+      hintClipX, psY + 1, hintClipW, psH - 2
     );
-    spr.drawString(hint.label, psX + 50, psY + 2);
+    spr.drawString(hint.label, hintX, psY + 2);
     spr.clearClipRect();
   }
 
   // 9. RT field
   // FM: original RDS radio text.
-  // SW/MW: recommended target frequency.
+  // Non-FM: temporary debug information.
   const int rtX = 10;
   const int rtY = 141;
   const int rtW = 300;
@@ -489,33 +493,38 @@ void drawLayoutTEF6686()
   {
     TEFBandplanHint hint = getTEFBandplanHint();
 
+    char debugText[48];
+
+    // Show actual frequency, mode, detected label and target.
+    // This helps identify why a frequency is classified incorrectly.
     if (hint.targetKHz > 0)
     {
-      char targetText[32];
-
       snprintf(
-        targetText,
-        sizeof(targetText),
-        "TARGET: %d kHz",
+        debugText,
+        sizeof(debugText),
+        "F:%ld M:%u T:%d",
+        (long)currentFrequency,
+        (unsigned int)currentMode,
         hint.targetKHz
       );
-
-      spr.setTextColor(COLOR_GREEN);
-      spr.setClipRect(
-        rtX + 5, rtY + 1, rtW - 10, rtH - 2
-      );
-      spr.drawString(targetText, rtX + 7, rtY + 2);
-      spr.clearClipRect();
     }
     else
     {
-      spr.setTextColor(COLOR_GREEN);
-      spr.drawString(
-        "NO TARGET FREQUENCY",
-        rtX + 7,
-        rtY + 2
+      snprintf(
+        debugText,
+        sizeof(debugText),
+        "F:%ld M:%u NO TARGET",
+        (long)currentFrequency,
+        (unsigned int)currentMode
       );
     }
+
+    spr.setTextColor(COLOR_YELLOW);
+    spr.setClipRect(
+      rtX + 5, rtY + 1, rtW - 10, rtH - 2
+    );
+    spr.drawString(debugText, rtX + 7, rtY + 2);
+    spr.clearClipRect();
   }
 
   // 10. Menu
