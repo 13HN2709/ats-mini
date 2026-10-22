@@ -59,32 +59,7 @@ static BandplanHint getBandplanHint()
   if (freq >= 28070 && freq <= 28080)
     return {"FT8 - USB", 28074};
 
-  // 2. FT4 - fixed target frequencies with +/- 1 kHz tolerance
-  if (abs(freq - 3575) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(freq - 7047) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(freq - 10140) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (freq == 14080)
-    return {"FT4 - USB", 0};
-
-  if (abs(freq - 18104) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(freq - 21140) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(freq - 24919) <= 1)
-    return {"FT4 - USB", 0};
-
-  if (abs(freq - 28180) <= 1)
-    return {"FT4 - USB", 0};
-
-  // 3. SSTV
+  // 2. SSTV frequency ranges
   if (abs(freq - 7165) <= 3)
     return {"SSTV - USB", 7165};
 
@@ -305,27 +280,9 @@ void drawLayoutClean()
   else
   {
     BandplanHint hint = getBandplanHint();
-    char hintText[48];
-
-    if (hint.targetKHz > 0)
-    {
-      snprintf(
-        hintText, sizeof(hintText),
-        "%s  TARGET: %d kHz",
-        hint.label, hint.targetKHz
-      );
-    }
-    else
-    {
-      snprintf(
-        hintText, sizeof(hintText),
-        "%s", hint.label
-      );
-    }
-
     spr.setTextDatum(MC_DATUM);
     spr.drawString(
-      hintText,
+      hint.label,
       rtX + rtW / 2,
       rtY + rtH / 2
     );
