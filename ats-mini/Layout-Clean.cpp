@@ -8,14 +8,58 @@
 // ATS Mini V4 - Clean Layout
 // Display: 320 x 170 Pixel
 // Frequenz: originale FONT_DIGITS / drawFrequency()
+// Testversion: FT8 / FT4 Bandplan-Hinweis
 // --------------------------------------------------
+
+static const char *getBandplanHint()
+{
+  // Nur fuer USB und LSB Bandplan-Hinweise anzeigen.
+  // currentFrequency wird bei AM/LSB/USB in kHz gespeichert.
+  if (currentMode != USB && currentMode != LSB)
+    return "GEMISCHT";
+
+  const int32_t freq = currentFrequency;
+
+  // FT8 - schmale Erkennungsfenster um die Dialfrequenzen.
+  // Werte in kHz; keine automatische Modulationsumschaltung.
+  if (currentMode == USB)
+  {
+    if (abs(freq - 1840) <= 1 ||
+        abs(freq - 3573) <= 1 ||
+        abs(freq - 5357) <= 1 ||
+        abs(freq - 7074) <= 1 ||
+        abs(freq - 10136) <= 1 ||
+        abs(freq - 14074) <= 1 ||
+        abs(freq - 18100) <= 1 ||
+        abs(freq - 21074) <= 1 ||
+        abs(freq - 24915) <= 1 ||
+        abs(freq - 28074) <= 1)
+    {
+      return "FT8 - USB";
+    }
+
+    // FT4 - getrennt von FT8.
+    if (abs(freq - 3575) <= 1 ||
+        abs(freq - 7047) <= 1 ||
+        abs(freq - 10140) <= 1 ||
+        abs(freq - 14080) <= 1 ||
+        abs(freq - 18104) <= 1 ||
+        abs(freq - 21140) <= 1 ||
+        abs(freq - 24919) <= 1 ||
+        abs(freq - 28180) <= 1)
+    {
+      return "FT4 - USB";
+    }
+  }
+
+  return "GEMISCHT";
+}
 
 void drawLayoutClean()
 {
   const uint16_t COLOR_GREEN = 0x07E0;
   const uint16_t COLOR_WHITE = 0xFFFF;
   const uint16_t COLOR_BLACK = 0x0000;
-  const uint16_t COLOR_CYAN  = 0x07FF;
   const uint16_t COLOR_GREY  = 0x2104;
 
   // 1. Batterie oben rechts
@@ -83,7 +127,7 @@ void drawLayoutClean()
       : 100
   );
 
-  // 6. Radiotextfeld
+  // 6. Bandplan-Hinweis im bisherigen RDS-Feld
   const int rtX = 20;
   const int rtY = 105;
   const int rtW = 280;
@@ -96,25 +140,24 @@ void drawLayoutClean()
     rtX, rtY, rtW, rtH, 5, COLOR_GREEN
   );
 
-  if (currentMode == FM)
-  {
-    const char *rt = getRadioText();
+  const char *hint = getBandplanHint();
 
-    if (rt != nullptr && *rt)
-    {
-      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-      spr.setTextDatum(TL_DATUM);
-      spr.setTextColor(COLOR_WHITE);
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(COLOR_WHITE);
 
-      spr.setClipRect(
-        rtX + 5, rtY + 3,
-        rtW - 10, rtH - 6
-      );
+  spr.setClipRect(
+    rtX + 5, rtY + 3,
+    rtW - 10, rtH - 6
+  );
 
-      spr.drawString(rt, rtX + 8, rtY + 8);
-      spr.clearClipRect();
-    }
-  }
+  spr.drawString(
+    hint,
+    rtX + rtW / 2,
+    rtY + rtH / 2
+  );
+
+  spr.clearClipRect();
 
   // 7. S-Meter unten
   const int barX = 50;
