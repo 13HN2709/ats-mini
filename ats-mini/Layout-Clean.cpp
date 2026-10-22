@@ -19,7 +19,7 @@ static const char *getBandplanHint()
 {
   const int32_t freq = currentFrequency;
 
-  // 1. FT8: unabhaengig vom aktuell eingestellten Empfangsmodus.
+  // 1. FT8 - genaue Frequenzpunkte, unabhaengig vom eingestellten Modus.
   if (abs(freq - 1840) <= 1 ||
       abs(freq - 3573) <= 1 ||
       abs(freq - 5357) <= 1 ||
@@ -34,7 +34,7 @@ static const char *getBandplanHint()
     return "FT8 - USB";
   }
 
-  // 2. FT4: unabhaengig vom aktuell eingestellten Empfangsmodus.
+  // 2. FT4 - genaue Frequenzpunkte, unabhaengig vom eingestellten Modus.
   if (abs(freq - 3575) <= 1 ||
       abs(freq - 7047) <= 1 ||
       abs(freq - 10140) <= 1 ||
@@ -47,7 +47,17 @@ static const char *getBandplanHint()
     return "FT4 - USB";
   }
 
-  // 3. Typische CW-Abschnitte.
+  // 3. SSTV - typische Anruffrequenzen.
+  if (abs(freq - 7165) <= 3 ||
+      abs(freq - 7171) <= 3 ||
+      abs(freq - 14230) <= 3 ||
+      abs(freq - 27700) <= 3 ||
+      abs(freq - 28680) <= 3)
+  {
+    return "SSTV";
+  }
+
+  // 4. Typische CW-Abschnitte.
   if ((freq >= 1800  && freq < 1843) ||
       (freq >= 3500  && freq < 3600) ||
       (freq >= 7000  && freq < 7060) ||
@@ -61,27 +71,76 @@ static const char *getBandplanHint()
     return "CW - MORSE";
   }
 
-  // 4. Typische Sprach-QSO-Bereiche.
-  // Die Anzeige richtet sich nach der Frequenz, nicht nach currentMode.
-  if ((freq >= 1843  && freq <= 2000) ||
-      (freq >= 3600  && freq <= 3800) ||
-      (freq >= 5354  && freq <= 5366) ||
-      (freq >= 7060  && freq <= 7200))
+  // 5. CB-Funk: ungefaehr 26.565 bis 27.405 MHz.
+  if (freq >= 26565 && freq <= 27405)
   {
-    return "QSO - LSB";
+    return "CB - AM/FM/SSB";
   }
 
-  if ((freq >= 14100 && freq <= 14350) ||
-      (freq >= 18110 && freq <= 18168) ||
-      (freq >= 21150 && freq <= 21450) ||
-      (freq >= 24931 && freq <= 24990) ||
-      (freq >= 28300 && freq <= 29700))
+  // 6. Typische Sprach-QSO-Bereiche.
+  // DAY/NIGHT sind Orientierungshinweise, keine Live-Erkennung.
+  if (freq >= 1843 && freq <= 2000)
+    return "QSO - LSB NIGHT";
+
+  if (freq >= 3600 && freq <= 3800)
+    return "QSO - LSB NIGHT";
+
+  if (freq >= 5354 && freq <= 5366)
+    return "QSO - USB DAY/NIGHT";
+
+  if (freq >= 7060 && freq <= 7200)
+    return "QSO - LSB DAY/NIGHT";
+
+  if (freq >= 14100 && freq <= 14350)
+    return "QSO - USB DAY";
+
+  if (freq >= 18110 && freq <= 18168)
+    return "QSO - USB DAY";
+
+  if (freq >= 21150 && freq <= 21450)
+    return "QSO - USB DAY";
+
+  if (freq >= 24931 && freq <= 24990)
+    return "QSO - USB DAY";
+
+  // 10 m: SSB-Sprachfunk und FM-Bereich.
+  if (freq >= 28300 && freq < 29100)
+    return "QSO - USB DAY";
+
+  if (freq >= 29100 && freq <= 29700)
+    return "QSO - FM DAY";
+
+  // 7. Kurzwellenrundfunk - typische internationale Rundfunksegmente.
+  // Spezifische Digital-, CW-, QSO- und SSTV-Regeln haben Vorrang.
+  if ((freq >= 3950  && freq <= 4000)  ||
+      (freq >= 5900  && freq <= 6200)  ||
+      (freq >= 7200  && freq <= 7450)  ||
+      (freq >= 9400  && freq <= 9900)  ||
+      (freq >= 11600 && freq <= 12100) ||
+      (freq >= 13570 && freq <= 13870) ||
+      (freq >= 15100 && freq <= 15800) ||
+      (freq >= 17480 && freq <= 17900) ||
+      (freq >= 18900 && freq <= 19020) ||
+      (freq >= 21450 && freq <= 21850) ||
+      (freq >= 25670 && freq <= 26100))
   {
-    return "QSO - USB";
+    return "SW-RADIO AM";
   }
 
-  // Weitere Bereiche wie CB, Rundfunk, SSTV und Utility
-  // werden spaeter gemeinsam ergaenzt.
+  // 8. Utility-Funk - vorlaeufige Orientierung in typischen HF-Segmenten.
+  // Utility ist vielfaeltig; die Zuordnung muss spaeter noch verfeinert werden.
+  if ((freq >= 4000  && freq < 4438)  ||
+      (freq >= 6200  && freq < 6525)  ||
+      (freq >= 8800  && freq < 9040)  ||
+      (freq >= 11175 && freq < 11400) ||
+      (freq >= 13200 && freq < 13360) ||
+      (freq >= 15010 && freq < 15100) ||
+      (freq >= 17900 && freq < 18030) ||
+      (freq >= 21870 && freq < 21924))
+  {
+    return "UTILITY - USB";
+  }
+
   return "GEMISCHT";
 }
 
