@@ -8,50 +8,80 @@
 // ATS Mini V4 - Clean Layout
 // Display: 320 x 170 Pixel
 // Frequenz: originale FONT_DIGITS / drawFrequency()
-// Testversion: FT8 / FT4 Bandplan-Hinweis
+// Bandplan-Hinweis: frequenzabhaengig, Modus-unabhaengig
 // --------------------------------------------------
 
+// Frequenzen in currentFrequency werden hier in kHz ausgewertet.
+// Diese Regeln sind eine erste Orientierung fuer den Empfang,
+// keine Sendefreigabe. Spezialbereiche (FT8/FT4/CW) haben Vorrang
+// vor der allgemeinen QSO-Anzeige.
 static const char *getBandplanHint()
 {
-  // Nur fuer USB und LSB Bandplan-Hinweise anzeigen.
-  // currentFrequency wird bei AM/LSB/USB in kHz gespeichert.
-  if (currentMode != USB && currentMode != LSB)
-    return "GEMISCHT";
-
   const int32_t freq = currentFrequency;
 
-  // FT8 - schmale Erkennungsfenster um die Dialfrequenzen.
-  // Werte in kHz; keine automatische Modulationsumschaltung.
-  if (currentMode == USB)
+  // 1. FT8: unabhaengig vom aktuell eingestellten Empfangsmodus.
+  if (abs(freq - 1840) <= 1 ||
+      abs(freq - 3573) <= 1 ||
+      abs(freq - 5357) <= 1 ||
+      abs(freq - 7074) <= 1 ||
+      abs(freq - 10136) <= 1 ||
+      abs(freq - 14074) <= 1 ||
+      abs(freq - 18100) <= 1 ||
+      abs(freq - 21074) <= 1 ||
+      abs(freq - 24915) <= 1 ||
+      abs(freq - 28074) <= 1)
   {
-    if (abs(freq - 1840) <= 1 ||
-        abs(freq - 3573) <= 1 ||
-        abs(freq - 5357) <= 1 ||
-        abs(freq - 7074) <= 1 ||
-        abs(freq - 10136) <= 1 ||
-        abs(freq - 14074) <= 1 ||
-        abs(freq - 18100) <= 1 ||
-        abs(freq - 21074) <= 1 ||
-        abs(freq - 24915) <= 1 ||
-        abs(freq - 28074) <= 1)
-    {
-      return "FT8 - USB";
-    }
-
-    // FT4 - getrennt von FT8.
-    if (abs(freq - 3575) <= 1 ||
-        abs(freq - 7047) <= 1 ||
-        abs(freq - 10140) <= 1 ||
-        abs(freq - 14080) <= 1 ||
-        abs(freq - 18104) <= 1 ||
-        abs(freq - 21140) <= 1 ||
-        abs(freq - 24919) <= 1 ||
-        abs(freq - 28180) <= 1)
-    {
-      return "FT4 - USB";
-    }
+    return "FT8 - USB";
   }
 
+  // 2. FT4: unabhaengig vom aktuell eingestellten Empfangsmodus.
+  if (abs(freq - 3575) <= 1 ||
+      abs(freq - 7047) <= 1 ||
+      abs(freq - 10140) <= 1 ||
+      abs(freq - 14080) <= 1 ||
+      abs(freq - 18104) <= 1 ||
+      abs(freq - 21140) <= 1 ||
+      abs(freq - 24919) <= 1 ||
+      abs(freq - 28180) <= 1)
+  {
+    return "FT4 - USB";
+  }
+
+  // 3. Typische CW-Abschnitte.
+  if ((freq >= 1800  && freq < 1843) ||
+      (freq >= 3500  && freq < 3600) ||
+      (freq >= 7000  && freq < 7060) ||
+      (freq >= 10100 && freq < 10140) ||
+      (freq >= 14000 && freq < 14100) ||
+      (freq >= 18068 && freq < 18110) ||
+      (freq >= 21000 && freq < 21150) ||
+      (freq >= 24890 && freq < 24931) ||
+      (freq >= 28000 && freq < 28300))
+  {
+    return "CW - MORSE";
+  }
+
+  // 4. Typische Sprach-QSO-Bereiche.
+  // Die Anzeige richtet sich nach der Frequenz, nicht nach currentMode.
+  if ((freq >= 1843  && freq <= 2000) ||
+      (freq >= 3600  && freq <= 3800) ||
+      (freq >= 5354  && freq <= 5366) ||
+      (freq >= 7060  && freq <= 7200))
+  {
+    return "QSO - LSB";
+  }
+
+  if ((freq >= 14100 && freq <= 14350) ||
+      (freq >= 18110 && freq <= 18168) ||
+      (freq >= 21150 && freq <= 21450) ||
+      (freq >= 24931 && freq <= 24990) ||
+      (freq >= 28300 && freq <= 29700))
+  {
+    return "QSO - USB";
+  }
+
+  // Weitere Bereiche wie CB, Rundfunk, SSTV und Utility
+  // werden spaeter gemeinsam ergaenzt.
   return "GEMISCHT";
 }
 
@@ -179,7 +209,7 @@ void drawLayoutClean()
     );
   }
 
-  // 8. Menüanzeige
+  // 8. Menueanzeige
   if (currentCmd != CMD_NONE &&
       currentCmd != CMD_SCAN &&
       currentCmd != CMD_FREQ)
