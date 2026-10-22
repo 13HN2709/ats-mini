@@ -660,17 +660,8 @@ void loop()
   uint32_t currentTime = millis();
   bool needRedraw = false;
 
-  // Keep frequency-dependent layout hints (e.g. TEF6686 bandplan MODE)
-  // synchronized with the tuned frequency, even if a tuning path forgets
-  // to request a full redraw.
+  // Remember the last frequency used for frequency-dependent layout hints.
   static uint32_t lastBandplanDisplayFrequency = UINT32_MAX;
-  const uint32_t bandplanDisplayFrequency =
-    currentFrequency + currentBFO / 1000;
-  if (bandplanDisplayFrequency != lastBandplanDisplayFrequency)
-  {
-    lastBandplanDisplayFrequency = bandplanDisplayFrequency;
-    needRedraw = true;
-  }
 
   uint32_t encCounts = consumeEncoderCounts();
   int16_t encCount = (int16_t)(encCounts & 0xFFFF);
@@ -886,6 +877,15 @@ void loop()
   }
 
   needRedraw |= statusTick(millis());
+
+  // Check after tuning/input processing so the current loop's frequency is used.
+  const uint32_t bandplanDisplayFrequency =
+    currentFrequency + currentBFO / 1000;
+  if (bandplanDisplayFrequency != lastBandplanDisplayFrequency)
+  {
+    lastBandplanDisplayFrequency = bandplanDisplayFrequency;
+    needRedraw = true;
+  }
 
   if(needRedraw) {
     drawScreen();
