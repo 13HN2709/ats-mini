@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        lang: [de, en]
+        lang: [de]
         board:
           - profile: esp32s3-ospi
             fqbn: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=8M,PSRAM=opi,CPUFreq=80,USBMode=hwcdc,FlashMode=qio,PartitionScheme=custom,DebugLevel=none
@@ -25,22 +25,6 @@ jobs:
               - --profile
               - esp32s3-ospi
               - --export-binaries
-          - profile: esp32s3-qspi
-            fqbn: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=8M,PSRAM=enabled,CPUFreq=80,USBMode=hwcdc,FlashMode=qio,PartitionScheme=custom,DebugLevel=none
-            artifact-suffix: qspi
-            cli-compile-flags: |
-              - --profile
-              - esp32s3-qspi
-              - --export-binaries
-          - profile: esp32s3-ospi
-            fqbn: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=8M,PSRAM=opi,CPUFreq=80,USBMode=hwcdc,FlashMode=qio,PartitionScheme=custom,DebugLevel=none
-            artifact-suffix: lilygo-t-embed
-            cli-compile-flags: |
-              - --profile
-              - esp32s3-ospi
-              - --export-binaries
-              - --build-property
-              - compiler.cpp.extra_flags=-DLILYGO_SI473X
 
     outputs:
       slug: ${{ steps.slug.outputs.slug }}
