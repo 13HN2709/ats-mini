@@ -59,7 +59,7 @@ static BandplanHint getBandplanHint()
   if (freq >= 28070 && freq <= 28080)
     return {"FT8 - USB", 28074};
 
-  // 2. FT4
+  // 2. FT4 - fixed target frequencies with +/- 1 kHz tolerance
   if (abs(freq - 3575) <= 1)
     return {"FT4 - USB", 3575};
 
@@ -69,7 +69,7 @@ static BandplanHint getBandplanHint()
   if (abs(freq - 10140) <= 1)
     return {"FT4 - USB", 10140};
 
-  if (freq >= 14078 && freq <= 14082)
+  if (abs(freq - 14080) <= 1)
     return {"FT4 - USB", 14080};
 
   if (abs(freq - 18104) <= 1)
