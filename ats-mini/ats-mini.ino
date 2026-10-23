@@ -847,7 +847,7 @@ void loop()
 
   if((currentTime - lastRDSCheck) > RDS_CHECK_TIME)
   {
-    needRedraw |= (currentMode == FM) && (snr >= 5) && checkRds();
+    needRedraw |= (currentMode == FM) && checkRds();
     lastRDSCheck = currentTime;
   }
 
