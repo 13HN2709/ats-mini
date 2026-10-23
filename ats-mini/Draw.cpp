@@ -533,9 +533,10 @@ static void drawDualRxScreen()
     spr.setFont(FONT_SMALL);
     spr.setTextDatum(ML_DATUM);
     spr.setTextColor(0xBDF7);
-    spr.drawString(i == 0 ? "A" : "B", 19, y+7);
+    // Move the complete A/B + RX/WAIT labels slightly down so they clear the top frame.
+    spr.drawString(i == 0 ? "A" : "B", 19, y+12);
     spr.setTextColor((dualRxSetupStage == 4 && i == dualRxDisplaySlot) ? 0x07E0 : 0x7BEF);
-    spr.drawString((dualRxSetupStage == 4 && i == dualRxDisplaySlot) ? "RX" : "WAIT", 36, y+7);
+    spr.drawString((dualRxSetupStage == 4 && i == dualRxDisplaySlot) ? "RX" : "WAIT", 36, y+12);
     char freqText[24];
     bool isFm = v.band < getTotalBands() && bands[v.band].bandType == FM_BAND_TYPE;
     if(isFm) snprintf(freqText, sizeof(freqText), "%.2f", v.freq / 100.0f);
