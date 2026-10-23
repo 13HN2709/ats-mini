@@ -220,19 +220,6 @@ class SI4735_fixed: public SI4735
     }
 
 
-
-    // Only one kind of text is available
-    inline char *getRdsProgramInformation(void)
-    {
-      return getRdsVersionCode()? SI4735::getRdsText2B() : SI4735::getRdsText2A();
-    }
-
-    // Only one kind of text is available
-    inline char *getRdsStationInformation(void)
-    {
-      return getRdsVersionCode()? SI4735::getRdsText2B() : SI4735::getRdsText2A();
-    }
-
     // Implementing the empty SI4735::setFmStereoOff() placeholder by
     // moving every blend threshold beyond reach, which pins the audio to mono
     void setFmStereoOff()
