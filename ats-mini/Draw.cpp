@@ -540,11 +540,12 @@ static void drawDualRxScreen()
     bool isFm = v.band < getTotalBands() && bands[v.band].bandType == FM_BAND_TYPE;
     if(isFm) snprintf(freqText, sizeof(freqText), "%.2f", v.freq / 100.0f);
     else snprintf(freqText, sizeof(freqText), "%u", v.freq);
-    // Use the compact Orbitron font so the full frequency stays inside each RX frame.
-    spr.setFont(&Orbitron_Light_24);
+    // Keep the exact 7-segment FONT_DIGITS used by Layout-Default.
+    // MR_DATUM is vertically centered, so y+28 centers the 48px digits in the 56px frame.
+    spr.setFont(FONT_DIGITS);
     spr.setTextDatum(MR_DATUM);
     spr.setTextColor(0xFFFF);
-    spr.drawString(freqText, 258, y+7);
+    spr.drawString(freqText, 258, y+28);
     spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
     spr.setTextDatum(ML_DATUM);
     spr.setTextColor(0x07E0);
