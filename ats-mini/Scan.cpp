@@ -8,7 +8,7 @@
 #define TUNE_DELAY_AM_SSB  80
 
 #define SCAN_POLL_TIME    10 // Tuning status polling interval (msecs)
-#define SCAN_POINTS      200 // Number of frequencies to scan
+#define SCAN_POINTS      256 // Number of frequencies to scan
 
 #define SCAN_OFF    0   // Scanner off, no data
 #define SCAN_RUN    1   // Scanner running
@@ -68,7 +68,7 @@ float scanGetSNR(uint16_t freq)
   return((result - scanMinSNR) / (float)(scanMaxSNR - scanMinSNR + 1));
 }
 
-static void scanInit(uint16_t centerFreq, uint16_t step)
+static void scanInitRange(uint16_t startFreq, uint16_t endFreq, uint16_t step)
 {
   scanStep    = step;
   scanCount   = 0;
@@ -78,18 +78,11 @@ static void scanInit(uint16_t centerFreq, uint16_t step)
   scanMaxSNR  = 0;
   scanStatus  = SCAN_RUN;
   scanTime    = millis();
+  scanStartFreq = startFreq;
 
-  const Band *band = getCurrentBand();
-  int freq = scanStep * (centerFreq / scanStep - SCAN_POINTS / 2);
-
-  // Adjust to band boundaries
-  if(freq + scanStep * (SCAN_POINTS - 1) > band->maximumFreq)
-    freq = band->maximumFreq - scanStep * (SCAN_POINTS - 1);
-  if(freq < band->minimumFreq)
-    freq = band->minimumFreq;
-  scanStartFreq = freq;
-
-  // Clear scan data
+  uint32_t points = ((uint32_t)endFreq - startFreq) / step + 1;
+  if(points > SCAN_POINTS) points = SCAN_POINTS;
+  // Keep the requested start frequency exact and clear the retained sample buffer.
   memset(scanData, 0, SCAN_POINTS * sizeof(*scanData));
 }
 
@@ -150,30 +143,45 @@ static bool scanTickTime()
 //
 // Run entire scan once
 //
-void scanRun(uint16_t centerFreq, uint16_t step)
+static void scanRunRangeInternal(uint16_t startFreq, uint16_t endFreq, uint16_t step)
 {
   // Allocate once and retain the samples for drawing after the scan.
   if(!scanData)
   {
     scanData = static_cast<ScanPoint *>(ps_malloc(SCAN_POINTS * sizeof(*scanData)));
-    if(!scanData)
-      return;
+    if(!scanData) return;
   }
 
-  // Set tuning delay
+  if(!step || endFreq < startFreq) return;
+  uint32_t points = ((uint32_t)endFreq - startFreq) / step + 1;
+  if(points > SCAN_POINTS) endFreq = startFreq + step * (SCAN_POINTS - 1);
+
   rx.setMaxDelaySetFrequency(currentMode == FM ? TUNE_DELAY_FM : TUNE_DELAY_AM_SSB);
-  // Mute the audio
   muteOn(MUTE_TEMP, true);
-  // Flag is set by rotary encoder and cleared on seek/scan entry
   seekStop = false;
-  // Save current frequency
   uint16_t curFreq = rx.getFrequency();
-  // Scan the whole range
-  for(scanInit(centerFreq, step) ; scanTickTime(););
-  // Restore current frequency
+  for(scanInitRange(startFreq, endFreq, step); scanTickTime(););
   rx.setFrequency(curFreq);
-  // Unmute the audio
   muteOn(MUTE_TEMP, false);
-  // Restore tuning delay
   rx.setMaxDelaySetFrequency(TUNE_DELAY_DEFAULT);
+}
+
+void scanRun(uint16_t centerFreq, uint16_t step)
+{
+  const Band *band = getCurrentBand();
+  if(!band || !step) return;
+  int32_t start = (int32_t)step * ((int32_t)(centerFreq / step) - SCAN_POINTS / 2);
+  int32_t end = start + (int32_t)step * (SCAN_POINTS - 1);
+  if(start < band->minimumFreq) { start = band->minimumFreq; end = start + (int32_t)step * (SCAN_POINTS - 1); }
+  if(end > band->maximumFreq) { end = band->maximumFreq; start = end - (int32_t)step * (SCAN_POINTS - 1); }
+  if(start < band->minimumFreq) start = band->minimumFreq;
+  scanRunRangeInternal((uint16_t)start, (uint16_t)end, step);
+}
+
+void scanRunRange(uint16_t startFreq, uint16_t endFreq, uint16_t step)
+{
+  const Band *band = getCurrentBand();
+  if(!band || !step || startFreq < band->minimumFreq || endFreq > band->maximumFreq || endFreq < startFreq)
+    return;
+  scanRunRangeInternal(startFreq, endFreq, step);
 }
