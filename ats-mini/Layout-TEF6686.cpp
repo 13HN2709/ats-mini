@@ -143,7 +143,34 @@ static TEFBandplanHint getTEFBandplanHint()
     return {"CW - MORSE", 28030};
 
   // ------------------------------------------------
-  // 6. 12 m band - voice communication
+  // 6. Common HF voice/QSO segments (IARU Region 1)
+  // Keep these after the specific FT8/FT4, SSTV, RTTY and CW rules above
+  // so the more specific activity labels retain priority.
+  // ------------------------------------------------
+
+  if (f >= 1843 && f <= 2000)
+    return {"QSO - LSB", 1843};   // 160 m
+
+  if (f >= 3600 && f <= 3800)
+    return {"QSO - LSB", 3650};   // 80 m
+
+  if (f >= 5354 && f <= 5366)
+    return {"QSO - USB", 5357};   // 60 m (regional/channel plan applies)
+
+  if (f >= 7060 && f <= 7200)
+    return {"QSO - LSB", 7100};   // 40 m
+
+  if (f >= 14101 && f <= 14350)
+    return {"QSO - USB", 14200};  // 20 m
+
+  if (f >= 18111 && f <= 18168)
+    return {"QSO - USB", 18130};  // 17 m
+
+  if (f >= 21110 && f <= 21450)
+    return {"QSO - USB", 21200};  // 15 m
+
+  // ------------------------------------------------
+  // 7. 12 m band - voice communication
   // ------------------------------------------------
 
   if (f >= 24940 && f <= 24990)
