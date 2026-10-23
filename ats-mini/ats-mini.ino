@@ -714,14 +714,14 @@ void loop()
   {
     if(pb1st.isLongPressed)
     {
-      dualRxStop();
-      needRedraw = true;
-      // Consume the long-press event here. Otherwise the normal button handler
-      // below sees the same event and toggles display sleep after Dual RX stops.
+      // Long press only dims/wakes the display; Dual RX keeps scanning in the background.
+      sleepOn(!sleepOn());
+      elapsedSleep = elapsedCommand = currentTime = millis();
       pb1st.wasClicked = false;
       pb1st.wasShortPressed = false;
       pb1st.isLongPressed = false;
       pb1st.isPressed = false;
+      needRedraw = true;
     }
     else if(pb1st.wasClicked || pb1st.wasShortPressed)
     {
@@ -731,7 +731,12 @@ void loop()
         freqKeypadReset();
       }
       else if(dualRxSetupStage == 3) dualRxBeginScan();
-      else if(dualRxSetupStage == 4) dualRxStop();
+      else if(dualRxSetupStage == 4)
+      {
+        // A short click stops the scan and wakes the display if it was dimmed.
+        if(sleepOn()) sleepOn(false);
+        dualRxStop();
+      }
       needRedraw = true;
       elapsedCommand = millis();
       pb1st.wasClicked = pb1st.wasShortPressed = pb1st.isLongPressed = false;
