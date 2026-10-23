@@ -923,6 +923,7 @@ void loop()
 
   prefsTickTime();
   netTickTime();
+  webSpectrumTick();
   needRedraw |= patchesTick();
   needRedraw |= clockUpdate();
 
