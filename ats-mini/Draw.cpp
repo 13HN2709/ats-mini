@@ -535,16 +535,16 @@ static void drawDualRxScreen()
     spr.setTextColor(0xBDF7);
     spr.drawString(i == 0 ? "A" : "B", 19, y+7);
     spr.setTextColor((dualRxSetupStage == 4 && i == dualRxDisplaySlot) ? 0x07E0 : 0x7BEF);
-    spr.drawString((dualRxSetupStage == 4 && i == dualRxDisplaySlot) ? "RX" : "WAIT", 19, y+32);
+    spr.drawString((dualRxSetupStage == 4 && i == dualRxDisplaySlot) ? "RX" : "WAIT", 36, y+7);
     char freqText[24];
     bool isFm = v.band < getTotalBands() && bands[v.band].bandType == FM_BAND_TYPE;
     if(isFm) snprintf(freqText, sizeof(freqText), "%.2f", v.freq / 100.0f);
     else snprintf(freqText, sizeof(freqText), "%u", v.freq);
-    // Match Layout-Default: use the same large 7-segment frequency font.
-    spr.setFont(FONT_DIGITS);
+    // Use the compact Orbitron font so the full frequency stays inside each RX frame.
+    spr.setFont(&Orbitron_Light_24);
     spr.setTextDatum(MR_DATUM);
     spr.setTextColor(0xFFFF);
-    spr.drawString(freqText, 258, y+3);
+    spr.drawString(freqText, 258, y+7);
     spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
     spr.setTextDatum(ML_DATUM);
     spr.setTextColor(0x07E0);
