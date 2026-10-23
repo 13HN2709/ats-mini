@@ -67,6 +67,8 @@ static const char pageStart[] PROGMEM = R"HTML(<!DOCTYPE HTML>
     .RANGE-FORM { display:grid; grid-template-columns:1fr 1fr; gap:9px; align-items:end; margin:14px 0; }
     .RANGE-FORM BUTTON { grid-column:1/-1; }
     .RANGE-FORM SELECT { font-size:.85rem; }
+    .RANGE-FORM .MOD-BUTTON { grid-column:auto; min-width:0; min-height:38px; padding:.55em .2em; font-size:.78rem; }
+    .RANGE-FORM .MOD-BUTTON.ACTIVE { color:#e8f3ff; border-color:#80a0ff; background:#123f91; box-shadow:inset 0 -2px 0 #167bff,0 0 12px #167bff44; }
     .RANGE-FORM LABEL { display:block; color:var(--muted); font:700 .68rem monospace; letter-spacing:.12em; }
     .RANGE-FORM INPUT { display:block; width:100%; min-width:0; margin-top:6px; font-family:monospace; font-size:1rem; color:#7bb5ff; }
     .RANGE-FORM BUTTON { min-height:42px; white-space:nowrap; }
