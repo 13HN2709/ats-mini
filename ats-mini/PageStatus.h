@@ -28,7 +28,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <BUTTON ID="radioStepUp" TYPE="button" aria-label="Tune up one step">+ STEP</BUTTON>
   </DIV>
   <DIV STYLE="margin-top:16px">
-    <LABEL FOR="radioVolume" CLASS="LABEL" STYLE="display:flex;justify-content:space-between;gap:10px"><SPAN>Volume</SPAN><STRONG ID="radioVolumeValue" CLASS="STEREO" STYLE="color:#80a0ff;border-color:#40527b;background:#101a2d">{{volume}}</STRONG></LABEL>
+    <LABEL FOR="radioVolume" CLASS="LABEL" STYLE="display:flex;justify-content:space-between;gap:10px"><SPAN>Volume</SPAN><STRONG ID="radioVolumeValue" STYLE="color:#80a0ff;font-family:monospace;font-weight:900;font-variant-numeric:tabular-nums">{{volume}}</STRONG></LABEL>
     <INPUT ID="radioVolume" TYPE="range" MIN="0" MAX="63" STEP="1" VALUE="{{volume}}" STYLE="width:100%;accent-color:#80a0ff;margin-top:10px">
     <DIV ID="radioVolumeStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:6px">Adjust volume · 0–63</DIV>
   </DIV>
