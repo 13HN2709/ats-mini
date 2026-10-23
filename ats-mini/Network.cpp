@@ -1324,7 +1324,7 @@ void webSpectrumTick()
   uint16_t center = currentFrequency;
   uint16_t step = currentMode == FM ? 10 : 1;
 
-  if(customRange && requestedMode >= 0 && requestedMode != currentMode)
+  if(customRange && requestedMode >= 0)
   {
     currentMode = requestedMode;
     if(currentMode == FM)
