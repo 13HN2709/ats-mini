@@ -36,6 +36,18 @@ static uint8_t  scanMaxSNR;
 static inline uint8_t min(uint8_t a, uint8_t b) { return(a<b? a:b); }
 static inline uint8_t max(uint8_t a, uint8_t b) { return(a>b? a:b); }
 
+// Read the latest completed sweep for the local web spectrum.
+bool scanGetPoint(uint16_t index, uint16_t *freq, uint8_t *rssi, uint8_t *snr)
+{
+  if(scanStatus != SCAN_DONE || index >= scanCount || !scanData) return false;
+  if(freq) *freq = scanStartFreq + scanStep * index;
+  if(rssi) *rssi = scanData[index].rssi;
+  if(snr) *snr = scanData[index].snr;
+  return true;
+}
+
+uint16_t scanGetCount() { return scanStatus == SCAN_DONE ? scanCount : 0; }
+
 float scanGetRSSI(uint16_t freq)
 {
   // Input frequency must be in range of existing data
