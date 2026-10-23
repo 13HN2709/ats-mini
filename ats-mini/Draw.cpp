@@ -481,7 +481,7 @@ void drawScanGraphs(uint32_t freq)
 
 static void drawDualRxScreen()
 {
-  const uint16_t panelBg = 0x0861, frameBlue = 0x249F, brightBlue = 0x3DFF;
+  const uint16_t panelBg = 0x0861, frameBlue = 0x001F, brightBlue = 0x07FF;
   spr.fillSprite(0x0000);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(brightBlue);
