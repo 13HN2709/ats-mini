@@ -99,18 +99,9 @@ void drawLayoutNewUI()
   {
     drawScanGraphs(isSSB()? (currentFrequency + currentBFO/1000) : currentFrequency);
   }
-  else if(!drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y))
+  else
   {
-    const char *rt = getRadioText();
-    const char *pi = getProgramInfo();
-
-    if((rt && *rt) || (pi && *pi))
-    {
-      spr.setTextColor(0x07E0);
-      spr.setTextDatum(TC_DATUM);
-      // Modernisierter Font-Aufruf statt veraltetem Index '4'
-      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-      spr.drawString(rt ? rt : pi, 145, 150);
-    }
+    // Keep status messages, but do not draw RDS radio text below the S-meter.
+    drawStatus(STATUS_OFFSET_X, STATUS_OFFSET_Y);
   }
 }
