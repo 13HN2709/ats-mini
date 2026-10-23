@@ -24,12 +24,15 @@ static const char pageStart[] PROGMEM = R"HTML(<!DOCTYPE HTML>
     .SUB { color:var(--muted); font-size:.78rem; margin-top:2px; }
     .PILL { border:1px solid #526db0; background:#111b2b; color:var(--blue); border-radius:999px; padding:6px 10px; font-size:.76rem; white-space:nowrap; }
     .NAV { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0 0 16px; }
-    .NAV .ACTIVE { font-weight:800; text-shadow:0 0 10px #80a0ff77; }\n    .NAV a { flex:1 1 auto; text-align:center; padding:10px 13px; border:1px solid var(--line); border-radius:8px; background:#101820; color:#dce5ff; font-size:.88rem; }
+    .NAV .ACTIVE { font-weight:800; text-shadow:0 0 10px #80a0ff77; }
+    .NAV a { flex:1 1 auto; text-align:center; padding:10px 13px; border:1px solid var(--line); border-radius:8px; background:#101820; color:#dce5ff; font-size:.88rem; }
     .NAV a.ACTIVE { border-color:var(--blue); background:#1a2946; color:var(--blue); box-shadow:inset 0 0 0 1px #80a0ff33; }
     .HERO { background:linear-gradient(140deg,#15243b,#0b111b 75%); border:1px solid #506aa7; border-radius:12px; padding:20px; box-shadow:0 18px 44px #0005; margin-bottom:14px; }
     .EYEBROW { color:var(--blue); font-size:.74rem; font-weight:750; letter-spacing:.16em; text-transform:uppercase; }
-    .STEREO { color:#ff453e; font-weight:900; letter-spacing:.16em; text-shadow:0 0 10px #ff453e99,0 0 22px #ff453e55; }\n    .FREQ { font-family:monospace; font-size:clamp(2.35rem,10vw,4.5rem); line-height:1.05; font-weight:800; letter-spacing:-.055em; font-variant-numeric:tabular-nums; color:var(--blue); font-family:"Arial Narrow", "Roboto Condensed", "Lucida Console", monospace; text-shadow:0 0 18px #80a0ff35; margin:12px 0 8px; overflow-wrap:anywhere; }
-    .STEREO { display:inline-block; margin-left:8px; padding:2px 8px; color:#ff4a45; border:1px solid #85312e; background:#200b0c; border-radius:3px; font-family:monospace; font-weight:900; letter-spacing:.12em; text-shadow:0 0 8px #ff302b88; }\n    .MODE { color:#d5e7ed; font-size:1rem; font-weight:650; }
+    .STEREO { color:#ff453e; font-weight:900; letter-spacing:.16em; text-shadow:0 0 10px #ff453e99,0 0 22px #ff453e55; }
+    .FREQ { font-family:monospace; font-size:clamp(2.35rem,10vw,4.5rem); line-height:1.05; font-weight:800; letter-spacing:-.055em; font-variant-numeric:tabular-nums; color:var(--blue); font-family:"Arial Narrow", "Roboto Condensed", "Lucida Console", monospace; text-shadow:0 0 18px #80a0ff35; margin:12px 0 8px; overflow-wrap:anywhere; }
+    .STEREO { display:inline-block; margin-left:8px; padding:2px 8px; color:#ff4a45; border:1px solid #85312e; background:#200b0c; border-radius:3px; font-family:monospace; font-weight:900; letter-spacing:.12em; text-shadow:0 0 8px #ff302b88; }
+    .MODE { color:#d5e7ed; font-size:1rem; font-weight:650; }
     .GRID { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:14px 0; }
     .STAT { min-width:0; padding:14px; border:1px solid #314252; border-radius:9px; background:linear-gradient(145deg,#121d2a,#0e151e); }
     .STAT .LABEL { display:block; color:var(--muted); font-size:.76rem; margin-bottom:5px; }
