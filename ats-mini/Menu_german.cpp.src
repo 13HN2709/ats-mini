@@ -10,6 +10,7 @@
 #include "Memories.h"
 #include "Patches.h"
 #include "FreqKeypad.h"
+#include "Storage.h"
 
 #include <time.h>
 
@@ -59,20 +60,22 @@ Band *getCurrentBand() { return(&bands[bandIdx]); }
 
 #define MENU_MODE         0
 #define MENU_BAND         1
-#define MENU_KEYPAD       2
-#define MENU_FREQ_INPUT   3
-#define MENU_BFO          4
-#define MENU_VOLUME       5
-#define MENU_STEP         6
-#define MENU_SEEK         7
-#define MENU_SCAN         8
-#define MENU_MEMORY       9
-#define MENU_SQUELCH     10
-#define MENU_BW          11
-#define MENU_AGC_ATT     12
-#define MENU_AVC         13
-#define MENU_SOFTMUTE    14
-#define MENU_SETTINGS    15
+#define MENU_VOLUME       2
+#define MENU_KEYPAD       3
+#define MENU_DUAL_RX      4
+#define MENU_VFO          5
+#define MENU_FREQ_INPUT   6
+#define MENU_BFO          7
+#define MENU_STEP         8
+#define MENU_SEEK         9
+#define MENU_SCAN        10
+#define MENU_MEMORY      11
+#define MENU_SQUELCH     12
+#define MENU_BW          13
+#define MENU_AGC_ATT     14
+#define MENU_AVC         15
+#define MENU_SOFTMUTE    16
+#define MENU_SETTINGS    17
 
 int8_t menuIdx = MENU_KEYPAD;
 
@@ -80,10 +83,12 @@ static const char *menu[] =
 {
   "AM-SSB",
   "BAENDER",
+  "LAUTST.",
   "KEYPAD",
+  "DUAL RX",
+  "VFO A/B",
   "FREQUENZ",
   "BFO",
-  "LAUTST.",
   "STEPS",
   "SUCHE",
   "SCANNEN",
@@ -311,9 +316,15 @@ static int getLastBandwidth(int mode)
   return(0);
 }
 
+static int8_t getCurrentBandwidthIdx()
+{
+  int8_t idx = bands[bandIdx].bandwidthIdx;
+  return(idx<0 || idx>getLastBandwidth(currentMode)? defaultBwIdx[currentMode] : idx);
+}
+
 const Bandwidth *getCurrentBandwidth()
 {
-  return(&bandwidths[currentMode][bands[bandIdx].bandwidthIdx > getLastBandwidth(currentMode) ? defaultBwIdx[currentMode] : bands[bandIdx].bandwidthIdx]);
+  return(&bandwidths[currentMode][getCurrentBandwidthIdx()]);
 }
 
 static void setBandwidth()
@@ -689,6 +700,168 @@ void doBandwidth(int16_t enc)
 
 static void doMenu(int16_t enc) { menuIdx = wrap_range(menuIdx, enc, 0, LAST_ITEM(menu)); }
 
+// Persistent VFO A/B tuning slots
+VfoState vfos[2] = {};
+uint8_t vfoIdx = 0;
+bool vfoInitialized = false;
+
+VfoState captureVfo()
+{
+  const Band *band = getCurrentBand();
+  VfoState vfo = {};
+  vfo.freq = currentFrequency;
+  vfo.band = (uint8_t)bandIdx;
+  vfo.mode = currentMode;
+  vfo.stepIdx = band->currentStepIdx;
+  vfo.bandwidthIdx = band->bandwidthIdx;
+  return vfo;
+}
+
+static bool validVfo(const VfoState &vfo)
+{
+  if(vfo.band >= getTotalBands() || vfo.mode >= getTotalModes()) return false;
+  const Band &band = bands[vfo.band];
+  if((vfo.mode == FM) != (band.bandType == FM_BAND_TYPE)) return false;
+  if(vfo.freq < band.minimumFreq || vfo.freq > band.maximumFreq) return false;
+  return vfo.stepIdx >= 0 && vfo.stepIdx <= getLastStep(vfo.mode) &&
+         vfo.bandwidthIdx >= 0 && vfo.bandwidthIdx <= getLastBandwidth(vfo.mode);
+}
+
+static void restoreVfo(bool drawLoadingPatch = true)
+{
+  const VfoState &vfo = vfos[vfoIdx];
+  Band &band = bands[vfo.band];
+  band.currentFreq = vfo.freq;
+  band.bandMode = vfo.mode;
+  band.currentStepIdx = vfo.stepIdx;
+  band.bandwidthIdx = vfo.bandwidthIdx;
+  selectBand(vfo.band, drawLoadingPatch);
+}
+
+void initVfo()
+{
+  if(vfoIdx < 2 && validVfo(vfos[0]) && validVfo(vfos[1]))
+    restoreVfo(false);
+  else
+  {
+    selectBand((uint8_t)bandIdx, false);
+    vfoIdx = 0;
+    vfos[0] = vfos[1] = captureVfo();
+    prefsRequestSave(SAVE_SETTINGS | SAVE_CUR_BAND);
+  }
+  vfoInitialized = true;
+}
+
+
+ 
+// DUAL RX: alternating A/B monitoring using the single SI4735 receiver.
+static VfoState dualRxSavedState = {};
+VfoState dualRxVfos[2] = {};
+uint8_t dualRxSetupStage = 0;
+static int16_t dualRxSavedBfo = 0;
+static uint8_t dualRxSlot = 0;
+uint8_t dualRxDisplaySlot = 0;
+static uint32_t dualRxNextSwitch = 0;
+static bool dualRxActive = false;
+
+void dualRxStart()
+{
+  if(!vfoInitialized) initVfo();
+  dualRxSavedState = captureVfo();
+  dualRxSavedBfo = currentBFO;
+  dualRxVfos[0] = dualRxVfos[1] = dualRxSavedState;
+  dualRxSetupStage = 1;
+  dualRxActive = false;
+  dualRxDisplaySlot = 0;
+  currentCmd = CMD_DUAL_RX;
+}
+
+void dualRxKeypadComplete(const VfoState &configured)
+{
+  if(dualRxSetupStage == 1)
+  {
+    dualRxVfos[0] = configured;
+    dualRxSetupStage = 2;
+  }
+  else if(dualRxSetupStage == 2)
+  {
+    dualRxVfos[1] = configured;
+    Band &savedBand = bands[dualRxSavedState.band];
+    savedBand.currentFreq = dualRxSavedState.freq;
+    savedBand.bandMode = dualRxSavedState.mode;
+    savedBand.currentStepIdx = dualRxSavedState.stepIdx;
+    savedBand.bandwidthIdx = dualRxSavedState.bandwidthIdx;
+    selectBand(dualRxSavedState.band, false);
+    if(currentBFO != dualRxSavedBfo) updateBFO(dualRxSavedBfo, true);
+    dualRxSetupStage = 3;
+  }
+  currentCmd = CMD_DUAL_RX;
+}
+
+void dualRxStop()
+{
+  dualRxActive = false;
+  dualRxSetupStage = 0;
+  Band &savedBand = bands[dualRxSavedState.band];
+  savedBand.currentFreq = dualRxSavedState.freq;
+  savedBand.bandMode = dualRxSavedState.mode;
+  savedBand.currentStepIdx = dualRxSavedState.stepIdx;
+  savedBand.bandwidthIdx = dualRxSavedState.bandwidthIdx;
+  selectBand(dualRxSavedState.band, false);
+  if(currentBFO != dualRxSavedBfo) updateBFO(dualRxSavedBfo, true);
+  currentCmd = CMD_NONE;
+  prefsRequestSave(SAVE_CUR_BAND);
+}
+
+void dualRxBeginScan()
+{
+  dualRxSetupStage = 4;
+  dualRxActive = true;
+  dualRxSlot = 0;
+  dualRxDisplaySlot = 0;
+  const VfoState &vfo = dualRxVfos[0];
+  Band &targetBand = bands[vfo.band];
+  targetBand.currentFreq = vfo.freq;
+  targetBand.bandMode = vfo.mode;
+  targetBand.currentStepIdx = vfo.stepIdx;
+  targetBand.bandwidthIdx = vfo.bandwidthIdx;
+  selectBand(vfo.band, false);
+  currentFrequency = vfo.freq;
+  dualRxNextSwitch = millis() + 250;
+}
+
+bool dualRxTick(uint32_t now)
+{
+  if(!dualRxActive || dualRxSetupStage != 4 || currentCmd != CMD_DUAL_RX) return false;
+  if((int32_t)(now - dualRxNextSwitch) < 0) return false;
+  if(rssi >= 25) { dualRxNextSwitch = now + 1200; return false; }
+  dualRxNextSwitch = now + 250;
+  dualRxSlot ^= 1;
+  dualRxDisplaySlot = dualRxSlot;
+  const VfoState &vfo = dualRxVfos[dualRxSlot];
+  Band &targetBand = bands[vfo.band];
+  targetBand.currentFreq = vfo.freq;
+  targetBand.bandMode = vfo.mode;
+  targetBand.currentStepIdx = vfo.stepIdx;
+  targetBand.bandwidthIdx = vfo.bandwidthIdx;
+  selectBand(vfo.band, false);
+  currentFrequency = vfo.freq;
+  return true;
+}
+
+static void clickVfo(bool shortPress)
+{
+  vfos[vfoIdx] = captureVfo();
+  if(shortPress)
+    vfos[vfoIdx ^ 1] = vfos[vfoIdx];
+  else
+  {
+    vfoIdx ^= 1;
+    restoreVfo();
+  }
+  prefsRequestSave(SAVE_SETTINGS | SAVE_BANDS);
+}
+
 static void clickMenu(int cmd, bool shortPress)
 {
   currentCmd = CMD_NONE;
@@ -706,6 +879,7 @@ static void clickMenu(int cmd, bool shortPress)
     case MENU_BFO:      currentCmd = CMD_BFO;       break;
     case MENU_SQUELCH:  currentCmd = CMD_SQUELCH;   break;
     case MENU_VOLUME:   currentCmd = CMD_VOLUME;    break;
+    case MENU_VFO:      clickVfo(shortPress);       break;
     case MENU_MEMORY:
       currentCmd = CMD_MEMORY;
       newMemory.freq  = freqToHz(currentFrequency, currentMode) + currentBFO;
@@ -719,6 +893,7 @@ static void clickMenu(int cmd, bool shortPress)
       currentCmd = CMD_SCAN;
       clickScan(true);
       break;
+    case MENU_DUAL_RX: dualRxStart(); break;
   }
 }
 

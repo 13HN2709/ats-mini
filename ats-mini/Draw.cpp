@@ -479,6 +479,97 @@ void drawScanGraphs(uint32_t freq)
   spr.drawLine(160, 130, 160, 169, TH.scale_pointer);
 }
 
+static void drawDualRxScreen()
+{
+  const uint16_t panelBg = 0x0861, frameBlue = 0x001F, brightBlue = 0x07FF;
+  // Dual RX alternates between A and B, so retain each slot's last measured RSSI.
+  static int slotStrength[2] = {0, 0};
+  if (dualRxSetupStage == 4 && dualRxDisplaySlot < 2)
+    slotStrength[dualRxDisplaySlot] = rx.getCurrentRSSI();
+
+  spr.fillSprite(0x0000);
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(brightBlue);
+  // TEF6686 layout uses FreeSans Bold for status text and the MHz/kHz label.
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.drawString("DUAL RX", 160, 12);
+  spr.drawFastHLine(12, 27, 296, frameBlue);
+  if(dualRxSetupStage < 3)
+  {
+    spr.setFont(FONT_SMALL);
+    spr.setTextColor(0xFFFF);
+    spr.drawString(dualRxSetupStage == 1 ? "SET FREQUENCY AND MODE A" : "SET FREQUENCY AND MODE B", 160, 58);
+    spr.setTextColor(0xBDF7);
+    if(dualRxSetupStage == 1)
+    {
+      spr.drawString("Press encoder to open frequency keypad", 160, 86);
+      spr.drawString("Choose frequency, mode and press OK", 160, 106);
+    }
+    else
+    {
+      char savedA[40];
+      const VfoState &a = dualRxVfos[0];
+      const bool aIsFm = a.band < getTotalBands() && bands[a.band].bandType == FM_BAND_TYPE;
+      if(aIsFm) snprintf(savedA, sizeof(savedA), "A: %.2f MHz  %s", a.freq / 100.0f, bandModeDesc[a.mode]);
+      else snprintf(savedA, sizeof(savedA), "A: %u kHz  %s", a.freq, bandModeDesc[a.mode]);
+      spr.setTextColor(0x07E0);
+      spr.drawString(savedA, 160, 84);
+      spr.setTextColor(0xBDF7);
+      spr.drawString("Press encoder to enter frequency B", 160, 108);
+    }
+    spr.setTextColor(brightBlue);
+    spr.drawString(dualRxSetupStage == 1 ? "STEP 1 OF 2" : "STEP 2 OF 2", 160, 139);
+    return;
+  }
+  for(uint8_t i=0; i<2; ++i)
+  {
+    int y = i == 0 ? 32 : 99;
+    const VfoState &v = dualRxVfos[i];
+    spr.fillRect(10, y, 300, 56, panelBg);
+    spr.drawRect(10, y, 300, 56, frameBlue);
+    spr.drawRect(11, y+1, 298, 54, brightBlue);
+    spr.setFont(FONT_SMALL);
+    spr.setTextDatum(ML_DATUM);
+    spr.setTextColor(0xBDF7);
+    // Move the complete A/B + RX/WAIT labels slightly down so they clear the top frame.
+    spr.drawString(i == 0 ? "A" : "B", 19, y+12);
+    spr.setTextColor((dualRxSetupStage == 4 && i == dualRxDisplaySlot) ? 0x07E0 : 0x7BEF);
+    spr.drawString((dualRxSetupStage == 4 && i == dualRxDisplaySlot) ? "RX" : "WAIT", 36, y+12);
+    char freqText[24];
+    bool isFm = v.band < getTotalBands() && bands[v.band].bandType == FM_BAND_TYPE;
+    if(isFm) snprintf(freqText, sizeof(freqText), "%.2f", v.freq / 100.0f);
+    else snprintf(freqText, sizeof(freqText), "%u", v.freq);
+    // Keep the exact 7-segment FONT_DIGITS used by Layout-Default.
+    // MR_DATUM is vertically centered, so y+28 centers the 48px digits in the 56px frame.
+    spr.setFont(FONT_DIGITS);
+    spr.setTextDatum(MR_DATUM);
+    spr.setTextColor(0xFFFF);
+    spr.drawString(freqText, 258, y+28);
+    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+    spr.setTextDatum(ML_DATUM);
+    spr.setTextColor(0x07E0);
+    spr.drawString(isFm ? "MHz" : "kHz", 265, y+27);
+    spr.setFont(FONT_SMALL);
+    spr.setTextColor(0xBDF7);
+    spr.drawString(v.mode < getTotalModes() ? bandModeDesc[v.mode] : "?", 265, y+41);
+
+    // Compact per-slot S-meter at lower left. Values are retained between A/B scans.
+    spr.setTextDatum(ML_DATUM);
+    spr.setTextColor(0xBDF7);
+    spr.drawString("S", 19, y+25);
+    int bars = constrain(map(slotStrength[i], 0, 60, 0, 10), 0, 10);
+    for (int bar = 0; bar < 10; ++bar) {
+      uint16_t barColor = bar < bars ? (bar < 7 ? 0x07E0 : 0xFFE0) : 0x4208;
+      spr.fillRect(31 + bar * 5, y+40, 3, 9, barColor);
+    }
+  }
+  // Keep the encoder instruction visible within the 170px display height.
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(0x07E0);
+  spr.drawString(dualRxSetupStage == 4 ? "Click Encoder to Stop Dual RX" : "Click Encoder to Start", 160, 165);
+}
+
 //
 // Draw screen according to given command
 //
@@ -495,6 +586,13 @@ void drawScreen()
   }
 
   spr.fillSprite(TH.bg);
+
+  if(currentCmd == CMD_DUAL_RX)
+  {
+    drawDualRxScreen();
+    spr.pushSprite(0, 0);
+    return;
+  }
 
   if(currentCmd==CMD_ABOUT)
   {

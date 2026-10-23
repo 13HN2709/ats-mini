@@ -57,6 +57,10 @@ static TEFBandplanHint getTEFBandplanHint()
   if (f >= 14070 && f <= 14077)
     return {"FT8 - USB", 14074};
 
+  // FT4 on 20 m (14.080 MHz dial frequency).
+  if (f >= 14078 && f <= 14082)
+    return {"FT4 - USB", 14080};
+
   if (f >= 18096 && f <= 18102)
     return {"FT8 - USB", 18100};
 
@@ -139,7 +143,46 @@ static TEFBandplanHint getTEFBandplanHint()
     return {"CW - MORSE", 28030};
 
   // ------------------------------------------------
-  // 6. 12 m band - voice communication
+  // 6. Common HF voice/QSO segments (IARU Region 1)
+  // Keep these after the specific FT8/FT4, SSTV, RTTY and CW rules above
+  // so the more specific activity labels retain priority.
+  // ------------------------------------------------
+
+  if (f >= 1843 && f <= 2000)
+    return {"QSO - LSB", 1843};   // 160 m
+
+  if (f >= 3600 && f <= 3800)
+    return {"QSO - LSB", 3650};   // 80 m
+
+  if (f >= 5354 && f <= 5366)
+    return {"QSO - USB", 5357};   // 60 m (regional/channel plan applies)
+
+  if (f >= 7060 && f <= 7200)
+    return {"QSO - LSB", 7100};   // 40 m
+
+  if (f >= 14101 && f <= 14350)
+    return {"QSO - USB", 14200};  // 20 m
+
+  if (f >= 18111 && f <= 18168)
+    return {"QSO - USB", 18130};  // 17 m
+
+  if (f >= 21110 && f <= 21450)
+    return {"QSO - USB", 21200};  // 15 m
+
+  // ------------------------------------------------
+  // 7. CB band (11 m) and Triple Five DX calling frequency
+  // Germany's CB allocation spans 26.565-27.405 MHz.
+  // Triple Five is a single commonly used DX frequency at 27.555 MHz.
+  // ------------------------------------------------
+
+  if (f == 27555)
+    return {"TRIPLE FIVE - USB", 27555};
+
+  if (f >= 26565 && f <= 27405)
+    return {"CB BAND", 27065};  // CB channel 9: commonly used call/emergency channel
+
+  // ------------------------------------------------
+  // 8. 12 m band - voice communication
   // ------------------------------------------------
 
   if (f >= 24940 && f <= 24990)
@@ -465,6 +508,18 @@ void drawLayoutTEF6686()
       spr.drawString(rt, rtX + 40, rtY + 2);
       spr.clearClipRect();
     }
+  }
+  else if (strncmp(bandplanHint.label, "FT8", 3) == 0 ||
+           strncmp(bandplanHint.label, "FT4", 3) == 0 ||
+           strncmp(bandplanHint.label, "TRIPLE FIVE", 11) == 0)
+  {
+    // Show the recommended dial frequency for digital modes and Triple Five.
+    char targetText[32];
+    snprintf(targetText, sizeof(targetText), "TARGET: %u kHz", bandplanHint.targetKHz);
+    spr.setTextColor(COLOR_GREEN);
+    spr.setClipRect(rtX + 5, rtY + 1, rtW - 10, rtH - 2);
+    spr.drawString(targetText, rtX + 7, rtY + 2);
+    spr.clearClipRect();
   }
   // Non-FM bandplan categories are shown in the MODE field above.
 

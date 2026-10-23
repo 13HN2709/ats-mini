@@ -49,6 +49,7 @@
 #define CMD_ABOUT      0x3500 //-+
 #define CMD_FREQ_KEYPAD 0x3600 // |
 #define CMD_BFO         0x3700 // |
+#define CMD_DUAL_RX     0x3800 // DUAL RX screen
 
 
 
@@ -69,6 +70,15 @@ typedef struct
   uint8_t idx;      // SI473X device bandwidth index
   const char *desc; // Bandwidth description
 } Bandwidth;
+
+typedef struct
+{
+  uint16_t freq;       // Frequency in kHz
+  uint8_t band;
+  uint8_t mode;
+  int8_t stepIdx;
+  int8_t bandwidthIdx;
+} VfoState;
 const Bandwidth *getCurrentBandwidth();
 
 typedef struct
@@ -94,6 +104,20 @@ extern const UTCOffset utcOffsets[];
 extern const char *bandModeDesc[];
 extern const FMRegion fmRegions[];
 extern int bandIdx;
+extern VfoState vfos[2];
+extern uint8_t vfoIdx;
+extern bool vfoInitialized;
+
+void initVfo();
+VfoState captureVfo();
+void dualRxStart();
+void dualRxStop();
+bool dualRxTick(uint32_t now);
+extern uint8_t dualRxDisplaySlot;
+extern VfoState dualRxVfos[2];
+extern uint8_t dualRxSetupStage;
+void dualRxKeypadComplete(const VfoState &configured);
+void dualRxBeginScan();
 
 // These are menu commands
 static inline bool isMenuMode(uint16_t cmd)

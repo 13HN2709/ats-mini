@@ -254,7 +254,7 @@ void setup()
 
   patchesInit();
 
-  selectBand(bandIdx, false);
+  initVfo();
   delay(50);
   rx.setVolume(volume);
   rx.setMaxSeekTime(SEEK_TIMEOUT);
@@ -658,8 +658,9 @@ bool processRssiSnr()
 void loop()
 {
   uint32_t currentTime = millis();
-  // Remember the last frequency used for frequency-dependent layout hints.
+  // Remember the last band and frequency used for frequency-dependent layout hints.
   static uint32_t lastBandplanDisplayFrequency = UINT32_MAX;
+  static const Band *lastBandplanDisplayBand = nullptr;
   bool needRedraw = false;
 
   uint32_t encCounts = consumeEncoderCounts();
@@ -667,6 +668,8 @@ void loop()
   int16_t encCountAccel = (int16_t)(encCounts >> 16);
 
   ButtonTracker::State pb1st = pb1.update(digitalRead(ENCODER_PUSH_BUTTON) == LOW);
+
+  if(currentCmd == CMD_DUAL_RX && dualRxTick(currentTime)) needRedraw = true;
 
   int ser_event = serialLoop(usbModeIdx);
   needRedraw |= !!(ser_event & REMOTE_CHANGED);
@@ -708,7 +711,45 @@ void loop()
     needRedraw = true;
   }
 
-  if(pushAndRotate)
+  if(currentCmd == CMD_DUAL_RX)
+  {
+    // Handle a long press only once per physical press. ButtonTracker reports
+    // isLongPressed continuously while the encoder remains held.
+    static bool dualRxLongPressHandled = false;
+    if(!pb1st.isPressed) dualRxLongPressHandled = false;
+
+    if(pb1st.isLongPressed && !dualRxLongPressHandled)
+    {
+      dualRxLongPressHandled = true;
+      // Long press only dims/wakes the display; Dual RX keeps scanning in the background.
+      sleepOn(!sleepOn());
+      elapsedSleep = elapsedCommand = currentTime = millis();
+      pb1st.wasClicked = false;
+      pb1st.wasShortPressed = false;
+      needRedraw = true;
+    }
+    else if(pb1st.wasClicked || pb1st.wasShortPressed)
+    {
+      if(dualRxSetupStage == 1 || dualRxSetupStage == 2)
+      {
+        currentCmd = CMD_FREQ_KEYPAD;
+        freqKeypadReset();
+      }
+      else if(dualRxSetupStage == 3) dualRxBeginScan();
+      else if(dualRxSetupStage == 4)
+      {
+        // A short click stops the scan and wakes the display if it was dimmed.
+        if(sleepOn()) sleepOn(false);
+        dualRxStop();
+      }
+      needRedraw = true;
+      elapsedCommand = millis();
+      pb1st.wasClicked = pb1st.wasShortPressed = pb1st.isLongPressed = false;
+    }
+    encCount = encCountAccel = 0;
+  }
+
+  if(currentCmd != CMD_DUAL_RX && pushAndRotate)
   {
     if(encCount)
     {
@@ -731,7 +772,7 @@ void loop()
     }
     elapsedSleep = elapsedCommand = currentTime;
   }
-  else
+  else if(currentCmd != CMD_DUAL_RX)
   {
     if(encCount)
     {
@@ -765,7 +806,12 @@ void loop()
     }
     else if(currentCmd == CMD_FREQ_KEYPAD && pb1st.isLongPressed)
     {
-      currentCmd = CMD_NONE;
+      // Cancelling keypad input during DUAL RX setup must also restore the
+      // radio state that was active before entering the setup wizard.
+      if(dualRxSetupStage == 1 || dualRxSetupStage == 2)
+        dualRxStop();
+      else
+        currentCmd = CMD_NONE;
       needRedraw = true;
     }
     else if(pb1st.isLongPressed)
@@ -824,7 +870,7 @@ void loop()
 
   if((currentTime - elapsedCommand) > ELAPSED_COMMAND)
   {
-    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY)
+    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX)
     {
       currentCmd = CMD_NONE;
       needRedraw = true;
@@ -860,9 +906,12 @@ void loop()
   // Refresh frequency-dependent hints immediately after tuning changes.
   const uint32_t bandplanDisplayFrequency =
     currentFrequency + currentBFO / 1000;
-  if(bandplanDisplayFrequency != lastBandplanDisplayFrequency)
+  const Band *bandplanDisplayBand = getCurrentBand();
+  if(bandplanDisplayFrequency != lastBandplanDisplayFrequency ||
+     bandplanDisplayBand != lastBandplanDisplayBand)
   {
     lastBandplanDisplayFrequency = bandplanDisplayFrequency;
+    lastBandplanDisplayBand = bandplanDisplayBand;
     needRedraw = true;
   }
 
