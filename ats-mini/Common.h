@@ -15,7 +15,7 @@ static constexpr const lgfx::IFont* FONT_LARGE   = &lgfx::fonts::Font4;  // 26px
 static constexpr const lgfx::IFont* FONT_DIGITS  = &lgfx::fonts::Font7;  // 48px 7-segment digits
 
 #define RECEIVER_DESC  "ESP32-SI4732 Receiver"
-#define RECEIVER_NAME  "ATS-Controll-Center"
+#define RECEIVER_NAME  "ATS-Control-Center"
 #define FIRMWARE_URL   "https://github.com/music4ever2026-collab/ats-mini"
 #define MANUAL_URL     "https://esp32-si4732.github.io/ats-mini/manual.html"
 #define AUTHORS_LINE1  "Original Fork @Max Arnold <= Thank you"
