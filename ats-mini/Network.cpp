@@ -380,6 +380,7 @@ static void webInit()
 
   server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Radio tuning is unavailable during a spectrum sweep.\"}");
     if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\"message\":\"Tuning is unavailable during Dual RX.\"}");
     if(!request->hasParam("freq", true)) return request->send(400, "application/json", "{\"message\":\"Missing frequency.\"}");
     String value = request->getParam("freq", true)->value();
@@ -395,6 +396,7 @@ static void webInit()
   });
   server.on("/radio/step", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Radio tuning is unavailable during a spectrum sweep.\"}");
     if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\"message\":\"Tuning is unavailable during Dual RX.\"}");
     if(!request->hasParam("direction", true)) return request->send(400, "application/json", "{\"message\":\"Missing direction.\"}");
     String value = request->getParam("direction", true)->value();
@@ -404,6 +406,7 @@ static void webInit()
   });
   server.on("/radio/volume", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Volume changes are unavailable during a spectrum sweep.\"}");
     if(!request->hasParam("volume", true)) return request->send(400, "application/json", "{\"message\":\"Missing volume.\"}");
     String value = request->getParam("volume", true)->value();
     char *end = nullptr;
