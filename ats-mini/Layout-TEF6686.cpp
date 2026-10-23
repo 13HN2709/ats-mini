@@ -170,7 +170,19 @@ static TEFBandplanHint getTEFBandplanHint()
     return {"QSO - USB", 21200};  // 15 m
 
   // ------------------------------------------------
-  // 7. 12 m band - voice communication
+  // 7. CB band (11 m) and Triple Five DX calling frequency
+  // Germany's CB allocation spans 26.565-27.405 MHz.
+  // Triple Five is a single commonly used DX frequency at 27.555 MHz.
+  // ------------------------------------------------
+
+  if (f == 27555)
+    return {"TRIPLE FIVE - USB", 27555};
+
+  if (f >= 26565 && f <= 27405)
+    return {"CB BAND", 27065};  // CB channel 9: commonly used call/emergency channel
+
+  // ------------------------------------------------
+  // 8. 12 m band - voice communication
   // ------------------------------------------------
 
   if (f >= 24940 && f <= 24990)
@@ -498,9 +510,10 @@ void drawLayoutTEF6686()
     }
   }
   else if (strncmp(bandplanHint.label, "FT8", 3) == 0 ||
-           strncmp(bandplanHint.label, "FT4", 3) == 0)
+           strncmp(bandplanHint.label, "FT4", 3) == 0 ||
+           strncmp(bandplanHint.label, "TRIPLE FIVE", 11) == 0)
   {
-    // Show the recommended dial frequency for digital modes.
+    // Show the recommended dial frequency for digital modes and Triple Five.
     char targetText[32];
     snprintf(targetText, sizeof(targetText), "TARGET: %u kHz", bandplanHint.targetKHz);
     spr.setTextColor(COLOR_GREEN);
