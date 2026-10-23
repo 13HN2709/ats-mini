@@ -389,7 +389,7 @@ static void webInit()
       return request->send(200, "application/json", "{\"ready\":false}");
     String json;
     json.reserve(2600);
-    json = "{\"ready\":true,\"samples\":[";
+    json = "{\"ready\":true,\"fm\":" + String(currentMode == FM ? "true" : "false") + ",\"samples\":[";
     uint16_t count = scanGetCount();
     for(uint16_t i = 0; i < count; i++)
     {
