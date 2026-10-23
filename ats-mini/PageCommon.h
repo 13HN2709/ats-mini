@@ -49,7 +49,12 @@ static const char pageStart[] PROGMEM = R"HTML(<!DOCTYPE HTML>
     .HEADING { background:#182b4c; border:1px solid #80a0ff; color:#a9c3ff; column-span:all; text-align:center; font-weight:800; letter-spacing:.08em; text-shadow:0 0 10px #80a0ff77; }
     TD.LABEL { text-align:right; }
     INPUT[type=text], INPUT[type=password], INPUT[type=file], INPUT[type=number], SELECT, TEXTAREA { max-width:100%; padding:.65em; border:1px solid #344762; border-radius:7px; background:#0b121b; color:var(--text); font:inherit; } INPUT[type=text], INPUT[type=password], SELECT, TEXTAREA { width:95%; } INPUT:focus, SELECT:focus, TEXTAREA:focus { outline:1px solid var(--blue); border-color:var(--blue); }
-    INPUT[type=submit], BUTTON { padding:.7em 1em; border:1px solid #607ecb; border-radius:8px; background:#1b2c4b; color:var(--blue); font:inherit; font-weight:700; letter-spacing:.035em; cursor:pointer; } INPUT[type=submit]:hover, BUTTON:hover { background:#263d67; } BUTTON:disabled { opacity:.55; cursor:wait; }
+    INPUT[type=submit], BUTTON { padding:.7em 1em; border:1px solid #607ecb; border-radius:5px; background:linear-gradient(135deg,#1b2c4b,#111b2d); color:var(--blue); font:inherit; font-weight:700; letter-spacing:.055em; cursor:pointer; }
+    INPUT[type=submit]:hover, BUTTON:hover { background:#263d67; border-color:var(--cyan); }
+    BUTTON:focus-visible, INPUT[type=submit]:focus-visible, A:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
+    BUTTON:disabled { opacity:.55; cursor:wait; }
+    INPUT[type=checkbox], INPUT[type=radio], INPUT[type=range] { accent-color:var(--blue); }
+    INPUT[type=checkbox], INPUT[type=radio] { width:1.15em; height:1.15em; vertical-align:middle; }
     INPUT[type=submit] { width:50%; }
     .CENTER { text-align:center; }
     .HEAP { color:#71838d; font-size:.72em; text-align:center; margin:2em .5em 0; }
