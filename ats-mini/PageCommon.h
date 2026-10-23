@@ -64,7 +64,9 @@ static const char pageStart[] PROGMEM = R"HTML(<!DOCTYPE HTML>
     .PANEL-HEAD H2 { margin:4px 0; color:#dbeaff; font-size:1.2rem; letter-spacing:.12em; }
     .LIVE-MARK { color:#ff5968; font:700 .7rem monospace; letter-spacing:.12em; }
     .LIVE-MARK SPAN { display:inline-block; width:7px; height:7px; background:#ff4057; border-radius:50%; box-shadow:0 0 10px #ff4057; margin-right:5px; }
-    .RANGE-FORM { display:grid; grid-template-columns:1fr 1fr auto; gap:9px; align-items:end; margin:14px 0; }
+    .RANGE-FORM { display:grid; grid-template-columns:1fr 1fr; gap:9px; align-items:end; margin:14px 0; }
+    .RANGE-FORM BUTTON { grid-column:1/-1; }
+    .RANGE-FORM SELECT { font-size:.85rem; }
     .RANGE-FORM LABEL { display:block; color:var(--muted); font:700 .68rem monospace; letter-spacing:.12em; }
     .RANGE-FORM INPUT { display:block; width:100%; min-width:0; margin-top:6px; font-family:monospace; font-size:1rem; color:#7bb5ff; }
     .RANGE-FORM BUTTON { min-height:42px; white-space:nowrap; }
