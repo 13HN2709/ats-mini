@@ -759,7 +759,7 @@ static const String webRadioPage()
     {"ip", ip}, {"ssid", ssid},
     {"mac", String(getMACAddress())}, {"version", String(getVersion(true))},
     {"time", receiverTime}, {"band", getCurrentBand()->bandName},
-    {"frequency", freq}, {"mode", bandModeDesc[currentMode]},
+    {"frequency", freq}, {"mode", bandModeDesc[currentMode]},\n    {"stereo", currentMode == FM && fmStereoIdx != FM_STEREO_MONO && rx.getCurrentPilot()? String("<SPAN CLASS=\\\"STEREO\\\">STEREO</SPAN>") : String("")},
     {"rssi", String(rssi)}, {"snr", String(snr)}, {"battery", String(batteryMonitor())}
   }, {
     {"navigation", [](String &out) { webNavigation(out, "/"); }}
