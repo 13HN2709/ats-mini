@@ -199,11 +199,7 @@ void drawFreqKeypad()
   spr.drawRoundRect(boxX, boxY, boxW, boxH, 4, frameBlue);
   spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, frameBlue);
 
-  // Kleinere Überschrift, damit sie sauber in den Rahmen passt.
-  spr.setFont(FONT_SMALL);
-  spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(brightBlue);
-  spr.drawString("FREQUENCY INPUT MENU", boxX + boxW / 2, boxY + 3);
+  // The title was removed to keep the compact keypad uncluttered.
 
   // Frequenz-Anzeigefeld
   int displayH = 26;
