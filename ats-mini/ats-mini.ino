@@ -668,6 +668,8 @@ void loop()
 
   ButtonTracker::State pb1st = pb1.update(digitalRead(ENCODER_PUSH_BUTTON) == LOW);
 
+  if(currentCmd == CMD_DUAL_RX && dualRxTick(currentTime)) needRedraw = true;
+
   int ser_event = serialLoop(usbModeIdx);
   needRedraw |= !!(ser_event & REMOTE_CHANGED);
   pb1st.isPressed |= !!(ser_event & REMOTE_PRESSED);
@@ -708,7 +710,18 @@ void loop()
     needRedraw = true;
   }
 
-  if(pushAndRotate)
+  if(currentCmd == CMD_DUAL_RX)
+  {
+    if(pb1st.wasClicked || pb1st.wasShortPressed || pb1st.isLongPressed)
+    {
+      dualRxStop();
+      needRedraw = true;
+      elapsedCommand = millis();
+    }
+    encCount = encCountAccel = 0;
+  }
+
+  if(currentCmd != CMD_DUAL_RX && pushAndRotate)
   {
     if(encCount)
     {
@@ -731,7 +744,7 @@ void loop()
     }
     elapsedSleep = elapsedCommand = currentTime;
   }
-  else
+  else if(currentCmd != CMD_DUAL_RX)
   {
     if(encCount)
     {
@@ -824,7 +837,7 @@ void loop()
 
   if((currentTime - elapsedCommand) > ELAPSED_COMMAND)
   {
-    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY)
+    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX)
     {
       currentCmd = CMD_NONE;
       needRedraw = true;
