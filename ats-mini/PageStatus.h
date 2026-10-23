@@ -259,7 +259,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const frequencyHz=Math.round(sample.f*(fmMode?10000:1000));
    status.textContent='Tuning to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'…';
    const ok=await postRadioCommand('/radio/tune',{freq:String(frequencyHz)},status);
-   if(ok)setTimeout(()=>location.reload(),700);
+   if(ok) status.textContent='Tuned to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'. Spectrum retained; scan again whenever you want fresh measurements.';
  });
  draw([]);
  window.addEventListener('resize',()=>draw(lastSamples));
