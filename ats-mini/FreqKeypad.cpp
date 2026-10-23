@@ -11,7 +11,7 @@ static const char* keypadLayout[16] = {
   "1", "2", "3", "BS",
   "4", "5", "6", "0",
   "7", "8", "9", ".",
-  "OK", "UNIT", "", ""   // Index 12 = OK, Index 13 = UNIT, 14-15 leer
+  "OK", "UNIT", "", "CLOSE"   // Index 12 = OK, Index 13 = UNIT, Index 15 = CLOSE
 };
 
 static uint8_t tempMode = FM;
@@ -42,8 +42,8 @@ bool doFreqKeypad(int16_t enc)
   if (keypadIndex < 0) keypadIndex = 16;  
   if (keypadIndex > 16) keypadIndex = 0;
   
-  // Leere Felder überspringen (Indizes 14 und 15)
-  while ((keypadIndex >= 14 && keypadIndex <= 15)) {
+  // Index 14 bleibt leer; Index 15 ist die neue Schließen-Taste.
+  while (keypadIndex == 14) {
     keypadIndex += step;
     if (keypadIndex < 0) keypadIndex = 16;
     if (keypadIndex > 16) keypadIndex = 0;
@@ -92,8 +92,14 @@ bool clickFreqKeypad(bool shortPress)
     return true;
   }
 
-  // Leere Felder abfangen
-  if (keypadIndex >= 14 && keypadIndex <= 15) return true;
+  // Separate Schließen-Taste unten rechts.
+  if (keypadIndex == 15) {
+    currentCmd = CMD_NONE;
+    return true;
+  }
+
+  // Index 14 bleibt leer.
+  if (keypadIndex == 14) return true;
 
   const char* selectedKey = keypadLayout[keypadIndex];
 
@@ -188,22 +194,24 @@ void drawFreqKeypad()
   int boxH = 166;
 
   spr.fillRect(boxX, boxY, boxW, boxH, 0x0000);
-  spr.drawRoundRect(boxX, boxY, boxW, boxH, 4, 0xFCA0);
-  spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, 0xFCA0);
+  const uint16_t frameBlue = 0x249F;
+  const uint16_t brightBlue = 0x3DFF;
+  spr.drawRoundRect(boxX, boxY, boxW, boxH, 4, frameBlue);
+  spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, frameBlue);
 
-  // Titel mit modernem Font
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  // Kleinere Überschrift, damit sie sauber in den Rahmen passt.
+  spr.setFont(FONT_SMALL);
   spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(0xFD20);
+  spr.setTextColor(brightBlue);
   spr.drawString("FREQUENCY INPUT MENU", boxX + boxW / 2, boxY + 3);
 
   // Frequenz-Anzeigefeld
   int displayH = 26;
   spr.fillRect(boxX + 8, boxY + 15, boxW - 100, displayH, 0x0000);
-  spr.drawRoundRect(boxX + 8, boxY + 15, boxW - 100, displayH, 2, freqRangeError ? 0xF800 : 0xFCA0);
+  spr.drawRoundRect(boxX + 8, boxY + 15, boxW - 100, displayH, 2, freqRangeError ? 0xF800 : frameBlue);
   
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(freqRangeError ? 0xF800 : 0xFD20);
+  spr.setTextColor(freqRangeError ? 0xF800 : brightBlue);
   
   char displayBuf[20];
   if (inputLen > 0) {
@@ -223,13 +231,13 @@ void drawFreqKeypad()
   bool modeSelected = (keypadIndex == 16);
 
   if (modeSelected) {
-    spr.fillRoundRect(modeX, modeY, modeW, modeH, 2, 0xFD20);
+    spr.fillRoundRect(modeX, modeY, modeW, modeH, 2, brightBlue);
     spr.setTextColor(0x0000);
   } else {
     spr.fillRoundRect(modeX, modeY, modeW, modeH, 2, 0x1084);
-    spr.setTextColor(0xFD20);
+    spr.setTextColor(brightBlue);
   }
-  spr.drawRoundRect(modeX, modeY, modeW, modeH, 2, 0xFCA0);
+  spr.drawRoundRect(modeX, modeY, modeW, modeH, 2, frameBlue);
   spr.setTextDatum(MC_DATUM);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.drawString(bandModeDesc[tempMode], modeX + modeW / 2, modeY + modeH / 2);
@@ -243,7 +251,7 @@ void drawFreqKeypad()
   int gapY = 2;
 
   for (int i = 0; i < 16; i++) {
-    if (i >= 14 && i <= 15) continue; // Indizes 14 und 15 bleiben leer
+    if (i == 14) continue; // Index 14 bleibt frei; Index 15 ist CLOSE
 
     int col = i % 4;
     int row = i / 4;
@@ -253,14 +261,14 @@ void drawFreqKeypad()
     bool isSelected = (i == keypadIndex);
 
     if (isSelected) {
-      spr.fillRoundRect(x, y, btnW, btnH, 3, 0xFD20);
+      spr.fillRoundRect(x, y, btnW, btnH, 3, brightBlue);
       spr.drawRoundRect(x, y, btnW, btnH, 3, 0xFFFF);
       spr.setTextColor(0x0000);                       
     } else {
       spr.fillRoundRect(x, y, btnW, btnH, 3, 0x0841); 
-      spr.drawRoundRect(x, y, btnW, btnH, 3, 0xFCA0); 
-      spr.drawRoundRect(x + 1, y + 1, btnW - 2, btnH - 2, 2, 0x528A); 
-      spr.setTextColor(0xFD20);                       
+      spr.drawRoundRect(x, y, btnW, btnH, 3, frameBlue); 
+      spr.drawRoundRect(x + 1, y + 1, btnW - 2, btnH - 2, 2, 0x249F); 
+      spr.setTextColor(brightBlue);                       
     }
 
     spr.setTextDatum(MC_DATUM);
