@@ -83,6 +83,7 @@ static volatile int8_t webTuneStep = 0;
 static volatile uint16_t webSpectrumStartFreq = 0;
 static volatile uint16_t webSpectrumEndFreq = 0;
 static volatile bool webSpectrumCustomRange = false;
+static volatile int8_t webSpectrumRequestedMode = -1;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -432,23 +433,32 @@ static void webInit()
     {
       if(!hasStart || !hasEnd)
         return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Provide both start and end frequencies.\"}");
-      if(currentMode != FM)
-        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Custom range scanning currently supports FM only.\"}");
+      if(!request->hasParam("mode", true))
+        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Select FM, AM, USB or LSB.\"}");
+      String modeValue = request->getParam("mode", true)->value();
+      int8_t requestedMode = -1;
+      if(modeValue == "FM") requestedMode = FM;
+      else if(modeValue == "AM") requestedMode = AM;
+      else if(modeValue == "USB") requestedMode = USB;
+      else if(modeValue == "LSB") requestedMode = LSB;
+      if(requestedMode < 0)
+        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Unsupported modulation.\"}");
       String startValue = request->getParam("start_hz", true)->value();
       String endValue = request->getParam("end_hz", true)->value();
       char *startEnd = nullptr, *endEnd = nullptr;
       long startHz = strtol(startValue.c_str(), &startEnd, 10);
       long endHz = strtol(endValue.c_str(), &endEnd, 10);
-      if(!startEnd || *startEnd || !endEnd || *endEnd || startHz < 100000 || endHz > 300000000 || endHz <= startHz)
-        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Invalid scan range.\"}");
-      Band *band = getCurrentBand();
-      requestedStart = freqFromHz((uint32_t)startHz, currentMode);
-      requestedEnd = freqFromHz((uint32_t)endHz, currentMode);
-      if(!band || !isFreqInBand(band, requestedStart) || !isFreqInBand(band, requestedEnd))
-        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Range must stay inside the current FM band.\"}");
-      uint32_t points = ((uint32_t)requestedEnd - requestedStart) / 10 + 1;
+      long minHz = requestedMode == FM ? 64000000L : 150000L;
+      long maxHz = requestedMode == FM ? 108000000L : 30000000L;
+      if(!startEnd || *startEnd || !endEnd || *endEnd || startHz < minHz || endHz > maxHz || endHz <= startHz)
+        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Range is outside the receiver's supported range for this modulation.\"}");
+      requestedStart = freqFromHz((uint32_t)startHz, requestedMode);
+      requestedEnd = freqFromHz((uint32_t)endHz, requestedMode);
+      uint16_t step = requestedMode == FM ? 10 : 1;
+      uint32_t points = ((uint32_t)requestedEnd - requestedStart) / step + 1;
       if(points < 2 || points > 256)
-        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Choose a range with 2–256 samples.\"}");
+        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Range must contain 2–256 samples at the selected resolution.\"}");
+      webSpectrumRequestedMode = requestedMode;
     }
 
     webSpectrumStartFreq = requestedStart;
@@ -1245,6 +1255,7 @@ void webSpectrumTick()
     webTuneFrequencyHz = 0;
     webSpectrumRequested = false;
     webSpectrumCustomRange = false;
+    webSpectrumRequestedMode = -1;
     webSpectrumBusy = false;
     return;
   }
@@ -1283,12 +1294,42 @@ void webSpectrumTick()
   bool customRange = webSpectrumCustomRange;
   uint16_t rangeStart = webSpectrumStartFreq;
   uint16_t rangeEnd = webSpectrumEndFreq;
+  int8_t requestedMode = webSpectrumRequestedMode;
   webSpectrumCustomRange = false;
+  webSpectrumRequestedMode = -1;
   uint16_t center = currentFrequency;
-  // FM uses 100 kHz steps; AM/SW uses 5 kHz steps for a useful local span.
-  uint16_t step = currentMode == FM ? 10 : 5;
-  if(customRange) scanRunRange(rangeStart, rangeEnd, step);
-  else scanRun(center, step);
+  uint16_t step = currentMode == FM ? 10 : 1;
+
+  if(customRange && requestedMode >= 0 && requestedMode != currentMode)
+  {
+    currentMode = requestedMode;
+    if(currentMode == FM)
+    {
+      center = constrain(center, 6400, 10800);
+      rx.setFM(6400, 10800, center, 10);
+    }
+    else if(currentMode == AM)
+    {
+      center = constrain(center, 150, 30000);
+      rx.setAM(150, 30000, center, 1);
+    }
+    else
+    {
+      center = constrain(center, 150, 30000);
+      rx.setSSB(150, 30000, center, 0, currentMode);
+      rx.setSSBConfig(getCurrentBandwidth()->idx, 1, 0, 1, 0, 1);
+      if(currentMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
+      else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
+    }
+    currentFrequency = rx.getFrequency();
+  }
+
+  if(customRange)
+  {
+    step = currentMode == FM ? 10 : 1;
+    scanRunRange(rangeStart, rangeEnd, step);
+  }
+  else scanRun(center, currentMode == FM ? 10 : 5);
   webSpectrumReady = scanGetCount() > 0;
   webSpectrumBusy = false;
 }
