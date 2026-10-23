@@ -123,6 +123,11 @@ bool clickFreqKeypad(bool shortPress)
       currentMode = tempMode;
       updateFrequency(targetFreq, false);
       if (isSSB()) updateBFO(0, true);
+      if(dualRxSetupStage == 1 || dualRxSetupStage == 2)
+      {
+        dualRxKeypadComplete(captureVfo());
+        return true;
+      }
     }
     currentCmd = CMD_NONE; 
     return true;
