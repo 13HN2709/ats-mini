@@ -716,6 +716,12 @@ void loop()
     {
       dualRxStop();
       needRedraw = true;
+      // Consume the long-press event here. Otherwise the normal button handler
+      // below sees the same event and toggles display sleep after Dual RX stops.
+      pb1st.wasClicked = false;
+      pb1st.wasShortPressed = false;
+      pb1st.isLongPressed = false;
+      pb1st.isPressed = false;
     }
     else if(pb1st.wasClicked || pb1st.wasShortPressed)
     {
