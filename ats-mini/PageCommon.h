@@ -48,7 +48,13 @@ static const char pageStart[] PROGMEM = R"HTML(<!DOCTYPE HTML>
     TH, TD { padding:.5em; }
     .HEADING { background:#182b4c; border:1px solid #80a0ff; color:#a9c3ff; column-span:all; text-align:center; font-weight:800; letter-spacing:.08em; text-shadow:0 0 10px #80a0ff77; }
     TD.LABEL { text-align:right; }
-    INPUT[type=text], INPUT[type=password], INPUT[type=file], INPUT[type=number], SELECT, TEXTAREA { max-width:100%; padding:.65em; border:1px solid #344762; border-radius:7px; background:#0b121b; color:var(--text); font:inherit; } INPUT[type=text], INPUT[type=password], SELECT, TEXTAREA { width:95%; } INPUT:focus, SELECT:focus, TEXTAREA:focus { outline:1px solid var(--blue); border-color:var(--blue); }
+    INPUT[type=text], INPUT[type=password], INPUT[type=file], INPUT[type=number], SELECT, TEXTAREA { max-width:100%; padding:.65em; border:1px solid #344762; border-radius:5px; background:#0b121b; color:var(--text); font:inherit; } INPUT[type=text], INPUT[type=password], SELECT, TEXTAREA { width:95%; } INPUT:focus, SELECT:focus, TEXTAREA:focus { outline:1px solid var(--blue); border-color:var(--blue); }
+    .CONFIGFORM TABLE { border-collapse:separate; border-spacing:0 5px; }
+    .CONFIGFORM TH, .CONFIGFORM TD { padding:.55em .6em; }
+    .CONFIGFORM TD.LABEL { width:42%; color:var(--muted); }
+    .CONFIGFORM INPUT[type=text], .CONFIGFORM INPUT[type=password], .CONFIGFORM INPUT[type=file], .CONFIGFORM SELECT, .CONFIGFORM TEXTAREA { width:100%; }
+    .CONFIGFORM INPUT[type=submit] { width:min(100%,320px); }
+    @media (max-width:480px) { .CONFIGFORM TD.LABEL { width:38%; } .CONFIGFORM TH, .CONFIGFORM TD { padding:.45em .3em; } }
     INPUT[type=submit], BUTTON { padding:.7em 1em; border:1px solid #607ecb; border-radius:5px; background:linear-gradient(135deg,#1b2c4b,#111b2d); color:var(--blue); font:inherit; font-weight:700; letter-spacing:.055em; cursor:pointer; }
     INPUT[type=submit]:hover, BUTTON:hover { background:#263d67; border-color:var(--cyan); }
     BUTTON:focus-visible, INPUT[type=submit]:focus-visible, A:focus-visible { outline:2px solid var(--cyan); outline-offset:2px; }
