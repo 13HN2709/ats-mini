@@ -78,6 +78,8 @@ static volatile bool webSpectrumRequested = false;
 static volatile bool webSpectrumReady = false;
 static volatile bool webSpectrumBusy = false;
 static volatile int32_t webTuneFrequencyHz = 0;
+static volatile int8_t webTuneRequestedMode = -1;
+static volatile int8_t webSpectrumResultMode = -1;
 static volatile int16_t webRequestedVolume = -1;
 static volatile int8_t webTuneStep = 0;
 static volatile uint16_t webSpectrumStartFreq = 0;
@@ -392,11 +394,22 @@ static void webInit()
     char *end = nullptr;
     long freqHz = strtol(value.c_str(), &end, 10);
     if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\"message\":\"Invalid frequency.\"}");
-    uint16_t targetFreq = freqFromHz((uint32_t)freqHz, currentMode);
-    uint32_t minHz = currentMode == FM ? 64000000UL : 150000UL;
-    uint32_t maxHz = currentMode == FM ? 108000000UL : 30000000UL;
+    int8_t targetMode = currentMode;
+    bool modeProvided = request->hasParam("mode", true);
+    if(modeProvided)
+    {
+      String modeValue = request->getParam("mode", true)->value();
+      if(modeValue == "FM") targetMode = FM;
+      else if(modeValue == "AM") targetMode = AM;
+      else if(modeValue == "USB") targetMode = USB;
+      else if(modeValue == "LSB") targetMode = LSB;
+      else return request->send(400, "application/json", "{\"message\":\"Unsupported modulation.\"}");
+    }
+    uint32_t minHz = targetMode == FM ? 64000000UL : 150000UL;
+    uint32_t maxHz = targetMode == FM ? 108000000UL : 30000000UL;
     if(freqHz < minHz || freqHz > maxHz)
       return request->send(422, "application/json", "{\"message\":\"Frequency is outside the receiver range for the selected modulation.\"}");
+    webTuneRequestedMode = modeProvided ? targetMode : -1;
     webTuneFrequencyHz = freqHz;
     return request->send(202, "application/json", "{\"message\":\"Tune command queued.\"}");
   });
@@ -492,7 +505,9 @@ static void webInit()
       return request->send(200, "application/json", "{\"ready\":false}");
     String json;
     json.reserve(7200);
-    json = "{\"ready\":true,\"fm\":" + String(currentMode == FM ? "true" : "false") + ",\"samples\":[";
+    int8_t resultMode = webSpectrumResultMode >= 0 ? webSpectrumResultMode : currentMode;
+    String modeName = resultMode == FM ? "FM" : resultMode == AM ? "AM" : resultMode == USB ? "USB" : "LSB";
+    json = "{\"ready\":true,\"fm\":" + String(resultMode == FM ? "true" : "false") + ",\"mode\":\"" + modeName + "\",\"samples\":[";
     uint16_t count = scanGetCount();
     for(uint16_t i = 0; i < count; i++)
     {
@@ -1269,6 +1284,7 @@ void webSpectrumTick()
     webTuneStep = 0;
     webRequestedVolume = -1;
     webTuneFrequencyHz = 0;
+    webTuneRequestedMode = -1;
     webSpectrumRequested = false;
     webSpectrumCustomRange = false;
     webSpectrumRequestedMode = -1;
@@ -1298,18 +1314,41 @@ void webSpectrumTick()
   if(requestedHz > 0)
   {
     webTuneFrequencyHz = 0;
-    uint16_t targetFreq = freqFromHz(requestedHz, currentMode);
-    uint32_t minFreq = currentMode == FM ? 6400UL : 150UL;
-    uint32_t maxFreq = currentMode == FM ? 10800UL : 30000UL;
-    if(targetFreq >= minFreq && targetFreq <= maxFreq)
+    int8_t requestedMode = webTuneRequestedMode;
+    webTuneRequestedMode = -1;
+    if(requestedMode >= 0 && requestedMode != currentMode)
     {
-      rx.setFrequency(targetFreq);
-      currentFrequency = rx.getFrequency();
-      Band *band = getCurrentBand();
-      if(band) band->currentFreq = currentFrequency;
-      clearStationInfo();
-      identifyFrequency(currentFrequency + currentBFO / 1000);
+      currentMode = requestedMode;
+      uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
+      if(currentMode == FM)
+        rx.setFM(6400, 10800, constrain(targetFreq, 6400, 10800), 10);
+      else if(currentMode == AM)
+        rx.setAM(150, 30000, constrain(targetFreq, 150, 30000), 1);
+      else
+      {
+        rx.setSSB(150, 30000, constrain(targetFreq, 150, 30000), 0, currentMode);
+        rx.setSSBConfig(getCurrentBandwidth()->idx, 1, 0, 1, 0, 1);
+        if(currentMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
+        else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
+      }
     }
+    else if(requestedMode >= 0)
+    {
+      uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
+      rx.setFrequency(targetFreq);
+    }
+    else
+    {
+      uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
+      uint32_t minFreq = currentMode == FM ? 6400UL : 150UL;
+      uint32_t maxFreq = currentMode == FM ? 10800UL : 30000UL;
+      if(targetFreq >= minFreq && targetFreq <= maxFreq) rx.setFrequency(targetFreq);
+    }
+    currentFrequency = rx.getFrequency();
+    Band *band = getCurrentBand();
+    if(band) band->currentFreq = currentFrequency;
+    clearStationInfo();
+    identifyFrequency(currentFrequency + currentBFO / 1000);
   }
   if(!webSpectrumRequested) return;
   webSpectrumRequested = false;
@@ -1321,6 +1360,10 @@ void webSpectrumTick()
   webSpectrumCustomRange = false;
   webSpectrumRequestedMode = -1;
   webSpectrumStep = 1;
+  const uint16_t savedFrequency = currentFrequency;
+  const int8_t savedMode = currentMode;
+  const int16_t savedBFO = currentBFO;
+  const int8_t scanMode = (customRange && requestedMode >= 0) ? requestedMode : currentMode;
   uint16_t center = currentFrequency;
   uint16_t step = currentMode == FM ? 10 : 1;
 
@@ -1354,6 +1397,32 @@ void webSpectrumTick()
     scanRunRange(rangeStart, rangeEnd, step);
   }
   else scanRun(center, currentMode == FM ? 10 : 5);
+
+  webSpectrumResultMode = scanMode;
   webSpectrumReady = scanGetCount() > 0;
+
+  if(customRange)
+  {
+    // Restore the original receiver state while retaining the scan modulation
+    // separately, so selecting a peak can intentionally switch to that mode.
+    currentMode = savedMode;
+    currentBFO = savedBFO;
+    if(savedMode == FM)
+      rx.setFM(6400, 10800, constrain(savedFrequency, 6400, 10800), 10);
+    else if(savedMode == AM)
+      rx.setAM(150, 30000, constrain(savedFrequency, 150, 30000), 1);
+    else
+    {
+      rx.setSSB(150, 30000, constrain(savedFrequency, 150, 30000), 0, savedMode);
+      rx.setSSBConfig(getCurrentBandwidth()->idx, 1, 0, 1, 0, 1);
+      if(savedMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
+      else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
+    }
+    currentFrequency = rx.getFrequency();
+    Band *band = getCurrentBand();
+    if(band) band->currentFreq = currentFrequency;
+    clearStationInfo();
+    identifyFrequency(currentFrequency + currentBFO / 1000);
+  }
   webSpectrumBusy = false;
 }

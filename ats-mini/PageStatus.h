@@ -18,8 +18,10 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
   <DIV CLASS="EYEBROW">Radio controls</DIV>
   <FORM ID="radioTune" STYLE="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px">
-    <LABEL FOR="radioFrequency" CLASS="LABEL" STYLE="grid-column:1/-1">Frequency (Hz)</LABEL>
-    <INPUT ID="radioFrequency" NAME="freq" TYPE="number" INPUTMODE="decimal" MIN="100000" MAX="300000000" STEP="{{frequency_step_hz}}" VALUE="{{frequency_hz}}" STYLE="width:100%;min-width:0" REQUIRED>
+    <LABEL FOR="radioFrequency" CLASS="LABEL" STYLE="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px">Frequency
+      <SELECT ID="radioFrequencyUnit" aria-label="Frequency unit" STYLE="width:auto;min-width:86px"><OPTION VALUE="hz">Hz</OPTION><OPTION VALUE="khz">kHz</OPTION><OPTION VALUE="mhz">MHz</OPTION></SELECT>
+    </LABEL>
+    <INPUT ID="radioFrequency" NAME="freq" TYPE="number" INPUTMODE="decimal" MIN="0" MAX="300000000" STEP="{{frequency_step_hz}}" VALUE="{{frequency_hz}}" STYLE="width:100%;min-width:0" REQUIRED>
     <BUTTON TYPE="submit">TUNE</BUTTON>
   </FORM>
   <DIV ID="radioControlStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:8px">Enter a frequency supported by the current band.</DIV>
@@ -76,7 +78,22 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
 (()=>{
  const tuneForm=document.getElementById('radioTune');
  const tuneInput=document.getElementById('radioFrequency');
+ const tuneUnit=document.getElementById('radioFrequencyUnit');
  const controlStatus=document.getElementById('radioControlStatus');
+ const frequencyStepHz=Number(tuneInput.step)||1000;
+ const unitScale=unit=>unit==='mhz'?1000000:unit==='khz'?1000:1;
+ let activeFrequencyUnit=tuneUnit.value;
+ function inputFrequencyHz(){return Number(tuneInput.value)*unitScale(activeFrequencyUnit);}
+ function setFrequencyUnit(nextUnit){
+   const hz=inputFrequencyHz();
+   tuneUnit.value=nextUnit;
+   activeFrequencyUnit=nextUnit;
+   tuneInput.value=Number.isFinite(hz)?(hz/unitScale(nextUnit)).toFixed(nextUnit==='mhz'?4:nextUnit==='khz'?3:0):'';
+   tuneInput.step=String(Math.max(1,frequencyStepHz/unitScale(nextUnit)));
+ }
+ const initialHz=Number(tuneInput.value);
+ setFrequencyUnit(initialHz>=64000000?'mhz':'khz');
+ tuneUnit.addEventListener('change',()=>setFrequencyUnit(tuneUnit.value));
  const stepDown=document.getElementById('radioStepDown');
  const stepUp=document.getElementById('radioStepUp');
  const volumeInput=document.getElementById('radioVolume');
@@ -96,9 +113,9 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  }
  tuneForm.addEventListener('submit',async event=>{
    event.preventDefault();
-   const frequency=Number(tuneInput.value);
+   const frequency=inputFrequencyHz();
    if(!Number.isFinite(frequency)||frequency<100000||frequency>300000000){
-     controlStatus.textContent='Enter a valid frequency in Hz.';
+     controlStatus.textContent='Enter a valid frequency between 100 kHz and 300 MHz.';
      return;
    }
    const button=tuneForm.querySelector('button[type=submit]');
@@ -141,6 +158,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  let lastSamples=[];
  let peakPoints=[];
  let fmMode=false;
+ let lastSpectrumMode='FM';
  function draw(samples,fm=fmMode){
    fmMode=fm;
    lastSamples=samples||[];
@@ -221,6 +239,8 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
        const data=await response.json();
        if(data.ready&&data.samples&&data.samples.length){
          draw(data.samples,!!data.fm);
+         lastSpectrumMode=data.mode||selectedMode;
+         try{sessionStorage.setItem('atsSpectrumSnapshot',JSON.stringify({fm:!!data.fm,mode:lastSpectrumMode,samples:data.samples}));}catch(_){}
          status.textContent='Sweep complete · '+data.samples.length+' real RSSI samples. Run again to refresh.';
          return;
        }
@@ -258,10 +278,20 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const sample=lastSamples[nearest.index];
    const frequencyHz=Math.round(sample.f*(fmMode?10000:1000));
    status.textContent='Tuning to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'…';
-   const ok=await postRadioCommand('/radio/tune',{freq:String(frequencyHz)},status);
+   const ok=await postRadioCommand('/radio/tune',{freq:String(frequencyHz),mode:lastSpectrumMode},status);
    if(ok) status.textContent='Tuned to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'. Spectrum retained; scan again whenever you want fresh measurements.';
  });
- draw([]);
+ let restored=false;
+ try{
+   const saved=JSON.parse(sessionStorage.getItem('atsSpectrumSnapshot')||'null');
+   if(saved&&Array.isArray(saved.samples)&&saved.samples.length>1){
+     draw(saved.samples,!!saved.fm);
+     lastSpectrumMode=saved.mode||(saved.fm?'FM':'AM');
+     status.textContent='Previous sweep restored · '+saved.samples.length+' samples. Scan again whenever you want fresh measurements.';
+     restored=true;
+   }
+ }catch(_){}
+ if(!restored)draw([]);
  window.addEventListener('resize',()=>draw(lastSamples));
 })();
 </SCRIPT>

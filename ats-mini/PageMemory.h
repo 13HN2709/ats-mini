@@ -29,8 +29,11 @@ static const char pageMemory[] PROGMEM = R"HTML(<STYLE>
 </STYLE>
 <H1>{{title}}</H1>
 {{{navigation}}}
-<P CLASS="MEMORY-HELP">Edit frequencies in Hz (0 clears a slot). Names: up to 9 printable ASCII characters.
+<P CLASS="MEMORY-HELP">Edit frequencies in the selected unit (0 clears a slot). Names: up to 9 printable ASCII characters.
 Use the up/down buttons to reorder slots. Press Save to apply changes.</P>
+<DIV CLASS="MEMORY-NAV"><LABEL FOR="memoryFrequencyUnit">Frequency display</LABEL>
+  <SELECT ID="memoryFrequencyUnit" aria-label="Memory frequency display unit"><OPTION VALUE="khz" SELECTED>kHz</OPTION><OPTION VALUE="mhz">MHz</OPTION></SELECT>
+</DIV>
 <FORM ID="memories" METHOD="post" ACTION="/memory" AUTOCOMPLETE="on" ONINPUT="changed()">
   {{{toolbar}}}
   <P ID="memory-status" ROLE="status"></P>
@@ -38,7 +41,7 @@ Use the up/down buttons to reorder slots. Press Save to apply changes.</P>
   <TABLE CLASS="MEMORY">
     <THEAD><TR>
       <TH SCOPE="col" ARIA-LABEL="Slot">#</TH><TH SCOPE="col">Name</TH><TH SCOPE="col">Band</TH>
-      <TH SCOPE="col">Frequency (Hz)</TH><TH SCOPE="col">Mode</TH><TH SCOPE="col">Move</TH>
+      <TH SCOPE="col">Frequency (<SPAN ID="memoryFrequencyUnitLabel">kHz</SPAN>)</TH><TH SCOPE="col">Mode</TH><TH SCOPE="col">Move</TH>
     </TR></THEAD>
     <TBODY>{{{rows}}}</TBODY>
   </TABLE>
@@ -50,12 +53,34 @@ const body = form.querySelector('tbody');
 const status = document.getElementById('memory-status');
 const file = document.getElementById('memory-file');
 const fields = ['band', 'freq', 'mode', 'name'];
+const frequencyUnit = document.getElementById('memoryFrequencyUnit');
+const frequencyUnitLabel = document.getElementById('memoryFrequencyUnitLabel');
 const rows = Array.from(body.rows);
 const cell = (row, field) => row.querySelector('[data-field="' + field + '"]');
+const unitScale = () => frequencyUnit.value === 'mhz' ? 1000000 : 1000;
+const toHz = value => Math.round(Number(value) * unitScale());
+const fromHz = value => Number(value) / unitScale();
+const displayFrequencies = () => rows.forEach(row => {
+  const field = cell(row, 'freq');
+  field.step = frequencyUnit.value === 'mhz' ? '0.001' : '1';
+  field.max = String(Math.floor(4294967295 / unitScale()));
+  field.value = fromHz(field.dataset.hz || 0);
+});
+rows.forEach(row => {
+  const field = cell(row, 'freq');
+  field.dataset.hz = field.value;
+  field.addEventListener('input', () => { field.dataset.hz = String(toHz(field.value)); });
+});
+displayFrequencies();
+frequencyUnit.addEventListener('change', () => {
+  frequencyUnitLabel.textContent = frequencyUnit.value;
+  displayFrequencies();
+  changed();
+});
 const bandNames = Array.from(cell(rows[0], 'band').options, option => option.value);
 const modeNames = Array.from(cell(rows[0], 'mode').options, option => option.value);
 const read = () => rows.map(row => Object.fromEntries(fields.map(field =>
-  [field, field === 'freq' ? Number(cell(row, field).value) : cell(row, field).value])));
+  [field, field === 'freq' ? toHz(cell(row, field).value) : cell(row, field).value])));
 
 function changed() {
   form.querySelectorAll('.MEMORY-STATE').forEach(label => label.textContent = 'Unsaved changes');
@@ -77,7 +102,7 @@ function validateImport(data) {
 }
 
 form.addEventListener('submit', () => {
-  rows.forEach(row => cell(row, 'freq').value = Number(cell(row, 'freq').value));
+  rows.forEach(row => cell(row, 'freq').value = toHz(cell(row, 'freq').value));
 });
 function exportMemories() {
   if(!form.reportValidity()) return;
@@ -96,7 +121,14 @@ file.addEventListener('change', async () => {
   try {
     if(file.files[0].size > 65536) throw Error('The memory file is too large.');
     const data = validateImport(JSON.parse(await file.files[0].text()));
-    rows.forEach((row, i) => fields.forEach(field => cell(row, field).value = data[i][field]));
+    rows.forEach((row, i) => {
+      fields.forEach(field => {
+        if(field === 'freq') {
+          cell(row, field).dataset.hz = String(data[i][field]);
+          cell(row, field).value = fromHz(data[i][field]);
+        } else cell(row, field).value = data[i][field];
+      });
+    });
     changed();
   } catch(error) { status.textContent = 'Import failed: ' + error.message; }
   file.value = '';
@@ -110,6 +142,7 @@ function moveRow(button, direction) {
   fields.forEach(field => {
     const source = cell(row, field), destination = cell(target, field);
     [source.value, destination.value] = [destination.value, source.value];
+    if(field === 'freq') [source.dataset.hz, destination.dataset.hz] = [destination.dataset.hz, source.dataset.hz];
   });
   changed();
   const next = target.querySelectorAll('button')[up ? 0 : 1];
