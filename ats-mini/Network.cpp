@@ -78,6 +78,7 @@ static volatile bool webSpectrumRequested = false;
 static volatile bool webSpectrumReady = false;
 static volatile bool webSpectrumBusy = false;
 static volatile int32_t webTuneFrequencyHz = 0;
+static volatile int16_t webRequestedVolume = -1;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -386,6 +387,16 @@ static void webInit()
     if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\"message\":\"Invalid frequency.\"}");
     webTuneFrequencyHz = freqHz;
     return request->send(202, "application/json", "{\"message\":\"Tune command queued.\"}");
+  });
+  server.on("/radio/volume", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(!request->hasParam("volume", true)) return request->send(400, "application/json", "{\"message\":\"Missing volume.\"}");
+    String value = request->getParam("volume", true)->value();
+    char *end = nullptr;
+    long requested = strtol(value.c_str(), &end, 10);
+    if(!end || *end || requested < 0 || requested > 63) return request->send(400, "application/json", "{\"message\":\"Volume must be 0–63.\"}");
+    webRequestedVolume = requested;
+    return request->send(202, "application/json", "{\"message\":\"Volume change queued.\"}");
   });
   server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
@@ -1134,6 +1145,13 @@ static void webPatchesPage(AsyncWebServerRequest *request)
 // Run receiver sweeps only from the main loop, never inside the async web task.
 void webSpectrumTick()
 {
+  int16_t requestedVolume = webRequestedVolume;
+  if(requestedVolume >= 0 && currentCmd != CMD_DUAL_RX)
+  {
+    webRequestedVolume = -1;
+    volume = (uint8_t)requestedVolume;
+    rx.setVolume(volume);
+  }
   int32_t requestedHz = webTuneFrequencyHz;
   if(requestedHz > 0 && currentCmd != CMD_DUAL_RX)
   {
