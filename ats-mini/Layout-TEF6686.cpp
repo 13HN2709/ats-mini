@@ -470,6 +470,17 @@ void drawLayoutTEF6686()
       spr.clearClipRect();
     }
   }
+  else if (strncmp(bandplanHint.label, "FT8", 3) == 0 ||
+           strncmp(bandplanHint.label, "FT4", 3) == 0)
+  {
+    // Show the recommended dial frequency for digital modes.
+    char targetText[32];
+    snprintf(targetText, sizeof(targetText), "TARGET: %u kHz", bandplanHint.targetKHz);
+    spr.setTextColor(COLOR_GREEN);
+    spr.setClipRect(rtX + 5, rtY + 1, rtW - 10, rtH - 2);
+    spr.drawString(targetText, rtX + 7, rtY + 2);
+    spr.clearClipRect();
+  }
   // Non-FM bandplan categories are shown in the MODE field above.
 
   // 10. Menu
