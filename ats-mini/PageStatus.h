@@ -29,7 +29,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <DIV><DIV CLASS="LABEL">LIVE RECEIVER SWEEP</DIV><DIV CLASS="VALUE" STYLE="font-size:1.05rem;color:#80a0ff">Spectrum analyzer</DIV></DIV>
     <BUTTON ID="spectrumStart" TYPE="button">RUN SPECTRUM</BUTTON>
   </DIV>
-  <DIV STYLE="margin-top:12px;background:#050b11;border:1px solid #40527b;border-radius:12px;padding:8px">
+  <DIV STYLE="margin-top:12px;background:#050810;border:1px solid #40527b;border-radius:12px;padding:8px">
     <CANVAS ID="spectrumCanvas" HEIGHT="190" STYLE="display:block;width:100%;height:190px"></CANVAS>
   </DIV>
   <DIV ID="spectrumStatus" CLASS="LABEL" STYLE="margin-top:10px">Press RUN SPECTRUM to measure real RSSI values across the current band. Audio is briefly muted during the sweep.</DIV>
@@ -70,7 +70,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const w=Math.max(260,canvas.clientWidth), h=190;
    canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr);
    ctx.setTransform(dpr,0,0,dpr,0,0);
-   ctx.fillStyle='#050b11';ctx.fillRect(0,0,w,h);
+   ctx.fillStyle='#050810';ctx.fillRect(0,0,w,h);
    const left=34,right=10,top=12,bottom=28,plotW=w-left-right,plotH=h-top-bottom;
    ctx.strokeStyle='#293958';ctx.lineWidth=1;
    ctx.fillStyle='#a5b9e1';ctx.font='10px system-ui';
@@ -93,12 +93,12 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    ctx.beginPath();ctx.moveTo(pts[0].x,top+plotH);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,top+plotH);ctx.closePath();
    ctx.fillStyle='rgba(95,135,255,.16)';ctx.fill();
    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-   ctx.strokeStyle='#35d9ff';ctx.lineWidth=2;ctx.stroke();
+   ctx.strokeStyle='#80a0ff';ctx.lineWidth=2;ctx.stroke();
    ctx.fillStyle='#8ea2ae';ctx.font='10px system-ui';
    const fmt=f=>fmMode?(f/100).toFixed(2)+' MHz':f+' kHz';
    ctx.textAlign='left';ctx.fillText(fmt(minF),left,h-8);
    ctx.textAlign='right';ctx.fillText(fmt(maxF),w-right,h-8);
-   ctx.textAlign='center';ctx.fillStyle='#35d9ff';ctx.fillText('RSSI',w/2, h-8);
+   ctx.textAlign='center';ctx.fillStyle='#80a0ff';ctx.fillText('RSSI',w/2, h-8);
  }
  async function start(){
    button.disabled=true;status.textContent='Starting receiver sweep…';
