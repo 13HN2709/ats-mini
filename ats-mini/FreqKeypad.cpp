@@ -119,11 +119,30 @@ bool clickFreqKeypad(bool shortPress)
         }
       }
 
+      const bool dualRxSetup = (dualRxSetupStage == 1 || dualRxSetupStage == 2);
+      if(dualRxSetup)
+      {
+        // Reject frequencies that do not fit any band supported by the
+        // selected modulation. Do not accidentally store the old frequency.
+        bool validTarget = false;
+        for(int i = 0; i < getTotalBands(); ++i)
+        {
+          const Band &b = bands[i];
+          const bool modeMatchesBand = (tempMode == FM) == (b.bandType == FM_BAND_TYPE);
+          if(modeMatchesBand && targetFreq >= b.minimumFreq && targetFreq <= b.maximumFreq)
+          {
+            validTarget = true;
+            break;
+          }
+        }
+        if(!validTarget) return true;
+      }
+
       switchToMatchingBand(targetFreq, tempMode);
       currentMode = tempMode;
-      updateFrequency(targetFreq, false);
+      if(!updateFrequency(targetFreq, false)) return true;
       if (isSSB()) updateBFO(0, true);
-      if(dualRxSetupStage == 1 || dualRxSetupStage == 2)
+      if(dualRxSetup)
       {
         dualRxKeypadComplete(captureVfo());
         return true;
