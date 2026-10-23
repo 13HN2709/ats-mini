@@ -76,7 +76,8 @@ static void webUploadSplash(AsyncWebServerRequest *request, const String &filena
 static bool webIsAuthenticated(AsyncWebServerRequest *request);
 static volatile bool webSpectrumRequested = false;
 static volatile bool webSpectrumReady = false;
-static volatile bool webSpectrumBusy = false;\nstatic volatile int32_t webTuneFrequencyHz = 0;
+static volatile bool webSpectrumBusy = false;
+static volatile int32_t webTuneFrequencyHz = 0;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -375,7 +376,18 @@ static void webInit()
     request->send(200, "text/html", webRadioPage());
   });
 
-  server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {\n    if(!webIsAuthenticated(request)) return request->requestAuthentication();\n    if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\\\"message\\\":\\\"Tuning is unavailable during Dual RX.\\\"}");\n    if(!request->hasParam("freq", true)) return request->send(400, "application/json", "{\\\"message\\\":\\\"Missing frequency.\\\"}");\n    String value = request->getParam("freq", true)->value();\n    char *end = nullptr;\n    long freqHz = strtol(value.c_str(), &end, 10);\n    if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\\\"message\\\":\\\"Invalid frequency.\\\"}");\n    webTuneFrequencyHz = freqHz;\n    return request->send(202, "application/json", "{\\\"message\\\":\\\"Tune command queued.\\\"}");\n  });\n  server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
+  server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\\"message\\":\\"Tuning is unavailable during Dual RX.\\"}");
+    if(!request->hasParam("freq", true)) return request->send(400, "application/json", "{\\"message\\":\\"Missing frequency.\\"}");
+    String value = request->getParam("freq", true)->value();
+    char *end = nullptr;
+    long freqHz = strtol(value.c_str(), &end, 10);
+    if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\\"message\\":\\"Invalid frequency.\\"}");
+    webTuneFrequencyHz = freqHz;
+    return request->send(202, "application/json", "{\\"message\\":\\"Tune command queued.\\"}");
+  });
+  server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     if(currentCmd == CMD_DUAL_RX)
       return request->send(409, "application/json", "{\"ready\":false,\"error\":\"Stop Dual RX before scanning.\"}");
@@ -1121,6 +1133,18 @@ static void webPatchesPage(AsyncWebServerRequest *request)
 // Run receiver sweeps only from the main loop, never inside the async web task.
 void webSpectrumTick()
 {
+  int32_t requestedHz = webTuneFrequencyHz;
+  if(requestedHz > 0 && currentCmd != CMD_DUAL_RX)
+  {
+    webTuneFrequencyHz = 0;
+    uint16_t targetFreq = freqFromHz(requestedHz, currentMode);
+    Band *band = getCurrentBand();
+    if(band && isFreqInBand(band, targetFreq) && updateFrequency(targetFreq, false))
+    {
+      clearStationInfo();
+      identifyFrequency(currentFrequency + currentBFO / 1000);
+    }
+  }
   if(!webSpectrumRequested || currentCmd == CMD_DUAL_RX) return;
   webSpectrumRequested = false;
   uint16_t center = currentFrequency;
