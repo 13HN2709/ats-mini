@@ -49,6 +49,10 @@ static const char pageStart[] PROGMEM = R"HTML(<!DOCTYPE HTML>
     .HEADING { background:#182b4c; border:1px solid #80a0ff; color:#a9c3ff; column-span:all; text-align:center; font-weight:800; letter-spacing:.08em; text-shadow:0 0 10px #80a0ff77; }
     TD.LABEL { text-align:right; }
     INPUT[type=text], INPUT[type=password], INPUT[type=file], INPUT[type=number], SELECT, TEXTAREA { max-width:100%; padding:.65em; border:1px solid #16458f; border-radius:0; background:#010713; color:var(--text); font:inherit; } INPUT[type=text], INPUT[type=password], SELECT, TEXTAREA { width:95%; } INPUT:focus, SELECT:focus, TEXTAREA:focus { outline:1px solid var(--blue); border-color:var(--blue); }
+    .LED-FREQ { display:flex; align-items:flex-end; justify-content:center; gap:clamp(2px,1vw,8px); min-height:92px; }
+    .LED-DIGIT { display:block; width:clamp(22px,8vw,58px); height:auto; flex:0 1 auto; filter:drop-shadow(0 0 5px #075dff66); }
+    .LED-DOT { display:block; width:clamp(7px,2vw,14px); height:auto; flex:0 0 auto; margin:0 clamp(0px,.2vw,2px) 0 0; }
+    .LED-UNIT { margin:0 0 5px 4px; color:#3b8fff; font:700 clamp(.7rem,2vw,1rem) monospace; letter-spacing:.08em; text-shadow:0 0 10px #075dff88; }
     .HERO:before { content:""; position:absolute; left:0; top:0; width:4px; height:100%; background:var(--blue); box-shadow:0 0 18px var(--blue); }
     .TOP { border-bottom:1px solid #10356e; padding-bottom:12px; }
     .NAV { grid-template-columns:repeat(5,minmax(0,1fr)); gap:0; border:1px solid #10356e; }
