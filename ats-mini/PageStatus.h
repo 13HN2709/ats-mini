@@ -41,7 +41,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   <FORM ID="spectrumRange" CLASS="RANGE-FORM">
     <LABEL>START <SPAN ID="spectrumUnitStart">MHz</SPAN><INPUT ID="spectrumStartMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="88.00" REQUIRED></LABEL>
     <LABEL>STOP <SPAN ID="spectrumUnitEnd">MHz</SPAN><INPUT ID="spectrumEndMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="108.00" REQUIRED></LABEL>
-    <LABEL>MODULATION<INPUT ID="spectrumMode" TYPE="hidden" VALUE="FM"><DIV ID="spectrumModes" STYLE="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:6px"><BUTTON TYPE="button" CLASS="MOD-BUTTON ACTIVE" DATA-MODE="FM">FM</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="AM">AM</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="USB">USB</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="LSB">LSB</BUTTON></DIV></LABEL>
+    <LABEL>MODULATION<DIV ID="spectrumModes" STYLE="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:6px"><BUTTON TYPE="button" CLASS="MOD-BUTTON ACTIVE" DATA-MODE="FM">FM</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="AM">AM</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="USB">USB</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="LSB">LSB</BUTTON></DIV></LABEL>
     <LABEL>STEP<SELECT ID="spectrumStep" STYLE="width:100%;margin-top:6px"><OPTION VALUE="100000" SELECTED>100 kHz</OPTION><OPTION VALUE="1000">1 kHz</OPTION><OPTION VALUE="5000">5 kHz</OPTION><OPTION VALUE="10000">10 kHz</OPTION><OPTION VALUE="25000">25 kHz</OPTION></SELECT></LABEL>
     <BUTTON ID="spectrumStart" TYPE="submit">▶ SCAN RANGE</BUTTON>
   </FORM>
@@ -131,7 +131,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const spectrumForm=document.getElementById('spectrumRange');
  const startInput=document.getElementById('spectrumStartMHz');
  const endInput=document.getElementById('spectrumEndMHz');
- const modeInput=document.getElementById('spectrumMode');
+ const modeInput={value:'FM'};
  const modeButtons=Array.from(document.querySelectorAll('[data-mode]'));
  const stepInput=document.getElementById('spectrumStep');
  const unitStart=document.getElementById('spectrumUnitStart');
