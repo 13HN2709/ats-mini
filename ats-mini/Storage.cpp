@@ -228,18 +228,24 @@ void prefsSave(uint32_t items)
 
   if(items & SAVE_BANDS)
   {
-    // Will be saving to bands
+    // Save all band settings and the VFO slots in the same namespace.
     prefs.begin("bands", false, STORAGE_PARTITION);
     prefs.putUChar("Version", VER_BANDS);
-    // Save band settings
     for(int i=0 ; i<getTotalBands() ; i++) prefsSaveBand(i, false);
-    // Done with bands
+    if(vfoInitialized) vfos[vfoIdx] = captureVfo();
+    prefs.putBytes("VFOSlots", vfos, sizeof(vfos));
+    prefs.putUChar("VFOActive", vfoIdx);
     prefs.end();
   }
   else if(items & SAVE_CUR_BAND)
   {
-    // Save current band only
+    // Save current band, plus both VFO states.
     prefsSaveBand(bandIdx);
+    if(vfoInitialized) vfos[vfoIdx] = captureVfo();
+    prefs.begin("bands", false, STORAGE_PARTITION);
+    prefs.putBytes("VFOSlots", vfos, sizeof(vfos));
+    prefs.putUChar("VFOActive", vfoIdx);
+    prefs.end();
   }
 
   if(items & SAVE_MEMORIES)
@@ -313,20 +319,26 @@ bool prefsLoad(uint32_t items)
 
   if(items & SAVE_BANDS)
   {
-    // Will be loading from bands
+    // Load band settings and VFO slots from the bands namespace.
     prefs.begin("bands", true, STORAGE_PARTITION);
-
-    // Check currently saved version
     if((items & SAVE_VERIFY) && (prefs.getUChar("Version", 0) != VER_BANDS))
     {
+      vfos[0] = vfos[1] = {};
+      vfoIdx = 0;
       prefs.end();
       return(false);
     }
 
-    // Read band settings
     for(int i=0 ; i<getTotalBands() ; i++) prefsLoadBand(i, false);
 
-    // Done with bands
+    if(prefs.getBytesLength("VFOSlots") == sizeof(vfos) &&
+       prefs.getBytes("VFOSlots", vfos, sizeof(vfos)) == sizeof(vfos))
+      vfoIdx = prefs.getUChar("VFOActive", 0);
+    else
+    {
+      vfos[0] = vfos[1] = {};
+      vfoIdx = 0;
+    }
     prefs.end();
   }
   else if(items & SAVE_CUR_BAND)
