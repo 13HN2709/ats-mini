@@ -65,16 +65,21 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const left=34,right=10,top=12,bottom=28,plotW=w-left-right,plotH=h-top-bottom;
    ctx.strokeStyle='#1c3441';ctx.lineWidth=1;
    ctx.fillStyle='#78909c';ctx.font='10px system-ui';
+   if(samples.length<2){
+     for(let i=0;i<5;i++){const y=top+plotH*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();}
+     ctx.fillStyle='#8ea2ae';ctx.font='12px system-ui';ctx.fillText('No sweep data yet',left+8,top+22);return;
+   }
+   const minF=samples[0].f,maxF=samples[samples.length-1].f;
+   const values=samples.map(p=>p.r);
+   const rawMin=Math.min(...values),rawMax=Math.max(...values);
+   const padding=Math.max(4,(rawMax-rawMin)*.15);
+   const minR=Math.max(0,rawMin-padding),maxR=rawMax+padding,span=Math.max(10,maxR-minR);
    for(let i=0;i<5;i++){
      const y=top+plotH*i/4;
      ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();
-     ctx.fillText(String(60-i*15),3,y+3);
+     ctx.fillText(String(Math.round(maxR-(maxR-minR)*i/4)),3,y+3);
    }
    ctx.fillText('RSSI',4,9);
-   if(samples.length<2){ctx.fillStyle='#8ea2ae';ctx.font='12px system-ui';ctx.fillText('No sweep data yet',left+8,top+22);return;}
-   const minF=samples[0].f,maxF=samples[samples.length-1].f;
-   const values=samples.map(p=>p.r);
-   const minR=Math.min(0,...values),maxR=Math.max(45,...values),span=Math.max(10,maxR-minR);
    const pts=samples.map((p,i)=>({x:left+i*plotW/(samples.length-1),y:top+plotH-(p.r-minR)/span*plotH}));
    ctx.beginPath();ctx.moveTo(pts[0].x,top+plotH);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,top+plotH);ctx.closePath();
    ctx.fillStyle='rgba(24,190,235,.12)';ctx.fill();
