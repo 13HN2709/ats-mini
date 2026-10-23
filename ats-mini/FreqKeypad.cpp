@@ -194,8 +194,8 @@ void drawFreqKeypad()
   int boxH = 166;
 
   spr.fillRect(boxX, boxY, boxW, boxH, 0x0000);
-  const uint16_t frameBlue = 0x249F;
-  const uint16_t brightBlue = 0x3DFF;
+  const uint16_t frameBlue = 0x001F;  // TEF6686 COLOR_BLUE
+  const uint16_t brightBlue = 0x07FF; // TEF6686 COLOR_CYAN
   spr.drawRoundRect(boxX, boxY, boxW, boxH, 4, frameBlue);
   spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, frameBlue);
 
@@ -267,7 +267,7 @@ void drawFreqKeypad()
     } else {
       spr.fillRoundRect(x, y, btnW, btnH, 3, 0x0841); 
       spr.drawRoundRect(x, y, btnW, btnH, 3, frameBlue); 
-      spr.drawRoundRect(x + 1, y + 1, btnW - 2, btnH - 2, 2, 0x249F); 
+      spr.drawRoundRect(x + 1, y + 1, btnW - 2, btnH - 2, 2, frameBlue); 
       spr.setTextColor(brightBlue);                       
     }
 
