@@ -113,6 +113,7 @@ VfoState captureVfo();
 void dualRxStart();
 void dualRxStop();
 bool dualRxTick(uint32_t now);
+extern uint8_t dualRxDisplaySlot;
 
 // These are menu commands
 static inline bool isMenuMode(uint16_t cmd)
