@@ -57,6 +57,10 @@ static TEFBandplanHint getTEFBandplanHint()
   if (f >= 14070 && f <= 14077)
     return {"FT8 - USB", 14074};
 
+  // FT4 on 20 m (14.080 MHz dial frequency).
+  if (f >= 14078 && f <= 14082)
+    return {"FT4 - USB", 14080};
+
   if (f >= 18096 && f <= 18102)
     return {"FT8 - USB", 18100};
 
