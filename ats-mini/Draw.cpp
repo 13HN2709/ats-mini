@@ -30,8 +30,23 @@ static void drawDualRxScreen()
     spr.setTextColor(0xFFFF);
     spr.drawString(dualRxSetupStage == 1 ? "SET FREQUENCY AND MODE A" : "SET FREQUENCY AND MODE B", 160, 58);
     spr.setTextColor(0xBDF7);
-    spr.drawString("Press encoder to open frequency keypad", 160, 86);
-    spr.drawString("Choose frequency, mode and press OK", 160, 106);
+    if(dualRxSetupStage == 1)
+    {
+      spr.drawString("Press encoder to open frequency keypad", 160, 86);
+      spr.drawString("Choose frequency, mode and press OK", 160, 106);
+    }
+    else
+    {
+      char savedA[40];
+      const VfoState &a = dualRxVfos[0];
+      const bool aIsFm = a.band < getTotalBands() && bands[a.band].bandType == FM_BAND_TYPE;
+      if(aIsFm) snprintf(savedA, sizeof(savedA), "A: %.2f MHz  %s", a.freq / 100.0f, bandModeDesc[a.mode]);
+      else snprintf(savedA, sizeof(savedA), "A: %u kHz  %s", a.freq, bandModeDesc[a.mode]);
+      spr.setTextColor(0x07E0);
+      spr.drawString(savedA, 160, 84);
+      spr.setTextColor(0xBDF7);
+      spr.drawString("Press encoder to enter frequency B", 160, 108);
+    }
     spr.setTextColor(brightBlue);
     spr.drawString(dualRxSetupStage == 1 ? "STEP 1 OF 2" : "STEP 2 OF 2", 160, 139);
     spr.setTextColor(0x7BEF);
