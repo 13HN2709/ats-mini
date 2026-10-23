@@ -39,8 +39,10 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <DIV CLASS="LIVE-MARK"><SPAN></SPAN> RECEIVER</DIV>
   </DIV>
   <FORM ID="spectrumRange" CLASS="RANGE-FORM">
-    <LABEL>START MHz<INPUT ID="spectrumStartMHz" TYPE="number" INPUTMODE="decimal" MIN="76" MAX="108" STEP="0.1" VALUE="88.00" REQUIRED></LABEL>
-    <LABEL>STOP MHz<INPUT ID="spectrumEndMHz" TYPE="number" INPUTMODE="decimal" MIN="76" MAX="108" STEP="0.1" VALUE="108.00" REQUIRED></LABEL>
+    <LABEL>START <SPAN ID="spectrumUnitStart">MHz</SPAN><INPUT ID="spectrumStartMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="88.00" REQUIRED></LABEL>
+    <LABEL>STOP <SPAN ID="spectrumUnitEnd">MHz</SPAN><INPUT ID="spectrumEndMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="108.00" REQUIRED></LABEL>
+    <LABEL>MODULATION<SELECT ID="spectrumMode" STYLE="width:100%;margin-top:6px"><OPTION VALUE="FM" SELECTED>FM</OPTION><OPTION VALUE="AM">AM</OPTION><OPTION VALUE="USB">USB</OPTION><OPTION VALUE="LSB">LSB</OPTION></SELECT></LABEL>
+    <LABEL>STEP<SELECT ID="spectrumStep" STYLE="width:100%;margin-top:6px"><OPTION VALUE="100000" SELECTED>100 kHz</OPTION><OPTION VALUE="1000">1 kHz</OPTION><OPTION VALUE="5000">5 kHz</OPTION><OPTION VALUE="10000">10 kHz</OPTION><OPTION VALUE="25000">25 kHz</OPTION></SELECT></LABEL>
     <BUTTON ID="spectrumStart" TYPE="submit">▶ SCAN RANGE</BUTTON>
   </FORM>
   <DIV CLASS="SPECTRUM-FRAME">
@@ -129,6 +131,10 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const spectrumForm=document.getElementById('spectrumRange');
  const startInput=document.getElementById('spectrumStartMHz');
  const endInput=document.getElementById('spectrumEndMHz');
+ const modeInput=document.getElementById('spectrumMode');
+ const stepInput=document.getElementById('spectrumStep');
+ const unitStart=document.getElementById('spectrumUnitStart');
+ const unitEnd=document.getElementById('spectrumUnitEnd');
  const button=document.getElementById('spectrumStart');
  const status=document.getElementById('spectrumStatus');
  let lastSamples=[];
@@ -184,13 +190,19 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  }
  async function start(event){
    event.preventDefault();
-   const startMHz=Number(startInput.value),endMHz=Number(endInput.value);
-   if(!Number.isFinite(startMHz)||!Number.isFinite(endMHz)||startMHz<76||endMHz>108||endMHz<=startMHz){
-     status.textContent='Enter a valid FM range: 76.0–108.0 MHz, with stop above start.';
+   const selectedMode=modeInput.value;
+   const startValue=Number(startInput.value),endValue=Number(endInput.value);
+   const fm=selectedMode==='FM';
+   const minValue=fm?64:150,maxValue=fm?108:30000;
+   const stepHz=Number(stepInput.value);
+   const startHz=Math.round(startValue*(fm?1000000:1000));
+   const endHz=Math.round(endValue*(fm?1000000:1000));
+   if(!Number.isFinite(startValue)||!Number.isFinite(endValue)||startValue<minValue||endValue>maxValue||endValue<=startValue){
+     status.textContent=fm?'Enter a valid FM range: 64–108 MHz.':'Enter a valid AM/SSB range: 150–30000 kHz.';
      return;
    }
-   if(Math.floor((endMHz-startMHz)*10+0.0001)+1>256){
-     status.textContent='Range is too wide for 256 samples. Reduce the range.';
+   if(Math.floor((endHz-startHz)/stepHz)+1>256){
+     status.textContent='Range is too wide for 256 samples at this step. Choose a larger step or narrower range.';
      return;
    }
    button.disabled=true;
@@ -199,7 +211,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    startInput.disabled=true;endInput.disabled=true;
    status.textContent='Starting receiver sweep…';
    try{
-     const params=new URLSearchParams({start_hz:String(Math.round(startMHz*1000000)),end_hz:String(Math.round(endMHz*1000000))});
+     const params=new URLSearchParams({start_hz:String(startHz),end_hz:String(endHz),mode:selectedMode,step_hz:String(stepHz)});
      const start=await fetch('/spectrum/start',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params,cache:'no-store'});
      if(!start.ok){const e=await start.json().catch(()=>({}));throw new Error(e.message||e.error||'Scan could not be started.');}
      for(let i=0;i<45;i++){
@@ -217,6 +229,18 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    }catch(error){status.textContent=error.message||'Spectrum request failed.';}
    finally{button.disabled=false;tuneButton.disabled=false;stepDown.disabled=false;stepUp.disabled=false;volumeInput.disabled=false;startInput.disabled=false;endInput.disabled=false;}
  }
+ function updateSpectrumMode(){
+   const fm=modeInput.value==='FM';
+   unitStart.textContent=fm?'MHz':'kHz';unitEnd.textContent=fm?'MHz':'kHz';
+   startInput.min=fm?'64':'150';endInput.min=fm?'64':'150';
+   startInput.max=fm?'108':'30000';endInput.max=fm?'108':'30000';
+   startInput.step=fm?'0.1':'1';endInput.step=fm?'0.1':'1';
+   if(fm){startInput.value='88.00';endInput.value='108.00';stepInput.value='100000';}
+   else {startInput.value='3000';endInput.value='3600';stepInput.value='5000';}
+   Array.from(stepInput.options).forEach(option=>{option.disabled=(fm&&option.value!=='100000')||(!fm&&option.value==='100000');});
+ }
+ modeInput.addEventListener('change',updateSpectrumMode);
+ updateSpectrumMode();
  spectrumForm.addEventListener('submit',start);
  canvas.addEventListener('click',async event=>{
    if(!peakPoints.length||!lastSamples.length)return;
@@ -227,8 +251,8 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    peakPoints.forEach(p=>{const d=Math.abs(p.x-x);if(d<distance){distance=d;nearest=p;}});
    if(!nearest||distance>22){status.textContent='Tap one of the red peaks to tune to that station.';return;}
    const sample=lastSamples[nearest.index];
-   const frequencyHz=Math.round(sample.f*10000);
-   status.textContent='Tuning to '+(sample.f/100).toFixed(2)+' MHz…';
+   const frequencyHz=Math.round(sample.f*(fmMode?10000:1000));
+   status.textContent='Tuning to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'…';
    const ok=await postRadioCommand('/radio/tune',{freq:String(frequencyHz)},status);
    if(ok)setTimeout(()=>location.reload(),700);
  });
