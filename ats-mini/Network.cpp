@@ -872,11 +872,12 @@ static const String webRadioPage()
     {"ip", ip}, {"ssid", ssid},
     {"mac", String(getMACAddress())}, {"version", String(getVersion(true))},
     {"time", receiverTime}, {"band", getCurrentBand()->bandName},
-    {"frequency", freq}, {"led_frequency", webLedFrequency(freq)}, {"frequency_hz", String((uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL))}, {"frequency_step_hz", currentMode == FM ? "10000" : "1000"}, {"volume", String(volume)}, {"mode", bandModeDesc[currentMode]},
+    {"frequency", freq}, {"frequency_hz", String((uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL))}, {"frequency_step_hz", currentMode == FM ? "10000" : "1000"}, {"volume", String(volume)}, {"mode", bandModeDesc[currentMode]},
     {"stereo", currentMode == FM && fmStereoIdx != FM_STEREO_MONO && rx.getCurrentPilot()? String("<SPAN CLASS=\"STEREO\">STEREO</SPAN>") : String("")},
     {"rssi", String(rssi)}, {"snr", String(snr)}, {"battery", String(batteryMonitor())}
   }, {
-    {"navigation", [](String &out) { webNavigation(out, "/"); }}
+    {"navigation", [](String &out) { webNavigation(out, "/"); }},
+    {"led_frequency", [freq](String &out) { out += webLedFrequency(freq); }}
   });
 }
 
