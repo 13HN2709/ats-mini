@@ -713,7 +713,7 @@ static const String webRadioPage()
   }
 
   String connection = WiFi.status() == WL_CONNECTED ? "Wi-Fi connected" :
-                      WiFi.getMode() == WIFI_MODE_AP || WiFi.getMode() == WIFI_MODE_APSTA ?
+                      WiFi.getMode() == WIFI_MODE_AP || WiFi.getMode() == WIFI_MODE_AP_STA ?
                       "Local access point" : "Radio online";
 
   return webPage(pageStatus, pageStatusTitle, {
