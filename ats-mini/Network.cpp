@@ -391,10 +391,11 @@ static void webInit()
     char *end = nullptr;
     long freqHz = strtol(value.c_str(), &end, 10);
     if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\"message\":\"Invalid frequency.\"}");
-    Band *band = getCurrentBand();
     uint16_t targetFreq = freqFromHz((uint32_t)freqHz, currentMode);
-    if(!band || !isFreqInBand(band, targetFreq))
-      return request->send(422, "application/json", "{\"message\":\"Frequency is outside the current band.\"}");
+    uint32_t minHz = currentMode == FM ? 64000000UL : 150000UL;
+    uint32_t maxHz = currentMode == FM ? 108000000UL : 30000000UL;
+    if(freqHz < minHz || freqHz > maxHz)
+      return request->send(422, "application/json", "{\"message\":\"Frequency is outside the receiver range for the selected modulation.\"}");
     webTuneFrequencyHz = freqHz;
     return request->send(202, "application/json", "{\"message\":\"Tune command queued.\"}");
   });
@@ -1282,9 +1283,14 @@ void webSpectrumTick()
   {
     webTuneFrequencyHz = 0;
     uint16_t targetFreq = freqFromHz(requestedHz, currentMode);
-    Band *band = getCurrentBand();
-    if(band && isFreqInBand(band, targetFreq) && updateFrequency(targetFreq, false))
+    uint32_t minFreq = currentMode == FM ? 6400UL : 150UL;
+    uint32_t maxFreq = currentMode == FM ? 10800UL : 30000UL;
+    if(targetFreq >= minFreq && targetFreq <= maxFreq)
     {
+      rx.setFrequency(targetFreq);
+      currentFrequency = rx.getFrequency();
+      Band *band = getCurrentBand();
+      if(band) band->currentFreq = currentFrequency;
       clearStationInfo();
       identifyFrequency(currentFrequency + currentBFO / 1000);
     }
