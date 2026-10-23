@@ -84,6 +84,7 @@ static volatile uint16_t webSpectrumStartFreq = 0;
 static volatile uint16_t webSpectrumEndFreq = 0;
 static volatile bool webSpectrumCustomRange = false;
 static volatile int8_t webSpectrumRequestedMode = -1;
+static volatile uint16_t webSpectrumStep = 1;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -455,11 +456,25 @@ static void webInit()
         return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Range is outside the receiver's supported range for this modulation.\"}");
       requestedStart = freqFromHz((uint32_t)startHz, requestedMode);
       requestedEnd = freqFromHz((uint32_t)endHz, requestedMode);
-      uint16_t step = requestedMode == FM ? 10 : 1;
+      uint32_t stepHz = requestedMode == FM ? 100000UL : 1000UL;
+      if(request->hasParam("step_hz", true))
+      {
+        String stepValue = request->getParam("step_hz", true)->value();
+        char *stepEnd = nullptr;
+        long parsedStep = strtol(stepValue.c_str(), &stepEnd, 10);
+        if(!stepEnd || *stepEnd || parsedStep <= 0)
+          return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Invalid scan step.\"}");
+        stepHz = (uint32_t)parsedStep;
+      }
+      if((requestedMode == FM && stepHz != 100000UL) ||
+         (requestedMode != FM && stepHz != 1000UL && stepHz != 5000UL && stepHz != 10000UL && stepHz != 25000UL))
+        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Unsupported scan resolution for this modulation.\"}");
+      uint16_t step = requestedMode == FM ? 10 : (uint16_t)(stepHz / 1000UL);
       uint32_t points = ((uint32_t)requestedEnd - requestedStart) / step + 1;
       if(points < 2 || points > 256)
         return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Range must contain 2–256 samples at the selected resolution.\"}");
       webSpectrumRequestedMode = requestedMode;
+      webSpectrumStep = step;
     }
 
     webSpectrumStartFreq = requestedStart;
@@ -1257,6 +1272,7 @@ void webSpectrumTick()
     webSpectrumRequested = false;
     webSpectrumCustomRange = false;
     webSpectrumRequestedMode = -1;
+    webSpectrumStep = 1;
     webSpectrumBusy = false;
     return;
   }
@@ -1301,8 +1317,10 @@ void webSpectrumTick()
   uint16_t rangeStart = webSpectrumStartFreq;
   uint16_t rangeEnd = webSpectrumEndFreq;
   int8_t requestedMode = webSpectrumRequestedMode;
+  uint16_t customStep = webSpectrumStep;
   webSpectrumCustomRange = false;
   webSpectrumRequestedMode = -1;
+  webSpectrumStep = 1;
   uint16_t center = currentFrequency;
   uint16_t step = currentMode == FM ? 10 : 1;
 
@@ -1332,7 +1350,7 @@ void webSpectrumTick()
 
   if(customRange)
   {
-    step = currentMode == FM ? 10 : 1;
+    step = customStep;
     scanRunRange(rangeStart, rangeEnd, step);
   }
   else scanRun(center, currentMode == FM ? 10 : 5);
