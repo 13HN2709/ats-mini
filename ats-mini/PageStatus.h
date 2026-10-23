@@ -6,21 +6,21 @@
 static const char pageStatusTitle[] PROGMEM = "ATS-Mini Status";
 
 static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
-  <DIV CLASS="BRAND"><DIV CLASS="LOGO">&#9673;</DIV><DIV><H1>ATS MINI <SPAN STYLE="color:#56f29a">CONTROLLER</SPAN></H1><DIV CLASS="SUB">Local radio control center</DIV></DIV></DIV>
+  <DIV CLASS="BRAND"><DIV CLASS="LOGO">&#9673;</DIV><DIV><H1>ATS MINI <SPAN STYLE="color:#80a0ff">CONTROLLER</SPAN></H1><DIV CLASS="SUB">Local radio control center</DIV></DIV></DIV>
   <SPAN CLASS="PILL">&#9679; {{connection}}</SPAN>
 </DIV>
 {{{navigation}}}
 <SECTION CLASS="HERO">
   <DIV CLASS="EYEBROW">Now receiving</DIV>
   <DIV CLASS="FREQ">{{frequency}}</DIV>
-  <DIV CLASS="MODE">{{band}} &nbsp;·&nbsp; {{mode}}</DIV>
+  <DIV CLASS="MODE">{{band}} &nbsp;·&nbsp; {{mode}} {{{stereo}}}</DIV>
 </SECTION>
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
   <DIV STYLE="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-    <DIV><DIV CLASS="LABEL">LIVE RECEIVER SWEEP</DIV><DIV CLASS="VALUE" STYLE="font-size:1.05rem;color:#35d9ff">Spectrum analyzer</DIV></DIV>
+    <DIV><DIV CLASS="LABEL">LIVE RECEIVER SWEEP</DIV><DIV CLASS="VALUE" STYLE="font-size:1.05rem;color:#80a0ff">Spectrum analyzer</DIV></DIV>
     <BUTTON ID="spectrumStart" TYPE="button">RUN SPECTRUM</BUTTON>
   </DIV>
-  <DIV STYLE="margin-top:12px;background:#050b11;border:1px solid #203746;border-radius:12px;padding:8px">
+  <DIV STYLE="margin-top:12px;background:#050b11;border:1px solid #40527b;border-radius:12px;padding:8px">
     <CANVAS ID="spectrumCanvas" HEIGHT="190" STYLE="display:block;width:100%;height:190px"></CANVAS>
   </DIV>
   <DIV ID="spectrumStatus" CLASS="LABEL" STYLE="margin-top:10px">Press RUN SPECTRUM to measure real RSSI values across the current band. Audio is briefly muted during the sweep.</DIV>
@@ -63,8 +63,8 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    ctx.setTransform(dpr,0,0,dpr,0,0);
    ctx.fillStyle='#050b11';ctx.fillRect(0,0,w,h);
    const left=34,right=10,top=12,bottom=28,plotW=w-left-right,plotH=h-top-bottom;
-   ctx.strokeStyle='#1c3441';ctx.lineWidth=1;
-   ctx.fillStyle='#78909c';ctx.font='10px system-ui';
+   ctx.strokeStyle='#293958';ctx.lineWidth=1;
+   ctx.fillStyle='#a5b9e1';ctx.font='10px system-ui';
    if(samples.length<2){
      for(let i=0;i<5;i++){const y=top+plotH*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();}
      ctx.fillStyle='#8ea2ae';ctx.font='12px system-ui';ctx.fillText('No sweep data yet',left+8,top+22);return;
@@ -82,7 +82,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    ctx.fillText('RSSI',4,9);
    const pts=samples.map((p,i)=>({x:left+i*plotW/(samples.length-1),y:top+plotH-(p.r-minR)/span*plotH}));
    ctx.beginPath();ctx.moveTo(pts[0].x,top+plotH);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,top+plotH);ctx.closePath();
-   ctx.fillStyle='rgba(24,190,235,.12)';ctx.fill();
+   ctx.fillStyle='rgba(95,135,255,.16)';ctx.fill();
    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
    ctx.strokeStyle='#35d9ff';ctx.lineWidth=2;ctx.stroke();
    ctx.fillStyle='#8ea2ae';ctx.font='10px system-ui';
