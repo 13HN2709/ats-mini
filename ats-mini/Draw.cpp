@@ -503,8 +503,8 @@ static void drawDualRxScreen()
     else
       spr.drawFloat(v.freq / 1000.0f, 3, 296, y+31, FONT_DIGITS);
     spr.setTextDatum(ML_DATUM);
-    spr.setTextColor((i == vfoIdx) ? 0x07E0 : 0x7BEF);
-    spr.drawString(i == vfoIdx ? "ACTIVE" : "STANDBY", 23, y+34, FONT_SMALL);
+    spr.setTextColor((i == dualRxDisplaySlot) ? 0x07E0 : 0x7BEF);
+    spr.drawString(i == dualRxDisplaySlot ? "ACTIVE" : "STANDBY", 23, y+34, FONT_SMALL);
   }
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(0x7BEF);
