@@ -483,33 +483,56 @@ void drawScanGraphs(uint32_t freq)
 
 static void drawDualRxScreen()
 {
+  // TEF6686-inspired look: square electric-blue frame and Orbitron typography.
+  const uint16_t panelBg = 0x0861;
+  const uint16_t frameBlue = 0x249F;
+  const uint16_t brightBlue = 0x3DFF;
   spr.fillSprite(0x0000);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(0x07E0);
-  spr.drawString("DUAL RX  /  A-B WATCH", 160, 12, FONT_SMALL);
+  spr.setTextColor(brightBlue);
+  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
+  spr.drawString("DUAL RX", 160, 12);
+  spr.drawFastHLine(12, 27, 296, frameBlue);
+
   for(uint8_t i=0; i<2; ++i)
   {
-    int y = i == 0 ? 31 : 98;
+    int y = i == 0 ? 32 : 99;
     const VfoState &v = vfos[i];
-    spr.fillRoundRect(12, y, 296, 55, 7, 0x10A2);
-    spr.drawRoundRect(12, y, 296, 55, 7, 0x35BF);
+    // Square corners, no rounded boxes; brighter TEF-style blue outline.
+    spr.fillRect(10, y, 300, 56, panelBg);
+    spr.drawRect(10, y, 300, 56, frameBlue);
+    spr.drawRect(11, y+1, 298, 54, brightBlue);
+
+    spr.setFont(FONT_SMALL);
     spr.setTextDatum(ML_DATUM);
     spr.setTextColor(0xBDF7);
-    spr.drawString(i == 0 ? "VFO A" : "VFO B", 23, y+9, FONT_SMALL);
+    spr.drawString(i == 0 ? "A" : "B", 19, y+7);
+    spr.setTextColor((i == dualRxDisplaySlot) ? 0x07E0 : 0x7BEF);
+    spr.drawString(i == dualRxDisplaySlot ? "RX" : "WAIT", 19, y+32);
+
+    char freqText[24];
+    const bool isFm = v.band < getTotalBands() && bands[v.band].bandType == FM_BAND_TYPE;
+    if(isFm) snprintf(freqText, sizeof(freqText), "%.2f", v.freq / 100.0f);
+    else if(v.mode == LSB || v.mode == USB) snprintf(freqText, sizeof(freqText), "%.3f", v.freq / 1000.0f);
+    else snprintf(freqText, sizeof(freqText), "%u", v.freq);
+
+    spr.setFont(&lgfx::fonts::Orbitron_Light_24);
     spr.setTextDatum(MR_DATUM);
     spr.setTextColor(0xFFFF);
-    if(v.band < getTotalBands() && bands[v.band].bandType == FM_BAND_TYPE)
-      spr.drawFloat(v.freq / 100.0f, 2, 296, y+31, FONT_DIGITS);
-    else
-      spr.drawFloat(v.freq / 1000.0f, 3, 296, y+31, FONT_DIGITS);
+    spr.drawString(freqText, 258, y+8);
+    spr.setFont(FONT_SMALL);
     spr.setTextDatum(ML_DATUM);
-    spr.setTextColor((i == dualRxDisplaySlot) ? 0x07E0 : 0x7BEF);
-    spr.drawString(i == dualRxDisplaySlot ? "ACTIVE" : "STANDBY", 23, y+34, FONT_SMALL);
+    spr.setTextColor(brightBlue);
+    spr.drawString(isFm || v.mode == LSB || v.mode == USB ? "MHz" : "kHz", 265, y+29);
+    spr.setTextColor(0xBDF7);
+    spr.drawString(v.mode < getTotalModes() ? bandModeDesc[v.mode] : "?", 265, y+42);
   }
+
+  spr.setFont(FONT_SMALL);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(0x7BEF);
-  spr.drawString("Single receiver - alternating scan", 160, 165, FONT_SMALL);
-  spr.drawString("Press encoder to exit", 160, 184, FONT_SMALL);
+  spr.drawString("A/B ALTERNATING SCAN", 160, 165);
+  spr.drawString("PRESS ENCODER TO EXIT", 160, 184);
 }
 
 //
