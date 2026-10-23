@@ -240,6 +240,7 @@ bool drawBattery(int x, int y);
 
 // Scan.c
 void scanRun(uint16_t centerFreq, uint16_t step);
+void scanRunRange(uint16_t startFreq, uint16_t endFreq, uint16_t step);
 bool scanGetPoint(uint16_t index, uint16_t *freq, uint8_t *rssi, uint8_t *snr);
 uint16_t scanGetCount();
 void webSpectrumTick();
