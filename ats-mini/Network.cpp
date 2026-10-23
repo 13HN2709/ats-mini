@@ -377,19 +377,19 @@ static void webInit()
   server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     if(currentCmd == CMD_DUAL_RX)
-      return request->send(409, "application/json", "{\\"ready\\":false,\\"error\\":\\"Stop Dual RX before scanning.\\"}");
+      return request->send(409, "application/json", "{\"ready\":false,\"error\":\"Stop Dual RX before scanning.\"}");
     webSpectrumReady = false;
     webSpectrumRequested = true;
-    request->send(202, "application/json", "{\\"ready\\":false}");
+    request->send(202, "application/json", "{\"ready\":false}");
   });
 
   server.on("/spectrum.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     if(!webSpectrumReady)
-      return request->send(200, "application/json", "{\\"ready\\":false}");
+      return request->send(200, "application/json", "{\"ready\":false}");
     String json;
     json.reserve(2600);
-    json = "{\\"ready\\":true,\\"samples\\":[";
+    json = "{\"ready\":true,\"samples\":[";
     uint16_t count = scanGetCount();
     for(uint16_t i = 0; i < count; i++)
     {
@@ -397,7 +397,7 @@ static void webInit()
       uint8_t signal = 0, noise = 0;
       if(!scanGetPoint(i, &freq, &signal, &noise)) break;
       if(i) json += ',';
-      json += "{\\"f\\":" + String(freq) + ",\\"r\\":" + String(signal) + ",\\"s\\":" + String(noise) + "}";
+      json += "{\"f\":" + String(freq) + ",\"r\":" + String(signal) + ",\"s\":" + String(noise) + "}";
     }
     json += "]}";
     AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
