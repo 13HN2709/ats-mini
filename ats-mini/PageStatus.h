@@ -16,6 +16,15 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   <DIV CLASS="MODE">{{band}} &nbsp;·&nbsp; {{mode}} {{{stereo}}}</DIV>
 </SECTION>
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
+  <DIV CLASS="EYEBROW">Radio controls</DIV>
+  <FORM ID="radioTune" STYLE="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px">
+    <LABEL FOR="radioFrequency" CLASS="LABEL" STYLE="grid-column:1/-1">Frequency (Hz)</LABEL>
+    <INPUT ID="radioFrequency" NAME="freq" TYPE="number" INPUTMODE="decimal" MIN="100000" MAX="300000000" STEP="100" VALUE="{{frequency_hz}}" REQUIRED>
+    <BUTTON TYPE="submit">TUNE</BUTTON>
+  </FORM>
+  <DIV ID="radioControlStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:8px">Enter a frequency supported by the current band.</DIV>
+</SECTION>
+<SECTION CLASS="STAT" STYLE="margin-top:14px">
   <DIV STYLE="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
     <DIV><DIV CLASS="LABEL">LIVE RECEIVER SWEEP</DIV><DIV CLASS="VALUE" STYLE="font-size:1.05rem;color:#80a0ff">Spectrum analyzer</DIV></DIV>
     <BUTTON ID="spectrumStart" TYPE="button">RUN SPECTRUM</BUTTON>
