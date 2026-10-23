@@ -567,12 +567,12 @@ static void drawDualRxScreen()
   }
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(dualRxSetupStage == 4 ? 0x07E0 : brightBlue);
-  spr.drawString(dualRxSetupStage == 4 ? "A/B ALTERNATING SCAN" : "PRESS TO START DUAL RX", 160, 165);
-  // Keep the stop hint centered and use a legible font already used by the UI.
+  spr.drawString(dualRxSetupStage == 4 ? "A/B ALTERNATING SCAN" : "PRESS TO START DUAL RX", 160, 151);
+  // Keep the encoder instruction visible within the 170px display height.
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(0x7BEF);
-  spr.drawString(dualRxSetupStage == 4 ? "Click Encoder to Stop Dual RX" : "Long press: cancel", 160, 180);
+  spr.drawString(dualRxSetupStage == 4 ? "Click Encoder to Stop Dual RX" : "Long press: cancel", 160, 165);
 }
 
 //
