@@ -127,7 +127,7 @@ static bool scanTickTime()
   freq += scanStep;
 
   // Set next frequency to scan or expire scan
-  if((++scanCount >= SCAN_POINTS) || freq > scanEndFreq || !isFreqInBand(getCurrentBand(), freq) || consumeAbortPending())
+  if((++scanCount >= SCAN_POINTS) || freq > scanEndFreq || consumeAbortPending())
     scanStatus = SCAN_DONE;
   else
     rx.setFrequency(freq); // Implies tuning delay
@@ -179,8 +179,8 @@ void scanRun(uint16_t centerFreq, uint16_t step)
 
 void scanRunRange(uint16_t startFreq, uint16_t endFreq, uint16_t step)
 {
-  const Band *band = getCurrentBand();
-  if(!band || !step || startFreq < band->minimumFreq || endFreq > band->maximumFreq || endFreq < startFreq)
-    return;
+  // Custom web scans intentionally span the receiver's full supported range,
+  // not just the currently selected preset band.
+  if(!step || endFreq < startFreq) return;
   scanRunRangeInternal(startFreq, endFreq, step);
 }
