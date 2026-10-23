@@ -712,15 +712,23 @@ void loop()
 
   if(currentCmd == CMD_DUAL_RX)
   {
-    if(pb1st.wasClicked || pb1st.wasShortPressed || pb1st.isLongPressed)
+    if(pb1st.isLongPressed)
     {
       dualRxStop();
       needRedraw = true;
+    }
+    else if(pb1st.wasClicked || pb1st.wasShortPressed)
+    {
+      if(dualRxSetupStage == 1 || dualRxSetupStage == 2)
+      {
+        currentCmd = CMD_FREQ_KEYPAD;
+        freqKeypadReset();
+      }
+      else if(dualRxSetupStage == 3) dualRxBeginScan();
+      else if(dualRxSetupStage == 4) dualRxStop();
+      needRedraw = true;
       elapsedCommand = millis();
-      // Consume this button event so it cannot open the normal menu too.
-      pb1st.wasClicked = false;
-      pb1st.wasShortPressed = false;
-      pb1st.isLongPressed = false;
+      pb1st.wasClicked = pb1st.wasShortPressed = pb1st.isLongPressed = false;
     }
     encCount = encCountAccel = 0;
   }
