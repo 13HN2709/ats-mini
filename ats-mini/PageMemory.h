@@ -6,15 +6,18 @@
 static const char pageMemoryTitle[] PROGMEM = "ATS-Mini Memory";
 
 static const char pageMemory[] PROGMEM = R"HTML(<STYLE>
-  TABLE.MEMORY { border-collapse: collapse; margin-bottom: 1em; }
-  .MEMORY TH, .MEMORY TD { padding:0.5em 0.125em; border-bottom:1px solid #2D4058; }
-  .MEMORY THEAD TH { background-color:#80A0FF; color:#07101F; text-align:left; font-size:0.75em; }
-  .MEMORY TBODY TR:nth-child(even) { background-color:#17243A; color:#EAF0FF; }
-  .MEMORY INPUT, .MEMORY SELECT { box-sizing: border-box; min-width: 0; width: auto; padding: 0.4em 0.1em; font: inherit; }
-  .MEMORY INPUT { width: 100%; }
-  .MEMORY INPUT[data-field=freq] { max-width: 12ch; text-align: right; font-variant-numeric: tabular-nums; }
+  TABLE.MEMORY { display:block; overflow-x:auto; border-collapse:collapse; margin-bottom:1em; }
+  .MEMORY TH, .MEMORY TD { padding:0.55em 0.35em; border-bottom:1px solid #314252; }
+  .MEMORY THEAD TH { background:linear-gradient(135deg,#182b4c,#101b2d); color:#a9c3ff; border-bottom:1px solid #80a0ff; text-align:left; font-size:0.75em; letter-spacing:.04em; white-space:nowrap; }
+  .MEMORY TBODY TR { background:#0b121b; color:#eaf0ff; }
+  .MEMORY TBODY TR:nth-child(even) { background:#121d2a; color:#eaf0ff; }
+  .MEMORY TBODY TR:focus-within { background:#1a2946; }
+  .MEMORY INPUT, .MEMORY SELECT { box-sizing:border-box; min-width:0; width:auto; padding:0.4em 0.25em; border:1px solid #344762; border-radius:4px; background:#0b121b; color:#eaf0ff; font:inherit; }
+  .MEMORY INPUT:focus, .MEMORY SELECT:focus { outline:1px solid #80a0ff; border-color:#80a0ff; }
+  .MEMORY INPUT { width:100%; }
+  .MEMORY INPUT[data-field=freq] { max-width:12ch; text-align:right; font-variant-numeric:tabular-nums; }
   .MEMORY .MOVE { white-space: nowrap; }
-  .MEMORY .MOVE BUTTON { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; width: 26px; min-width: 0; min-height: 32px; padding: 0; font-size: 1em; }
+  .MEMORY .MOVE BUTTON { display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; width:28px; min-width:0; min-height:34px; padding:0; border:1px solid #526db0; border-radius:4px; background:#17243a; color:#80a0ff; font-size:1em; }
   .MEMORY-NAV, #memory-status, .MEMORY-HELP { max-width: 768px; margin: 1em auto; padding: 0 0.5em; box-sizing: border-box; }
   .MEMORY-NAV { display: flex; gap: 1em; align-items: center; }
   .MEMORY-NAV BUTTON { min-width: 72px; min-height: 44px; padding: 0.5em 1em; font: inherit; }
