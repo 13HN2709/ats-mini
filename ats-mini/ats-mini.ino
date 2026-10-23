@@ -254,7 +254,7 @@ void setup()
 
   patchesInit();
 
-  selectBand(bandIdx, false);
+  initVfo();
   delay(50);
   rx.setVolume(volume);
   rx.setMaxSeekTime(SEEK_TIMEOUT);
