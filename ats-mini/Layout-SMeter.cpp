@@ -220,14 +220,6 @@ void drawLayoutSmeter()
       drawRadioText(STATUS_OFFSET_Y, STATUS_OFFSET_Y + 25);
     else
     {
-      // Center the S/SNR fallback line in this layout.
-      char sigBuf[40];
-      snprintf(sigBuf, sizeof(sigBuf), "S:%d | SNR:%d dB", rx.getCurrentRSSI(), rx.getCurrentSNR());
-      spr.setTextDatum(TC_DATUM);
-      spr.setTextColor(0x07E0);
-      spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-      spr.drawString(sigBuf, 160, STATUS_OFFSET_Y);
-
       // Preview all bar colors without replacing scan graphs or radio text.
       int meterSnr = switchThemeEditor() ? 64 : snr;
       int meterRssi = switchThemeEditor() ? 74 : rssi;
