@@ -80,6 +80,9 @@ static volatile bool webSpectrumBusy = false;
 static volatile int32_t webTuneFrequencyHz = 0;
 static volatile int16_t webRequestedVolume = -1;
 static volatile int8_t webTuneStep = 0;
+static volatile uint16_t webSpectrumStartFreq = 0;
+static volatile uint16_t webSpectrumEndFreq = 0;
+static volatile bool webSpectrumCustomRange = false;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -421,6 +424,36 @@ static void webInit()
       return request->send(409, "application/json", "{\"ready\":false,\"error\":\"Stop Dual RX before scanning.\"}");
     if(webSpectrumBusy || webSpectrumRequested)
       return request->send(409, "application/json", "{\"ready\":false,\"error\":\"A spectrum scan is already running.\"}");
+
+    bool hasStart = request->hasParam("start_hz", true);
+    bool hasEnd = request->hasParam("end_hz", true);
+    uint16_t requestedStart = 0, requestedEnd = 0;
+    if(hasStart || hasEnd)
+    {
+      if(!hasStart || !hasEnd)
+        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Provide both start and end frequencies.\"}");
+      if(currentMode != FM)
+        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Custom range scanning currently supports FM only.\"}");
+      String startValue = request->getParam("start_hz", true)->value();
+      String endValue = request->getParam("end_hz", true)->value();
+      char *startEnd = nullptr, *endEnd = nullptr;
+      long startHz = strtol(startValue.c_str(), &startEnd, 10);
+      long endHz = strtol(endValue.c_str(), &endEnd, 10);
+      if(!startEnd || *startEnd || !endEnd || *endEnd || startHz < 100000 || endHz > 300000000 || endHz <= startHz)
+        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Invalid scan range.\"}");
+      Band *band = getCurrentBand();
+      requestedStart = freqFromHz((uint32_t)startHz, currentMode);
+      requestedEnd = freqFromHz((uint32_t)endHz, currentMode);
+      if(!band || !isFreqInBand(band, requestedStart) || !isFreqInBand(band, requestedEnd))
+        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Range must stay inside the current FM band.\"}");
+      uint32_t points = ((uint32_t)requestedEnd - requestedStart) / 10 + 1;
+      if(points < 2 || points > 256)
+        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Choose a range with 2–256 samples.\"}");
+    }
+
+    webSpectrumStartFreq = requestedStart;
+    webSpectrumEndFreq = requestedEnd;
+    webSpectrumCustomRange = hasStart && hasEnd;
     webSpectrumReady = false;
     webSpectrumBusy = true;
     webSpectrumRequested = true;
@@ -432,7 +465,7 @@ static void webInit()
     if(!webSpectrumReady)
       return request->send(200, "application/json", "{\"ready\":false}");
     String json;
-    json.reserve(2600);
+    json.reserve(7200);
     json = "{\"ready\":true,\"fm\":" + String(currentMode == FM ? "true" : "false") + ",\"samples\":[";
     uint16_t count = scanGetCount();
     for(uint16_t i = 0; i < count; i++)
@@ -1170,6 +1203,7 @@ void webSpectrumTick()
     webRequestedVolume = -1;
     webTuneFrequencyHz = 0;
     webSpectrumRequested = false;
+    webSpectrumCustomRange = false;
     webSpectrumBusy = false;
     return;
   }
@@ -1205,10 +1239,15 @@ void webSpectrumTick()
   }
   if(!webSpectrumRequested) return;
   webSpectrumRequested = false;
+  bool customRange = webSpectrumCustomRange;
+  uint16_t rangeStart = webSpectrumStartFreq;
+  uint16_t rangeEnd = webSpectrumEndFreq;
+  webSpectrumCustomRange = false;
   uint16_t center = currentFrequency;
   // FM uses 100 kHz steps; AM/SW uses 5 kHz steps for a useful local span.
   uint16_t step = currentMode == FM ? 10 : 5;
-  scanRun(center, step);
+  if(customRange) scanRunRange(rangeStart, rangeEnd, step);
+  else scanRun(center, step);
   webSpectrumReady = scanGetCount() > 0;
   webSpectrumBusy = false;
 }
