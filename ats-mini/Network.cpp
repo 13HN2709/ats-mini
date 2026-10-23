@@ -1152,11 +1152,23 @@ static void webPatchesPage(AsyncWebServerRequest *request)
   request->send(response);
 }
 
-// Run receiver sweeps only from the main loop, never inside the async web task.
+// Run receiver commands and sweeps only from the main loop, never inside the async web task.
 void webSpectrumTick()
 {
+  // Do not let commands accepted just before Dual RX starts execute later,
+  // after Dual RX has stopped. Dual RX owns the receiver while active.
+  if(currentCmd == CMD_DUAL_RX)
+  {
+    webTuneStep = 0;
+    webRequestedVolume = -1;
+    webTuneFrequencyHz = 0;
+    webSpectrumRequested = false;
+    webSpectrumBusy = false;
+    return;
+  }
+
   int8_t requestedStep = webTuneStep;
-  if(requestedStep && currentCmd != CMD_DUAL_RX)
+  if(requestedStep)
   {
     webTuneStep = 0;
     int step = getCurrentStep()->step;
@@ -1166,14 +1178,14 @@ void webSpectrumTick()
     identifyFrequency(currentFrequency + currentBFO / 1000);
   }
   int16_t requestedVolume = webRequestedVolume;
-  if(requestedVolume >= 0 && currentCmd != CMD_DUAL_RX)
+  if(requestedVolume >= 0)
   {
     webRequestedVolume = -1;
     volume = (uint8_t)requestedVolume;
     rx.setVolume(volume);
   }
   int32_t requestedHz = webTuneFrequencyHz;
-  if(requestedHz > 0 && currentCmd != CMD_DUAL_RX)
+  if(requestedHz > 0)
   {
     webTuneFrequencyHz = 0;
     uint16_t targetFreq = freqFromHz(requestedHz, currentMode);
@@ -1184,7 +1196,7 @@ void webSpectrumTick()
       identifyFrequency(currentFrequency + currentBFO / 1000);
     }
   }
-  if(!webSpectrumRequested || currentCmd == CMD_DUAL_RX) return;
+  if(!webSpectrumRequested) return;
   webSpectrumRequested = false;
   uint16_t center = currentFrequency;
   // FM uses 100 kHz steps; AM/SW uses 5 kHz steps for a useful local span.
