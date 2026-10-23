@@ -14,6 +14,7 @@ void drawLayoutDecoder();
 void drawLayoutDefault();
 void drawLayoutClean();
 void drawLayoutTEF6686();
+static void drawDualRxScreen();
 
 uint32_t lastTuneTime = 0;
 
@@ -479,6 +480,38 @@ void drawScanGraphs(uint32_t freq)
   spr.drawLine(160, 130, 160, 169, TH.scale_pointer);
 }
 
+
+static void drawDualRxScreen()
+{
+  spr.fillSprite(0x0000);
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(0x07E0);
+  spr.drawString("DUAL RX  /  A-B WATCH", 160, 12, FONT_SMALL);
+  for(uint8_t i=0; i<2; ++i)
+  {
+    int y = i == 0 ? 31 : 98;
+    const VfoState &v = vfos[i];
+    spr.fillRoundRect(12, y, 296, 55, 7, 0x10A2);
+    spr.drawRoundRect(12, y, 296, 55, 7, 0x35BF);
+    spr.setTextDatum(ML_DATUM);
+    spr.setTextColor(0xBDF7);
+    spr.drawString(i == 0 ? "VFO A" : "VFO B", 23, y+9, FONT_SMALL);
+    spr.setTextDatum(MR_DATUM);
+    spr.setTextColor(0xFFFF);
+    if(v.band < getTotalBands() && bands[v.band].bandType == FM_BAND_TYPE)
+      spr.drawFloat(v.freq / 100.0f, 2, 296, y+31, FONT_DIGITS);
+    else
+      spr.drawFloat(v.freq / 1000.0f, 3, 296, y+31, FONT_DIGITS);
+    spr.setTextDatum(ML_DATUM);
+    spr.setTextColor((i == vfoIdx) ? 0x07E0 : 0x7BEF);
+    spr.drawString(i == vfoIdx ? "ACTIVE" : "STANDBY", 23, y+34, FONT_SMALL);
+  }
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(0x7BEF);
+  spr.drawString("Single receiver - alternating scan", 160, 165, FONT_SMALL);
+  spr.drawString("Press encoder to exit", 160, 184, FONT_SMALL);
+}
+
 //
 // Draw screen according to given command
 //
@@ -495,6 +528,13 @@ void drawScreen()
   }
 
   spr.fillSprite(TH.bg);
+
+  if(currentCmd == CMD_DUAL_RX)
+  {
+    drawDualRxScreen();
+    spr.pushSprite(0, 0);
+    return;
+  }
 
   if(currentCmd==CMD_ABOUT)
   {
