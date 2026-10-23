@@ -19,6 +19,7 @@ static int8_t keypadIndex = 5; // Startet auf '5'
 static char inputFreqStr[15] = "";
 static uint8_t inputLen = 0;
 static bool inputInMHz = false; // Status für MHz / kHz Umschaltung
+static bool freqRangeError = false;
 
 void freqKeypadReset()
 {
@@ -27,6 +28,7 @@ void freqKeypadReset()
   keypadIndex = 5;
   tempMode = currentMode;
   inputInMHz = false;
+  freqRangeError = false;
 }
 
 // Navigation auf dem Keypad per Encoder (4x4 Grid + Modus = 17 Positionen: 0-15 Grid, 16 Modus)
@@ -84,7 +86,8 @@ bool clickFreqKeypad(bool shortPress)
 
   // Modus-Feld oben angewählt (Index 16)
   if (keypadIndex == 16) {
-    tempMode = (tempMode + 1) % 4; 
+    tempMode = (tempMode + 1) % 4;
+    freqRangeError = false;
     return true;
   }
 
@@ -96,6 +99,7 @@ bool clickFreqKeypad(bool shortPress)
   // UNIT-Schalter (Index 13) umschalten
   if (strcmp(selectedKey, "UNIT") == 0) {
     inputInMHz = !inputInMHz;
+    freqRangeError = false;
     return true;
   }
 
@@ -135,7 +139,8 @@ bool clickFreqKeypad(bool shortPress)
             break;
           }
         }
-        if(!validTarget) return true;
+        if(!validTarget) { freqRangeError = true; return true; }
+        freqRangeError = false;
       }
 
       switchToMatchingBand(targetFreq, tempMode);
@@ -157,11 +162,13 @@ bool clickFreqKeypad(bool shortPress)
     return true;
   }
   else if (strcmp(selectedKey, "BS") == 0) {
+    freqRangeError = false;
     if (inputLen > 0) {
       inputFreqStr[--inputLen] = '\0';
     }
   }
   else {
+    freqRangeError = false;
     if (inputLen < sizeof(inputFreqStr) - 1) {
       inputFreqStr[inputLen++] = selectedKey[0];
       inputFreqStr[inputLen] = '\0';
@@ -191,10 +198,10 @@ void drawFreqKeypad()
   // Frequenz-Anzeigefeld
   int displayH = 26;
   spr.fillRect(boxX + 8, boxY + 15, boxW - 100, displayH, 0x0000);
-  spr.drawRoundRect(boxX + 8, boxY + 15, boxW - 100, displayH, 2, 0xFCA0);
+  spr.drawRoundRect(boxX + 8, boxY + 15, boxW - 100, displayH, 2, freqRangeError ? 0xF800 : 0xFCA0);
   
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(0xFD20);
+  spr.setTextColor(freqRangeError ? 0xF800 : 0xFD20);
   
   char displayBuf[20];
   if (inputLen > 0) {
