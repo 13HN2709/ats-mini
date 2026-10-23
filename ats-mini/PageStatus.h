@@ -162,7 +162,10 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    ctx.textAlign='center';ctx.fillStyle='#80a0ff';ctx.fillText('RSSI',w/2, h-8);
  }
  async function start(){
-   button.disabled=true;status.textContent='Starting receiver sweep…';
+   button.disabled=true;
+   const tuneButton=tuneForm.querySelector('button[type=submit]');
+   tuneButton.disabled=true;stepDown.disabled=true;stepUp.disabled=true;
+   status.textContent='Starting receiver sweep…';
    try{
      const start=await fetch('/spectrum/start',{method:'POST',cache:'no-store'});
      if(!start.ok){const e=await start.json().catch(()=>({}));throw new Error(e.message||e.error||'Scan could not be started.');}
@@ -179,7 +182,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      }
      throw new Error('Sweep timed out. Try again.');
    }catch(error){status.textContent=error.message||'Spectrum request failed.';}
-   finally{button.disabled=false;}
+   finally{button.disabled=false;tuneButton.disabled=false;stepDown.disabled=false;stepUp.disabled=false;}
  }
  button.addEventListener('click',start);
  draw([]);
