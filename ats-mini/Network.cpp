@@ -712,8 +712,13 @@ static const String webRadioPage()
     ssid = String(apSSID);
   }
 
+  String connection = WiFi.status() == WL_CONNECTED ? "Wi-Fi connected" :
+                      WiFi.getMode() == WIFI_MODE_AP || WiFi.getMode() == WIFI_MODE_APSTA ?
+                      "Local access point" : "Radio online";
+
   return webPage(pageStatus, pageStatusTitle, {
     {"title", pageStatusTitle},
+    {"connection", connection},
     {"ip", ip}, {"ssid", ssid},
     {"mac", String(getMACAddress())}, {"version", String(getVersion(true))},
     {"time", receiverTime}, {"band", getCurrentBand()->bandName},
