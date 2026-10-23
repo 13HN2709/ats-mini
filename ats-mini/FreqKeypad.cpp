@@ -27,7 +27,7 @@ void freqKeypadReset()
   inputLen = 0;
   keypadIndex = 5;
   tempMode = currentMode;
-  inputInMHz = false;
+  inputInMHz = (tempMode == FM);
   freqRangeError = false;
 }
 
@@ -87,6 +87,7 @@ bool clickFreqKeypad(bool shortPress)
   // Modus-Feld oben angewählt (Index 16)
   if (keypadIndex == 16) {
     tempMode = (tempMode + 1) % 4;
+    inputInMHz = (tempMode == FM);
     freqRangeError = false;
     return true;
   }
@@ -98,7 +99,8 @@ bool clickFreqKeypad(bool shortPress)
 
   // UNIT-Schalter (Index 13) umschalten
   if (strcmp(selectedKey, "UNIT") == 0) {
-    inputInMHz = !inputInMHz;
+    if(tempMode != FM) inputInMHz = !inputInMHz;
+    else inputInMHz = true; // FM input is always entered in MHz.
     freqRangeError = false;
     return true;
   }
