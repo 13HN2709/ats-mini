@@ -23,6 +23,11 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <BUTTON TYPE="submit">TUNE</BUTTON>
   </FORM>
   <DIV ID="radioControlStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:8px">Enter a frequency supported by the current band.</DIV>
+  <DIV STYLE="margin-top:16px">
+    <LABEL FOR="radioVolume" CLASS="LABEL" STYLE="display:flex;justify-content:space-between;gap:10px"><SPAN>Volume</SPAN><STRONG ID="radioVolumeValue" CLASS="STEREO" STYLE="color:#80a0ff;border-color:#40527b;background:#101a2d">{{volume}}</STRONG></LABEL>
+    <INPUT ID="radioVolume" TYPE="range" MIN="0" MAX="63" STEP="1" VALUE="{{volume}}" STYLE="width:100%;accent-color:#80a0ff;margin-top:10px">
+    <DIV ID="radioVolumeStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:6px">Adjust volume · 0–63</DIV>
+  </DIV>
 </SECTION>
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
   <DIV STYLE="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
