@@ -76,7 +76,7 @@ static void webUploadSplash(AsyncWebServerRequest *request, const String &filena
 static bool webIsAuthenticated(AsyncWebServerRequest *request);
 static volatile bool webSpectrumRequested = false;
 static volatile bool webSpectrumReady = false;
-static volatile bool webSpectrumBusy = false;
+static volatile bool webSpectrumBusy = false;\nstatic volatile int32_t webTuneFrequencyHz = 0;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -375,7 +375,7 @@ static void webInit()
     request->send(200, "text/html", webRadioPage());
   });
 
-  server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
+  server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {\n    if(!webIsAuthenticated(request)) return request->requestAuthentication();\n    if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\\\"message\\\":\\\"Tuning is unavailable during Dual RX.\\\"}");\n    if(!request->hasParam("freq", true)) return request->send(400, "application/json", "{\\\"message\\\":\\\"Missing frequency.\\\"}");\n    String value = request->getParam("freq", true)->value();\n    char *end = nullptr;\n    long freqHz = strtol(value.c_str(), &end, 10);\n    if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\\\"message\\\":\\\"Invalid frequency.\\\"}");\n    webTuneFrequencyHz = freqHz;\n    return request->send(202, "application/json", "{\\\"message\\\":\\\"Tune command queued.\\\"}");\n  });\n  server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     if(currentCmd == CMD_DUAL_RX)
       return request->send(409, "application/json", "{\"ready\":false,\"error\":\"Stop Dual RX before scanning.\"}");
@@ -759,7 +759,7 @@ static const String webRadioPage()
     {"ip", ip}, {"ssid", ssid},
     {"mac", String(getMACAddress())}, {"version", String(getVersion(true))},
     {"time", receiverTime}, {"band", getCurrentBand()->bandName},
-    {"frequency", freq}, {"mode", bandModeDesc[currentMode]},\n    {"stereo", currentMode == FM && fmStereoIdx != FM_STEREO_MONO && rx.getCurrentPilot()? String("<SPAN CLASS=\\\"STEREO\\\">STEREO</SPAN>") : String("")},
+    {"frequency", freq}, {"frequency_hz", String((uint32_t)currentFrequency * 1000)}, {"mode", bandModeDesc[currentMode]},\n    {"stereo", currentMode == FM && fmStereoIdx != FM_STEREO_MONO && rx.getCurrentPilot()? String("<SPAN CLASS=\\\"STEREO\\\">STEREO</SPAN>") : String("")},
     {"rssi", String(rssi)}, {"snr", String(snr)}, {"battery", String(batteryMonitor())}
   }, {
     {"navigation", [](String &out) { webNavigation(out, "/"); }}
