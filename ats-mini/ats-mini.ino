@@ -790,7 +790,12 @@ void loop()
     }
     else if(currentCmd == CMD_FREQ_KEYPAD && pb1st.isLongPressed)
     {
-      currentCmd = CMD_NONE;
+      // Cancelling keypad input during DUAL RX setup must also restore the
+      // radio state that was active before entering the setup wizard.
+      if(dualRxSetupStage == 1 || dualRxSetupStage == 2)
+        dualRxStop();
+      else
+        currentCmd = CMD_NONE;
       needRedraw = true;
     }
     else if(pb1st.isLongPressed)
