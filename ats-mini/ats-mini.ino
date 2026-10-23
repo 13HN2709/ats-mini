@@ -717,6 +717,10 @@ void loop()
       dualRxStop();
       needRedraw = true;
       elapsedCommand = millis();
+      // Consume this button event so it cannot open the normal menu too.
+      pb1st.wasClicked = false;
+      pb1st.wasShortPressed = false;
+      pb1st.isLongPressed = false;
     }
     encCount = encCountAccel = 0;
   }
