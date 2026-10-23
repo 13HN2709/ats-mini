@@ -563,12 +563,6 @@ static void drawDualRxScreen()
       spr.fillRect(31 + bar * 5, y+40, 3, 9, barColor);
     }
   }
-  if (dualRxSetupStage != 4)
-  {
-    spr.setTextDatum(MC_DATUM);
-    spr.setTextColor(brightBlue);
-    spr.drawString("PRESS TO START DUAL RX", 160, 151);
-  }
   // Keep the encoder instruction visible within the 170px display height.
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
