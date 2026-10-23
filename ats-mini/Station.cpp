@@ -226,8 +226,6 @@ bool checkRds()
   bool needRedraw = false;
   uint8_t mode = getRDSMode();
 
-  if(mode==RDS_OFF) return(false);
-
   // Drain at most one FIFO capacity per loop iteration so the UI can run.
   for(uint8_t i=0 ; i<RDS_MAX_GROUPS_PER_CHECK ; i++)
   {
