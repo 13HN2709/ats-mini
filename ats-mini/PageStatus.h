@@ -164,7 +164,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  async function start(){
    button.disabled=true;
    const tuneButton=tuneForm.querySelector('button[type=submit]');
-   tuneButton.disabled=true;stepDown.disabled=true;stepUp.disabled=true;
+   tuneButton.disabled=true;stepDown.disabled=true;stepUp.disabled=true;volumeInput.disabled=true;
    status.textContent='Starting receiver sweep…';
    try{
      const start=await fetch('/spectrum/start',{method:'POST',cache:'no-store'});
@@ -182,7 +182,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      }
      throw new Error('Sweep timed out. Try again.');
    }catch(error){status.textContent=error.message||'Spectrum request failed.';}
-   finally{button.disabled=false;tuneButton.disabled=false;stepDown.disabled=false;stepUp.disabled=false;}
+   finally{button.disabled=false;tuneButton.disabled=false;stepDown.disabled=false;stepUp.disabled=false;volumeInput.disabled=false;}
  }
  button.addEventListener('click',start);
  draw([]);
