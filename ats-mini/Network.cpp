@@ -386,6 +386,10 @@ static void webInit()
     char *end = nullptr;
     long freqHz = strtol(value.c_str(), &end, 10);
     if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\"message\":\"Invalid frequency.\"}");
+    Band *band = getCurrentBand();
+    uint16_t targetFreq = freqFromHz((uint32_t)freqHz, currentMode);
+    if(!band || !isFreqInBand(band, targetFreq))
+      return request->send(422, "application/json", "{\"message\":\"Frequency is outside the current band.\"}");
     webTuneFrequencyHz = freqHz;
     return request->send(202, "application/json", "{\"message\":\"Tune command queued.\"}");
   });
