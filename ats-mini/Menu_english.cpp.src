@@ -719,6 +719,8 @@ void initVfo()
  
 // DUAL RX: alternating A/B monitoring using the single SI4735 receiver.
 static VfoState dualRxSavedState = {};
+VfoState dualRxVfos[2] = {};
+uint8_t dualRxSetupStage = 0;
 static int16_t dualRxSavedBfo = 0;
 static uint8_t dualRxSlot = 0;
 uint8_t dualRxDisplaySlot = 0;
@@ -730,51 +732,76 @@ void dualRxStart()
   if(!vfoInitialized) initVfo();
   dualRxSavedState = captureVfo();
   dualRxSavedBfo = currentBFO;
-  vfos[vfoIdx] = dualRxSavedState;
-  if(!validVfo(vfos[0]) || !validVfo(vfos[1]))
+  dualRxVfos[0] = dualRxVfos[1] = dualRxSavedState;
+  dualRxSetupStage = 1;
+  dualRxActive = false;
+  dualRxDisplaySlot = 0;
+  currentCmd = CMD_DUAL_RX;
+}
+
+void dualRxKeypadComplete(const VfoState &configured)
+{
+  if(dualRxSetupStage == 1)
   {
-    currentCmd = CMD_NONE;
-    return;
+    dualRxVfos[0] = configured;
+    dualRxSetupStage = 2;
   }
-  dualRxSlot = vfoIdx;
-  dualRxDisplaySlot = dualRxSlot;
-  dualRxActive = true;
-  dualRxNextSwitch = millis() + 250;
+  else if(dualRxSetupStage == 2)
+  {
+    dualRxVfos[1] = configured;
+    Band &savedBand = bands[dualRxSavedState.band];
+    savedBand.currentFreq = dualRxSavedState.freq;
+    savedBand.bandMode = dualRxSavedState.mode;
+    savedBand.currentStepIdx = dualRxSavedState.stepIdx;
+    savedBand.bandwidthIdx = dualRxSavedState.bandwidthIdx;
+    selectBand(dualRxSavedState.band, false);
+    if(currentBFO != dualRxSavedBfo) updateBFO(dualRxSavedBfo, true);
+    dualRxSetupStage = 3;
+  }
   currentCmd = CMD_DUAL_RX;
 }
 
 void dualRxStop()
 {
-  if(!dualRxActive) { currentCmd = CMD_NONE; return; }
   dualRxActive = false;
+  dualRxSetupStage = 0;
   Band &savedBand = bands[dualRxSavedState.band];
   savedBand.currentFreq = dualRxSavedState.freq;
   savedBand.bandMode = dualRxSavedState.mode;
   savedBand.currentStepIdx = dualRxSavedState.stepIdx;
   savedBand.bandwidthIdx = dualRxSavedState.bandwidthIdx;
-  selectBand(dualRxSavedState.band);
+  selectBand(dualRxSavedState.band, false);
   if(currentBFO != dualRxSavedBfo) updateBFO(dualRxSavedBfo, true);
   currentCmd = CMD_NONE;
   prefsRequestSave(SAVE_CUR_BAND);
 }
 
+void dualRxBeginScan()
+{
+  dualRxSetupStage = 4;
+  dualRxActive = true;
+  dualRxSlot = 0;
+  dualRxDisplaySlot = 0;
+  const VfoState &vfo = dualRxVfos[0];
+  Band &targetBand = bands[vfo.band];
+  targetBand.currentFreq = vfo.freq;
+  targetBand.bandMode = vfo.mode;
+  targetBand.currentStepIdx = vfo.stepIdx;
+  targetBand.bandwidthIdx = vfo.bandwidthIdx;
+  selectBand(vfo.band, false);
+  currentFrequency = vfo.freq;
+  dualRxNextSwitch = millis() + 250;
+}
+
 bool dualRxTick(uint32_t now)
 {
-  if(!dualRxActive || currentCmd != CMD_DUAL_RX) return false;
+  if(!dualRxActive || dualRxSetupStage != 4 || currentCmd != CMD_DUAL_RX) return false;
   if((int32_t)(now - dualRxNextSwitch) < 0) return false;
-  vfos[dualRxSlot] = captureVfo();
-  // Briefly hold a strong station before resuming the A/B scan.
-  if(rssi >= 25)
-  {
-    dualRxNextSwitch = now + 1200;
-    return false;
-  }
+  if(rssi >= 25) { dualRxNextSwitch = now + 1200; return false; }
   dualRxNextSwitch = now + 250;
-  uint8_t nextSlot = dualRxSlot ^ 1;
-  if(!validVfo(vfos[nextSlot])) return false;
-  dualRxSlot = nextSlot;
+  dualRxSlot ^= 1;
   dualRxDisplaySlot = dualRxSlot;
-  const VfoState &vfo = vfos[dualRxSlot];
+  const VfoState &vfo = dualRxVfos[dualRxSlot];
   Band &targetBand = bands[vfo.band];
   targetBand.currentFreq = vfo.freq;
   targetBand.bandMode = vfo.mode;
