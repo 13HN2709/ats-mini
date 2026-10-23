@@ -378,14 +378,14 @@ static void webInit()
 
   server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
-    if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\\"message\\":\\"Tuning is unavailable during Dual RX.\\"}");
-    if(!request->hasParam("freq", true)) return request->send(400, "application/json", "{\\"message\\":\\"Missing frequency.\\"}");
+    if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\"message\":\"Tuning is unavailable during Dual RX.\\"}");
+    if(!request->hasParam("freq", true)) return request->send(400, "application/json", "{\"message\":\"Missing frequency.\\"}");
     String value = request->getParam("freq", true)->value();
     char *end = nullptr;
     long freqHz = strtol(value.c_str(), &end, 10);
-    if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\\"message\\":\\"Invalid frequency.\\"}");
+    if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\"message\":\"Invalid frequency.\\"}");
     webTuneFrequencyHz = freqHz;
-    return request->send(202, "application/json", "{\\"message\\":\\"Tune command queued.\\"}");
+    return request->send(202, "application/json", "{\"message\":\"Tune command queued.\\"}");
   });
   server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
