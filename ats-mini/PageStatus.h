@@ -165,7 +165,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    button.disabled=true;status.textContent='Starting receiver sweep…';
    try{
      const start=await fetch('/spectrum/start',{method:'POST',cache:'no-store'});
-     if(!start.ok){const e=await start.json().catch(()=>({}));throw new Error(e.error||'Scan could not be started.');}
+     if(!start.ok){const e=await start.json().catch(()=>({}));throw new Error(e.message||e.error||'Scan could not be started.');}
      for(let i=0;i<45;i++){
        await new Promise(resolve=>setTimeout(resolve,1000));
        const response=await fetch('/spectrum.json',{cache:'no-store'});
