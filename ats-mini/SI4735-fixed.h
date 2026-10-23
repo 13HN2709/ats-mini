@@ -204,8 +204,17 @@ class SI4735_fixed: public SI4735
 
     inline char *getRdsStationName(void) { return getRdsText0A(); }
 
-    inline char *getRdsText2A(void) { return decodeRadioText(0); }
-    inline char *getRdsText2B(void) { return decodeRadioText(1); }
+    // Keep the library's original RadioText assembly while retaining the
+    // ordered station-name fix above. The experimental complete-message
+    // decoder can withhold RT indefinitely on stations with irregular groups.
+    inline char *getRdsText2A(void)
+    {
+      return getRdsVersionCode()? NULL : SI4735::getRdsText2A();
+    }
+    inline char *getRdsText2B(void)
+    {
+      return getRdsVersionCode()? SI4735::getRdsText2B() : NULL;
+    }
 
     // Only one kind of text is available
     inline char *getRdsProgramInformation(void)
