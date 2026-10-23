@@ -712,15 +712,19 @@ void loop()
 
   if(currentCmd == CMD_DUAL_RX)
   {
-    if(pb1st.isLongPressed)
+    // Handle a long press only once per physical press. ButtonTracker reports
+    // isLongPressed continuously while the encoder remains held.
+    static bool dualRxLongPressHandled = false;
+    if(!pb1st.isPressed) dualRxLongPressHandled = false;
+
+    if(pb1st.isLongPressed && !dualRxLongPressHandled)
     {
+      dualRxLongPressHandled = true;
       // Long press only dims/wakes the display; Dual RX keeps scanning in the background.
       sleepOn(!sleepOn());
       elapsedSleep = elapsedCommand = currentTime = millis();
       pb1st.wasClicked = false;
       pb1st.wasShortPressed = false;
-      pb1st.isLongPressed = false;
-      pb1st.isPressed = false;
       needRedraw = true;
     }
     else if(pb1st.wasClicked || pb1st.wasShortPressed)
