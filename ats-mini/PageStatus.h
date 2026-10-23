@@ -137,6 +137,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  function draw(samples,fm=fmMode){
    fmMode=fm;
    lastSamples=samples||[];
+   peakPoints=[];
    const dpr=window.devicePixelRatio||1;
    const w=Math.max(260,canvas.clientWidth), h=190;
    canvas.width=Math.round(w*dpr); canvas.height=Math.round(h*dpr);
@@ -169,7 +170,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const threshold=rawMin+(rawMax-rawMin)*0.22;
    samples.forEach((sample,i)=>{
      if(i===0||i===samples.length-1)return;
-     if(sample.r>=samples[i-1].r&&sample.r>=samples[i+1].r&&sample.r>=threshold){
+     if(sample.r>=samples[i-1].r&&sample.r>samples[i+1].r&&sample.r>=threshold){
        const p=pts[i];peakPoints.push(p);
        ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fillStyle='#ff4c50';ctx.shadowColor='#ff334b';ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;
        ctx.strokeStyle='#ffd4dc';ctx.lineWidth=1;ctx.stroke();
