@@ -49,6 +49,7 @@
 #define CMD_ABOUT      0x3500 //-+
 #define CMD_FREQ_KEYPAD 0x3600 // |
 #define CMD_BFO         0x3700 // |
+#define CMD_DUAL_RX     0x3800 // DUAL RX screen
 
 
 
@@ -109,6 +110,9 @@ extern bool vfoInitialized;
 
 void initVfo();
 VfoState captureVfo();
+void dualRxStart();
+void dualRxStop();
+bool dualRxTick(uint32_t now);
 
 // These are menu commands
 static inline bool isMenuMode(uint16_t cmd)
