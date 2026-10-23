@@ -1,6 +1,6 @@
 # ATS Mini
 
-![](docs/source/_static/esp32-si4732-ui-theme.jpg)
+<img src="docs/source/_static/20261023_043409.jpg" alt="ATS Mini V4" width="320">
 
 This firmware is for use on the SI4732 (ESP32-S3) Mini/Pocket Receiver
 
