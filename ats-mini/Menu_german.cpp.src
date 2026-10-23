@@ -60,21 +60,22 @@ Band *getCurrentBand() { return(&bands[bandIdx]); }
 
 #define MENU_MODE         0
 #define MENU_BAND         1
-#define MENU_KEYPAD       2
-#define MENU_FREQ_INPUT   3
-#define MENU_BFO          4
-#define MENU_VOLUME       5
-#define MENU_VFO          6
-#define MENU_STEP         7
-#define MENU_SEEK         8
-#define MENU_SCAN         9
-#define MENU_MEMORY      10
-#define MENU_SQUELCH     11
-#define MENU_BW          12
-#define MENU_AGC_ATT     13
-#define MENU_AVC         14
-#define MENU_SOFTMUTE    15
-#define MENU_SETTINGS    16
+#define MENU_VOLUME       2
+#define MENU_KEYPAD       3
+#define MENU_DUAL_RX      4
+#define MENU_VFO          5
+#define MENU_FREQ_INPUT   6
+#define MENU_BFO          7
+#define MENU_STEP         8
+#define MENU_SEEK         9
+#define MENU_SCAN        10
+#define MENU_MEMORY      11
+#define MENU_SQUELCH     12
+#define MENU_BW          13
+#define MENU_AGC_ATT     14
+#define MENU_AVC         15
+#define MENU_SOFTMUTE    16
+#define MENU_SETTINGS    17
 
 int8_t menuIdx = MENU_KEYPAD;
 
@@ -82,11 +83,12 @@ static const char *menu[] =
 {
   "AM-SSB",
   "BAENDER",
+  "LAUTST.",
   "KEYPAD",
+  "DUAL RX",
+  "VFO A/B",
   "FREQUENZ",
   "BFO",
-  "LAUTST.",
-  "VFO A/B",
   "STEPS",
   "SUCHE",
   "SCANNEN",
@@ -97,7 +99,6 @@ static const char *menu[] =
   "AVC",
   "SOFT-MUTE",
   "EINSTELL.",
-  "DUAL RX",
 };
 
 #define MENU_BRIGHTNESS   0
@@ -892,7 +893,7 @@ static void clickMenu(int cmd, bool shortPress)
       currentCmd = CMD_SCAN;
       clickScan(true);
       break;
-    case 17: dualRxStart(); break;
+    case MENU_DUAL_RX: dualRxStart(); break;
   }
 }
 
