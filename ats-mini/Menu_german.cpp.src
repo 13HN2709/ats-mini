@@ -757,6 +757,7 @@ void initVfo()
 static VfoState dualRxSavedState = {};
 static int16_t dualRxSavedBfo = 0;
 static uint8_t dualRxSlot = 0;
+uint8_t dualRxDisplaySlot = 0;
 static uint32_t dualRxNextSwitch = 0;
 static bool dualRxActive = false;
 
@@ -772,6 +773,7 @@ void dualRxStart()
     return;
   }
   dualRxSlot = vfoIdx;
+  dualRxDisplaySlot = dualRxSlot;
   dualRxActive = true;
   dualRxNextSwitch = millis() + 250;
   currentCmd = CMD_DUAL_RX;
@@ -796,11 +798,18 @@ bool dualRxTick(uint32_t now)
 {
   if(!dualRxActive || currentCmd != CMD_DUAL_RX) return false;
   if((int32_t)(now - dualRxNextSwitch) < 0) return false;
-  dualRxNextSwitch = now + 250;
   vfos[dualRxSlot] = captureVfo();
+  // Briefly hold a strong station before resuming the A/B scan.
+  if(rssi >= 25)
+  {
+    dualRxNextSwitch = now + 1200;
+    return false;
+  }
+  dualRxNextSwitch = now + 250;
   uint8_t nextSlot = dualRxSlot ^ 1;
   if(!validVfo(vfos[nextSlot])) return false;
   dualRxSlot = nextSlot;
+  dualRxDisplaySlot = dualRxSlot;
   const VfoState &vfo = vfos[dualRxSlot];
   Band &targetBand = bands[vfo.band];
   targetBand.currentFreq = vfo.freq;
