@@ -817,7 +817,7 @@ static String webLedFrequency(const String &text)
     else if(ch == '.')
       out += F("<svg class=\"LED-DOT\" viewBox=\"0 0 8 37\" aria-hidden=\"true\"><rect x=\"1\" y=\"31\" width=\"6\" height=\"6\" fill=\"#167bff\"/></svg>");
   }
-  out += F("<span class=\"LED-UNIT\">MHz</span>");
+  out += currentMode == FM ? F("<span class=\"LED-UNIT\">MHz</span>") : F("<span class=\"LED-UNIT\">kHz</span>");
   return out;
 }
 
