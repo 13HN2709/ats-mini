@@ -114,6 +114,10 @@ void dualRxStart();
 void dualRxStop();
 bool dualRxTick(uint32_t now);
 extern uint8_t dualRxDisplaySlot;
+extern VfoState dualRxVfos[2];
+extern uint8_t dualRxSetupStage;
+void dualRxKeypadComplete(const VfoState &configured);
+void dualRxBeginScan();
 
 // These are menu commands
 static inline bool isMenuMode(uint16_t cmd)
