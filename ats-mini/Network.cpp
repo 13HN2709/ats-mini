@@ -74,6 +74,8 @@ static void webSetMemories(AsyncWebServerRequest *request);
 static void webUploadSplash(AsyncWebServerRequest *request, const String &filename,
                             size_t index, uint8_t *data, size_t len, bool final);
 static bool webIsAuthenticated(AsyncWebServerRequest *request);
+static volatile bool webSpectrumRequested = false;
+static volatile bool webSpectrumReady = false;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -370,6 +372,37 @@ static void webInit()
 {
   server.on("/", HTTP_ANY, [] (AsyncWebServerRequest *request) {
     request->send(200, "text/html", webRadioPage());
+  });
+
+  server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(currentCmd == CMD_DUAL_RX)
+      return request->send(409, "application/json", "{\\"ready\\":false,\\"error\\":\\"Stop Dual RX before scanning.\\"}");
+    webSpectrumReady = false;
+    webSpectrumRequested = true;
+    request->send(202, "application/json", "{\\"ready\\":false}");
+  });
+
+  server.on("/spectrum.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(!webSpectrumReady)
+      return request->send(200, "application/json", "{\\"ready\\":false}");
+    String json;
+    json.reserve(2600);
+    json = "{\\"ready\\":true,\\"samples\\":[";
+    uint16_t count = scanGetCount();
+    for(uint16_t i = 0; i < count; i++)
+    {
+      uint16_t freq = 0;
+      uint8_t signal = 0, noise = 0;
+      if(!scanGetPoint(i, &freq, &signal, &noise)) break;
+      if(i) json += ',';
+      json += "{\\"f\\":" + String(freq) + ",\\"r\\":" + String(signal) + ",\\"s\\":" + String(noise) + "}";
+    }
+    json += "]}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
   });
 
   server.on("/memory", HTTP_GET, [] (AsyncWebServerRequest *request) {
@@ -713,7 +746,7 @@ static const String webRadioPage()
   }
 
   String connection = WiFi.status() == WL_CONNECTED ? "Wi-Fi connected" :
-                      WiFi.getMode() == WIFI_MODE_AP || WiFi.getMode() == WIFI_MODE_AP_STA ?
+                      WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA ?
                       "Local access point" : "Radio online";
 
   return webPage(pageStatus, pageStatusTitle, {
@@ -1079,4 +1112,16 @@ static void webPatchesPage(AsyncWebServerRequest *request)
   response->addHeader("Cache-Control", "no-store");
   if(busy) response->addHeader("Refresh", "2; url=/patches");
   request->send(response);
+}
+
+// Run receiver sweeps only from the main loop, never inside the async web task.
+void webSpectrumTick()
+{
+  if(!webSpectrumRequested || currentCmd == CMD_DUAL_RX) return;
+  webSpectrumRequested = false;
+  uint16_t center = currentFrequency;
+  // FM uses 100 kHz steps; AM/SW uses 5 kHz steps for a useful local span.
+  uint16_t step = currentMode == FM ? 10 : 5;
+  scanRun(center, step);
+  webSpectrumReady = scanGetCount() > 0;
 }
