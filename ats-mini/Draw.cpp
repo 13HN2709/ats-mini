@@ -20,7 +20,8 @@ static void drawDualRxScreen()
   spr.fillSprite(0x0000);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(brightBlue);
-  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
+  // TEF6686 layout uses FreeSans Bold for status text and the MHz/kHz label.
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.drawString("DUAL RX", 160, 12);
   spr.drawFastHLine(12, 27, 296, frameBlue);
   if(dualRxSetupStage < 3)
@@ -58,10 +59,11 @@ static void drawDualRxScreen()
     spr.setTextDatum(MR_DATUM);
     spr.setTextColor(0xFFFF);
     spr.drawString(freqText, 258, y+8);
-    spr.setFont(FONT_SMALL);
+    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
     spr.setTextDatum(ML_DATUM);
-    spr.setTextColor(brightBlue);
+    spr.setTextColor(0x07E0);
     spr.drawString(isFm ? "MHz" : "kHz", 265, y+29);
+    spr.setFont(FONT_SMALL);
     spr.setTextColor(0xBDF7);
     spr.drawString(v.mode < getTotalModes() ? bandModeDesc[v.mode] : "?", 265, y+42);
   }
