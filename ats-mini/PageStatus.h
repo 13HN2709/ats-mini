@@ -66,6 +66,58 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
 <P CLASS="SUB" STYLE="text-align:center;margin:16px 0 0">Offline-ready interface · Served directly by your ATS Mini</P>
 <SCRIPT>
 (()=>{
+ const tuneForm=document.getElementById('radioTune');
+ const tuneInput=document.getElementById('radioFrequency');
+ const controlStatus=document.getElementById('radioControlStatus');
+ const stepDown=document.getElementById('radioStepDown');
+ const stepUp=document.getElementById('radioStepUp');
+ const volumeInput=document.getElementById('radioVolume');
+ const volumeValue=document.getElementById('radioVolumeValue');
+ const volumeStatus=document.getElementById('radioVolumeStatus');
+ async function postRadioCommand(path,params,statusElement){
+   try{
+     const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params),cache:'no-store'});
+     const data=await response.json().catch(()=>({}));
+     if(!response.ok) throw new Error(data.message||data.error||'Radio command failed.');
+     statusElement.textContent=data.message||'Command accepted.';
+     return true;
+   }catch(error){
+     statusElement.textContent=error.message||'Radio command failed.';
+     return false;
+   }
+ }
+ tuneForm.addEventListener('submit',async event=>{
+   event.preventDefault();
+   const frequency=Number(tuneInput.value);
+   if(!Number.isFinite(frequency)||frequency<100000||frequency>300000000){
+     controlStatus.textContent='Enter a valid frequency in Hz.';
+     return;
+   }
+   const button=tuneForm.querySelector('button[type=submit]');
+   button.disabled=true;
+   const ok=await postRadioCommand('/radio/tune',{freq:String(Math.round(frequency))},controlStatus);
+   button.disabled=false;
+   if(ok) setTimeout(()=>location.reload(),900);
+ });
+ async function stepRadio(direction,button){
+   button.disabled=true;
+   const ok=await postRadioCommand('/radio/step',{direction},controlStatus);
+   if(ok) setTimeout(()=>location.reload(),700);
+   else button.disabled=false;
+ }
+ stepDown.addEventListener('click',()=>stepRadio('down',stepDown));
+ stepUp.addEventListener('click',()=>stepRadio('up',stepUp));
+ let volumeTimer=0;
+ volumeInput.addEventListener('input',()=>{
+   volumeValue.textContent=volumeInput.value;
+   volumeStatus.textContent='Setting volume to '+volumeInput.value+'…';
+   clearTimeout(volumeTimer);
+   volumeTimer=setTimeout(async()=>{
+     volumeInput.disabled=true;
+     await postRadioCommand('/radio/volume',{volume:volumeInput.value},volumeStatus);
+     volumeInput.disabled=false;
+   },180);
+ });
  const canvas=document.getElementById('spectrumCanvas');
  const ctx=canvas.getContext('2d');
  const button=document.getElementById('spectrumStart');
