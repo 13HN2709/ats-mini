@@ -566,7 +566,7 @@ static void drawDualRxScreen()
   // Keep the encoder instruction visible within the 170px display height.
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(0x7BEF);
+  spr.setTextColor(0x07E0);
   spr.drawString(dualRxSetupStage == 4 ? "Click Encoder to Stop Dual RX" : "Click Encoder to Start", 160, 165);
 }
 
