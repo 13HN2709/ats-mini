@@ -53,7 +53,9 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const button=document.getElementById('spectrumStart');
  const status=document.getElementById('spectrumStatus');
  let lastSamples=[];
- function draw(samples){
+ let fmMode=false;
+ function draw(samples,fm=fmMode){
+   fmMode=fm;
    lastSamples=samples||[];
    const dpr=window.devicePixelRatio||1;
    const w=Math.max(260,canvas.clientWidth), h=190;
@@ -79,7 +81,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
    ctx.strokeStyle='#35d9ff';ctx.lineWidth=2;ctx.stroke();
    ctx.fillStyle='#8ea2ae';ctx.font='10px system-ui';
-   const fmt=f=>f>=1000?(f/1000).toFixed(3)+' MHz':f+' kHz';
+   const fmt=f=>fmMode?(f/100).toFixed(2)+' MHz':f+' kHz';
    ctx.textAlign='left';ctx.fillText(fmt(minF),left,h-8);
    ctx.textAlign='right';ctx.fillText(fmt(maxF),w-right,h-8);
    ctx.textAlign='center';ctx.fillStyle='#35d9ff';ctx.fillText('RSSI',w/2, h-8);
@@ -94,7 +96,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
        const response=await fetch('/spectrum.json',{cache:'no-store'});
        const data=await response.json();
        if(data.ready&&data.samples&&data.samples.length){
-         draw(data.samples);
+         draw(data.samples,!!data.fm);
          status.textContent='Sweep complete · '+data.samples.length+' real RSSI samples. Run again to refresh.';
          return;
        }
