@@ -519,8 +519,6 @@ static void drawDualRxScreen()
     }
     spr.setTextColor(brightBlue);
     spr.drawString(dualRxSetupStage == 1 ? "STEP 1 OF 2" : "STEP 2 OF 2", 160, 139);
-    spr.setTextColor(0x7BEF);
-    spr.drawString("Long press: cancel", 160, 175);
     return;
   }
   for(uint8_t i=0; i<2; ++i)
@@ -575,7 +573,7 @@ static void drawDualRxScreen()
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(0x7BEF);
-  spr.drawString(dualRxSetupStage == 4 ? "Click Encoder to Stop Dual RX" : "Long press: cancel", 160, 165);
+  spr.drawString(dualRxSetupStage == 4 ? "Click Encoder to Stop Dual RX" : "Click Encoder to Start", 160, 165);
 }
 
 //
