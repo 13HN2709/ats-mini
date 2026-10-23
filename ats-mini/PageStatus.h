@@ -126,9 +126,13 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  });
  const canvas=document.getElementById('spectrumCanvas');
  const ctx=canvas.getContext('2d');
+ const spectrumForm=document.getElementById('spectrumRange');
+ const startInput=document.getElementById('spectrumStartMHz');
+ const endInput=document.getElementById('spectrumEndMHz');
  const button=document.getElementById('spectrumStart');
  const status=document.getElementById('spectrumStatus');
  let lastSamples=[];
+ let peakPoints=[];
  let fmMode=false;
  function draw(samples,fm=fmMode){
    fmMode=fm;
@@ -156,24 +160,46 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      ctx.fillText(String(Math.round(maxR-(maxR-minR)*i/4)),3,y+3);
    }
    ctx.fillText('RSSI',4,9);
-   const pts=samples.map((p,i)=>({x:left+i*plotW/(samples.length-1),y:top+plotH-(p.r-minR)/span*plotH}));
+   const pts=samples.map((p,i)=>({x:left+i*plotW/(samples.length-1),y:top+plotH-(p.r-minR)/span*plotH,index:i}));
    ctx.beginPath();ctx.moveTo(pts[0].x,top+plotH);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,top+plotH);ctx.closePath();
-   ctx.fillStyle='rgba(95,135,255,.16)';ctx.fill();
+   ctx.fillStyle='rgba(0,65,255,.22)';ctx.fill();
    ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
-   ctx.strokeStyle='#80a0ff';ctx.lineWidth=2;ctx.stroke();
-   ctx.fillStyle='#8ea2ae';ctx.font='10px system-ui';
+   ctx.strokeStyle='#167bff';ctx.lineWidth=2.5;ctx.shadowColor='#087cff';ctx.shadowBlur=8;ctx.stroke();ctx.shadowBlur=0;
+   peakPoints=[];
+   const threshold=rawMin+(rawMax-rawMin)*0.22;
+   samples.forEach((sample,i)=>{
+     if(i===0||i===samples.length-1)return;
+     if(sample.r>=samples[i-1].r&&sample.r>=samples[i+1].r&&sample.r>=threshold){
+       const p=pts[i];peakPoints.push(p);
+       ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fillStyle='#ff4c50';ctx.shadowColor='#ff334b';ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;
+       ctx.strokeStyle='#ffd4dc';ctx.lineWidth=1;ctx.stroke();
+     }
+   });
+   ctx.fillStyle='#8ea2ae';ctx.font='10px monospace';
    const fmt=f=>fmMode?(f/100).toFixed(2)+' MHz':f+' kHz';
    ctx.textAlign='left';ctx.fillText(fmt(minF),left,h-8);
    ctx.textAlign='right';ctx.fillText(fmt(maxF),w-right,h-8);
-   ctx.textAlign='center';ctx.fillStyle='#80a0ff';ctx.fillText('RSSI',w/2, h-8);
+   ctx.textAlign='center';ctx.fillStyle='#167bff';ctx.fillText('TAP RED PEAK TO TUNE',w/2, h-8);
  }
- async function start(){
+ async function start(event){
+   event.preventDefault();
+   const startMHz=Number(startInput.value),endMHz=Number(endInput.value);
+   if(!Number.isFinite(startMHz)||!Number.isFinite(endMHz)||startMHz<76||endMHz>108||endMHz<=startMHz){
+     status.textContent='Enter a valid FM range: 76.0–108.0 MHz, with stop above start.';
+     return;
+   }
+   if(Math.floor((endMHz-startMHz)*10+0.0001)+1>256){
+     status.textContent='Range is too wide for 256 samples. Reduce the range.';
+     return;
+   }
    button.disabled=true;
    const tuneButton=tuneForm.querySelector('button[type=submit]');
    tuneButton.disabled=true;stepDown.disabled=true;stepUp.disabled=true;volumeInput.disabled=true;
+   startInput.disabled=true;endInput.disabled=true;
    status.textContent='Starting receiver sweep…';
    try{
-     const start=await fetch('/spectrum/start',{method:'POST',cache:'no-store'});
+     const params=new URLSearchParams({start_hz:String(Math.round(startMHz*1000000)),end_hz:String(Math.round(endMHz*1000000))});
+     const start=await fetch('/spectrum/start',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params,cache:'no-store'});
      if(!start.ok){const e=await start.json().catch(()=>({}));throw new Error(e.message||e.error||'Scan could not be started.');}
      for(let i=0;i<45;i++){
        await new Promise(resolve=>setTimeout(resolve,1000));
@@ -188,9 +214,23 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      }
      throw new Error('Sweep timed out. Try again.');
    }catch(error){status.textContent=error.message||'Spectrum request failed.';}
-   finally{button.disabled=false;tuneButton.disabled=false;stepDown.disabled=false;stepUp.disabled=false;volumeInput.disabled=false;}
+   finally{button.disabled=false;tuneButton.disabled=false;stepDown.disabled=false;stepUp.disabled=false;volumeInput.disabled=false;startInput.disabled=false;endInput.disabled=false;}
  }
- button.addEventListener('click',start);
+ spectrumForm.addEventListener('submit',start);
+ canvas.addEventListener('click',async event=>{
+   if(!peakPoints.length||!lastSamples.length)return;
+   const rect=canvas.getBoundingClientRect();
+   const scaleX=canvas.width/(window.devicePixelRatio||1)/rect.width;
+   const x=(event.clientX-rect.left)*scaleX;
+   let nearest=null,distance=Infinity;
+   peakPoints.forEach(p=>{const d=Math.abs(p.x-x);if(d<distance){distance=d;nearest=p;}});
+   if(!nearest||distance>22){status.textContent='Tap one of the red peaks to tune to that station.';return;}
+   const sample=lastSamples[nearest.index];
+   const frequencyHz=Math.round(sample.f*10000);
+   status.textContent='Tuning to '+(sample.f/100).toFixed(2)+' MHz…';
+   const ok=await postRadioCommand('/radio/tune',{freq:String(frequencyHz)},status);
+   if(ok)setTimeout(()=>location.reload(),700);
+ });
  draw([]);
  window.addEventListener('resize',()=>draw(lastSamples));
 })();
