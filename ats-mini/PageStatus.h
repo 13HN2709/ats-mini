@@ -12,7 +12,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
 {{{navigation}}}
 <SECTION CLASS="HERO">
   <DIV CLASS="EYEBROW">Now receiving</DIV>
-  <DIV CLASS="FREQ">{{frequency}}</DIV>
+  <DIV CLASS="FREQ LED-FREQ">{{{led_frequency}}}</DIV>
   <DIV CLASS="MODE">{{band}} &nbsp;·&nbsp; {{mode}} {{{stereo}}}</DIV>
 </SECTION>
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
