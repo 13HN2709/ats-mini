@@ -129,6 +129,11 @@ bool clickFreqKeypad(bool shortPress)
         return true;
       }
     }
+    if((dualRxSetupStage == 1 || dualRxSetupStage == 2) && inputLen == 0)
+    {
+      currentCmd = CMD_DUAL_RX;
+      return true;
+    }
     currentCmd = CMD_NONE; 
     return true;
   }
