@@ -10,6 +10,7 @@
 #include "Memories.h"
 #include "Patches.h"
 #include "FreqKeypad.h"
+#include "Storage.h"
 
 #include <time.h>
 
@@ -63,23 +64,24 @@ Band *getCurrentBand() { return(&bands[bandIdx]); }
 #define MENU_FREQ_INPUT   3
 #define MENU_BFO          4
 #define MENU_VOLUME       5
-#define MENU_STEP         6
-#define MENU_SEEK         7
-#define MENU_SCAN         8
-#define MENU_MEMORY       9
-#define MENU_SQUELCH     10
-#define MENU_BW          11
-#define MENU_AGC_ATT     12
-#define MENU_AVC         13
-#define MENU_SOFTMUTE    14
-#define MENU_SETTINGS    15
+#define MENU_VFO          6
+#define MENU_STEP         7
+#define MENU_SEEK         8
+#define MENU_SCAN         9
+#define MENU_MEMORY      10
+#define MENU_SQUELCH     11
+#define MENU_BW          12
+#define MENU_AGC_ATT     13
+#define MENU_AVC         14
+#define MENU_SOFTMUTE    15
+#define MENU_SETTINGS    16
 
 int8_t menuIdx = MENU_KEYPAD;
 
 static const char *menu[] =
 {
   "Mode", "Bands", "Keypad", "Frequency", "BFO", "Volume",
-  "Steps", "Seek", "Scan", "Memory", "Squelch", "Bandwidth",
+  "VFO A/B", "Steps", "Seek", "Scan", "Memory", "Squelch", "Bandwidth",
   "AGC/ATTN", "AVC", "SoftMute", "Settings",
 };
 
@@ -655,6 +657,71 @@ void doBandwidth(int16_t enc)
 
 static void doMenu(int16_t enc) { menuIdx = wrap_range(menuIdx, enc, 0, LAST_ITEM(menu)); }
 
+// Persistent VFO A/B tuning slots
+VfoState vfos[2] = {};
+uint8_t vfoIdx = 0;
+bool vfoInitialized = false;
+
+VfoState captureVfo()
+{
+  const Band *band = getCurrentBand();
+  VfoState vfo = {};
+  vfo.freq = currentFrequency;
+  vfo.band = (uint8_t)bandIdx;
+  vfo.mode = currentMode;
+  vfo.stepIdx = band->currentStepIdx;
+  vfo.bandwidthIdx = band->bandwidthIdx;
+  return vfo;
+}
+
+static bool validVfo(const VfoState &vfo)
+{
+  if(vfo.band >= getTotalBands() || vfo.mode >= getTotalModes()) return false;
+  const Band &band = bands[vfo.band];
+  if((vfo.mode == FM) != (band.bandType == FM_BAND_TYPE)) return false;
+  if(vfo.freq < band.minimumFreq || vfo.freq > band.maximumFreq) return false;
+  return vfo.stepIdx >= 0 && vfo.stepIdx <= getLastStep(vfo.mode) &&
+         vfo.bandwidthIdx >= 0 && vfo.bandwidthIdx <= getLastBandwidth(vfo.mode);
+}
+
+static void restoreVfo(bool drawLoadingPatch = true)
+{
+  const VfoState &vfo = vfos[vfoIdx];
+  Band &band = bands[vfo.band];
+  band.currentFreq = vfo.freq;
+  band.bandMode = vfo.mode;
+  band.currentStepIdx = vfo.stepIdx;
+  band.bandwidthIdx = vfo.bandwidthIdx;
+  selectBand(vfo.band, drawLoadingPatch);
+}
+
+void initVfo()
+{
+  if(vfoIdx < 2 && validVfo(vfos[0]) && validVfo(vfos[1]))
+    restoreVfo(false);
+  else
+  {
+    selectBand((uint8_t)bandIdx, false);
+    vfoIdx = 0;
+    vfos[0] = vfos[1] = captureVfo();
+    prefsRequestSave(SAVE_SETTINGS | SAVE_CUR_BAND);
+  }
+  vfoInitialized = true;
+}
+
+static void clickVfo(bool shortPress)
+{
+  vfos[vfoIdx] = captureVfo();
+  if(shortPress)
+    vfos[vfoIdx ^ 1] = vfos[vfoIdx];
+  else
+  {
+    vfoIdx ^= 1;
+    restoreVfo();
+  }
+  prefsRequestSave(SAVE_SETTINGS | SAVE_BANDS);
+}
+
 static void clickMenu(int cmd, bool shortPress)
 {
   currentCmd = CMD_NONE;
@@ -672,6 +739,7 @@ static void clickMenu(int cmd, bool shortPress)
     case MENU_BFO:      currentCmd = CMD_BFO;       break;
     case MENU_SQUELCH:  currentCmd = CMD_SQUELCH;   break;
     case MENU_VOLUME:   currentCmd = CMD_VOLUME;    break;
+    case MENU_VFO:      clickVfo(shortPress);       break;
     case MENU_MEMORY:
       currentCmd = CMD_MEMORY;
       newMemory.freq  = freqToHz(currentFrequency, currentMode) + currentBFO;
