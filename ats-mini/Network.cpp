@@ -781,6 +781,46 @@ static String webPage(const char *body, const char *title, std::initializer_list
   return page;
 }
 
+static String webLedFrequency(const String &text)
+{
+  String out;
+  out.reserve(text.length() * 620);
+  const char *segments[10] = {
+    "abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgcde", "abc",
+    "abcdefg", "abfgcd"
+  };
+  for(size_t i = 0; i < text.length(); i++)
+  {
+    char ch = text[i];
+    if(ch >= '0' && ch <= '9')
+    {
+      out += F("<svg class=\"LED-DIGIT\" viewBox=\"0 0 24 37\" aria-hidden=\"true\">");
+      const char *on = segments[ch - '0'];
+      const char *names = "abcdefg";
+      const int x[7] = {4,20,20,4,1,1,4};
+      const int y[7] = {2,5,20,32,20,5,17};
+      const int w[7] = {16,3,3,16,3,3,16};
+      const int h[7] = {3,12,12,3,12,12,3};
+      for(uint8_t s = 0; s < 7; s++)
+      {
+        bool lit = strchr(on, names[s]) != nullptr;
+        out += F("<rect x=\"");
+        out += String(x[s]); out += F("\" y=\"");
+        out += String(y[s]); out += F("\" width=\"");
+        out += String(w[s]); out += F("\" height=\"");
+        out += String(h[s]); out += F("\" fill=\"");
+        out += lit ? F("#167bff") : F("#061630");
+        out += F("\"/>");
+      }
+      out += F("</svg>");
+    }
+    else if(ch == '.')
+      out += F("<svg class=\"LED-DOT\" viewBox=\"0 0 8 37\" aria-hidden=\"true\"><rect x=\"1\" y=\"31\" width=\"6\" height=\"6\" fill=\"#167bff\"/></svg>");
+  }
+  out += F("<span class=\"LED-UNIT\">MHz</span>");
+  return out;
+}
+
 static const String webRadioPage()
 {
   String ip = "";
@@ -832,7 +872,7 @@ static const String webRadioPage()
     {"ip", ip}, {"ssid", ssid},
     {"mac", String(getMACAddress())}, {"version", String(getVersion(true))},
     {"time", receiverTime}, {"band", getCurrentBand()->bandName},
-    {"frequency", freq}, {"frequency_hz", String((uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL))}, {"frequency_step_hz", currentMode == FM ? "10000" : "1000"}, {"volume", String(volume)}, {"mode", bandModeDesc[currentMode]},
+    {"frequency", freq}, {"led_frequency", webLedFrequency(freq)}, {"frequency_hz", String((uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL))}, {"frequency_step_hz", currentMode == FM ? "10000" : "1000"}, {"volume", String(volume)}, {"mode", bandModeDesc[currentMode]},
     {"stereo", currentMode == FM && fmStereoIdx != FM_STEREO_MONO && rx.getCurrentPilot()? String("<SPAN CLASS=\"STEREO\">STEREO</SPAN>") : String("")},
     {"rssi", String(rssi)}, {"snr", String(snr)}, {"battery", String(batteryMonitor())}
   }, {
