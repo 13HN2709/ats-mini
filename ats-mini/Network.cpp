@@ -76,6 +76,7 @@ static void webUploadSplash(AsyncWebServerRequest *request, const String &filena
 static bool webIsAuthenticated(AsyncWebServerRequest *request);
 static volatile bool webSpectrumRequested = false;
 static volatile bool webSpectrumReady = false;
+static volatile bool webSpectrumBusy = false;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -378,7 +379,10 @@ static void webInit()
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     if(currentCmd == CMD_DUAL_RX)
       return request->send(409, "application/json", "{\"ready\":false,\"error\":\"Stop Dual RX before scanning.\"}");
+    if(webSpectrumBusy || webSpectrumRequested)
+      return request->send(409, "application/json", "{\"ready\":false,\"error\":\"A spectrum scan is already running.\"}");
     webSpectrumReady = false;
+    webSpectrumBusy = true;
     webSpectrumRequested = true;
     request->send(202, "application/json", "{\"ready\":false}");
   });
@@ -1124,4 +1128,5 @@ void webSpectrumTick()
   uint16_t step = currentMode == FM ? 10 : 5;
   scanRun(center, step);
   webSpectrumReady = scanGetCount() > 0;
+  webSpectrumBusy = false;
 }
