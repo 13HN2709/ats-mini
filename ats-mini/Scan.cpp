@@ -26,6 +26,7 @@ static uint32_t scanTime = millis();
 static uint8_t  scanStatus = SCAN_OFF;
 
 static uint16_t scanStartFreq;
+static uint16_t scanEndFreq;
 static uint16_t scanStep;
 static uint16_t scanCount;
 static uint8_t  scanMinRSSI;
@@ -79,9 +80,7 @@ static void scanInitRange(uint16_t startFreq, uint16_t endFreq, uint16_t step)
   scanStatus  = SCAN_RUN;
   scanTime    = millis();
   scanStartFreq = startFreq;
-
-  uint32_t points = ((uint32_t)endFreq - startFreq) / step + 1;
-  if(points > SCAN_POINTS) points = SCAN_POINTS;
+  scanEndFreq = endFreq;
   // Keep the requested start frequency exact and clear the retained sample buffer.
   memset(scanData, 0, SCAN_POINTS * sizeof(*scanData));
 }
@@ -128,7 +127,7 @@ static bool scanTickTime()
   freq += scanStep;
 
   // Set next frequency to scan or expire scan
-  if((++scanCount >= SCAN_POINTS) || !isFreqInBand(getCurrentBand(), freq) || consumeAbortPending())
+  if((++scanCount >= SCAN_POINTS) || freq > scanEndFreq || !isFreqInBand(getCurrentBand(), freq) || consumeAbortPending())
     scanStatus = SCAN_DONE;
   else
     rx.setFrequency(freq); // Implies tuning delay
