@@ -33,15 +33,21 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <DIV ID="radioVolumeStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:6px">Adjust volume · 0–63</DIV>
   </DIV>
 </SECTION>
-<SECTION CLASS="STAT" STYLE="margin-top:14px">
-  <DIV STYLE="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-    <DIV><DIV CLASS="LABEL">LIVE RECEIVER SWEEP</DIV><DIV CLASS="VALUE" STYLE="font-size:1.05rem;color:#80a0ff">Spectrum analyzer</DIV></DIV>
-    <BUTTON ID="spectrumStart" TYPE="button">RUN SPECTRUM</BUTTON>
+<SECTION CLASS="SPECTRUM-PANEL">
+  <DIV CLASS="PANEL-HEAD">
+    <DIV><DIV CLASS="EYEBROW">01 / RF ANALYSIS</DIV><H2>SPECTRUM SCAN</H2><DIV CLASS="SUB">FM band · 100 kHz resolution</DIV></DIV>
+    <DIV CLASS="LIVE-MARK"><SPAN></SPAN> RECEIVER</DIV>
   </DIV>
-  <DIV STYLE="margin-top:12px;background:#050810;border:1px solid #40527b;border-radius:12px;padding:8px">
-    <CANVAS ID="spectrumCanvas" HEIGHT="190" STYLE="display:block;width:100%;height:190px"></CANVAS>
+  <FORM ID="spectrumRange" CLASS="RANGE-FORM">
+    <LABEL>START MHz<INPUT ID="spectrumStartMHz" TYPE="number" INPUTMODE="decimal" MIN="76" MAX="108" STEP="0.1" VALUE="88.00" REQUIRED></LABEL>
+    <LABEL>STOP MHz<INPUT ID="spectrumEndMHz" TYPE="number" INPUTMODE="decimal" MIN="76" MAX="108" STEP="0.1" VALUE="108.00" REQUIRED></LABEL>
+    <BUTTON ID="spectrumStart" TYPE="submit">▶ SCAN RANGE</BUTTON>
+  </FORM>
+  <DIV CLASS="SPECTRUM-FRAME">
+    <DIV CLASS="SPECTRUM-META"><SPAN>FIELD STRENGTH / RSSI</SPAN><SPAN>PEAKS ARE SELECTABLE</SPAN></DIV>
+    <CANVAS ID="spectrumCanvas" HEIGHT="230" STYLE="display:block;width:100%;height:230px;cursor:crosshair" aria-label="Clickable FM spectrum plot"></CANVAS>
   </DIV>
-  <DIV ID="spectrumStatus" CLASS="LABEL" STYLE="margin-top:10px">Press RUN SPECTRUM to measure real RSSI values across the current band. Audio is briefly muted during the sweep.</DIV>
+  <DIV ID="spectrumStatus" CLASS="SCAN-STATUS" ROLE="status">Set the FM range and start a scan. Tap a detected peak to tune the receiver to that station.</DIV>
 </SECTION>
 <DIV CLASS="GRID">
   <DIV CLASS="STAT"><SPAN CLASS="LABEL">Signal strength</SPAN><SPAN CLASS="VALUE">{{rssi}} <SMALL STYLE="color:#8ea2ae;font-size:.72rem">dBµV</SMALL></SPAN></DIV>
