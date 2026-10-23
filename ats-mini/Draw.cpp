@@ -482,6 +482,11 @@ void drawScanGraphs(uint32_t freq)
 static void drawDualRxScreen()
 {
   const uint16_t panelBg = 0x0861, frameBlue = 0x001F, brightBlue = 0x07FF;
+  // Dual RX alternates between A and B, so retain each slot's last measured RSSI.
+  static int slotStrength[2] = {0, 0};
+  if (dualRxSetupStage == 4 && dualRxDisplaySlot < 2)
+    slotStrength[dualRxDisplaySlot] = rx.getCurrentRSSI();
+
   spr.fillSprite(0x0000);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(brightBlue);
@@ -535,17 +540,28 @@ static void drawDualRxScreen()
     bool isFm = v.band < getTotalBands() && bands[v.band].bandType == FM_BAND_TYPE;
     if(isFm) snprintf(freqText, sizeof(freqText), "%.2f", v.freq / 100.0f);
     else snprintf(freqText, sizeof(freqText), "%u", v.freq);
-    spr.setFont(&lgfx::fonts::Orbitron_Light_24);
+    // Match Layout-Default: use the same large 7-segment frequency font.
+    spr.setFont(FONT_DIGITS);
     spr.setTextDatum(MR_DATUM);
     spr.setTextColor(0xFFFF);
-    spr.drawString(freqText, 258, y+8);
+    spr.drawString(freqText, 258, y+3);
     spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
     spr.setTextDatum(ML_DATUM);
     spr.setTextColor(0x07E0);
-    spr.drawString(isFm ? "MHz" : "kHz", 265, y+29);
+    spr.drawString(isFm ? "MHz" : "kHz", 265, y+27);
     spr.setFont(FONT_SMALL);
     spr.setTextColor(0xBDF7);
-    spr.drawString(v.mode < getTotalModes() ? bandModeDesc[v.mode] : "?", 265, y+42);
+    spr.drawString(v.mode < getTotalModes() ? bandModeDesc[v.mode] : "?", 265, y+41);
+
+    // Compact per-slot S-meter at lower left. Values are retained between A/B scans.
+    spr.setTextDatum(ML_DATUM);
+    spr.setTextColor(0xBDF7);
+    spr.drawString("S", 19, y+25);
+    int bars = constrain(map(slotStrength[i], 0, 60, 0, 10), 0, 10);
+    for (int bar = 0; bar < 10; ++bar) {
+      uint16_t barColor = bar < bars ? (bar < 7 ? 0x07E0 : 0xFFE0) : 0x4208;
+      spr.fillRect(31 + bar * 5, y+40, 3, 9, barColor);
+    }
   }
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(dualRxSetupStage == 4 ? 0x07E0 : brightBlue);
