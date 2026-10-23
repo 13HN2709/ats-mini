@@ -82,7 +82,7 @@ static const char *menu[] =
 {
   "Mode", "Bands", "Keypad", "Frequency", "BFO", "Volume",
   "VFO A/B", "Steps", "Seek", "Scan", "Memory", "Squelch", "Bandwidth",
-  "AGC/ATTN", "AVC", "SoftMute", "Settings",
+  "AGC/ATTN", "AVC", "SoftMute", "Settings", "DUAL RX",
 };
 
 #define MENU_BRIGHTNESS   0
@@ -715,6 +715,67 @@ void initVfo()
   vfoInitialized = true;
 }
 
+
+ 
+// DUAL RX: alternating A/B monitoring using the single SI4735 receiver.
+static VfoState dualRxSavedState = {};
+static int16_t dualRxSavedBfo = 0;
+static uint8_t dualRxSlot = 0;
+static uint32_t dualRxNextSwitch = 0;
+static bool dualRxActive = false;
+
+void dualRxStart()
+{
+  if(!vfoInitialized) initVfo();
+  dualRxSavedState = captureVfo();
+  dualRxSavedBfo = currentBFO;
+  vfos[vfoIdx] = dualRxSavedState;
+  if(!validVfo(vfos[0]) || !validVfo(vfos[1]))
+  {
+    currentCmd = CMD_NONE;
+    return;
+  }
+  dualRxSlot = vfoIdx;
+  dualRxActive = true;
+  dualRxNextSwitch = millis() + 250;
+  currentCmd = CMD_DUAL_RX;
+}
+
+void dualRxStop()
+{
+  if(!dualRxActive) { currentCmd = CMD_NONE; return; }
+  dualRxActive = false;
+  Band &savedBand = bands[dualRxSavedState.band];
+  savedBand.currentFreq = dualRxSavedState.freq;
+  savedBand.bandMode = dualRxSavedState.mode;
+  savedBand.currentStepIdx = dualRxSavedState.stepIdx;
+  savedBand.bandwidthIdx = dualRxSavedState.bandwidthIdx;
+  selectBand(dualRxSavedState.band);
+  if(currentBFO != dualRxSavedBfo) updateBFO(dualRxSavedBfo, true);
+  currentCmd = CMD_NONE;
+  prefsRequestSave(SAVE_CUR_BAND);
+}
+
+bool dualRxTick(uint32_t now)
+{
+  if(!dualRxActive || currentCmd != CMD_DUAL_RX) return false;
+  if((int32_t)(now - dualRxNextSwitch) < 0) return false;
+  dualRxNextSwitch = now + 250;
+  vfos[dualRxSlot] = captureVfo();
+  uint8_t nextSlot = dualRxSlot ^ 1;
+  if(!validVfo(vfos[nextSlot])) return false;
+  dualRxSlot = nextSlot;
+  const VfoState &vfo = vfos[dualRxSlot];
+  Band &targetBand = bands[vfo.band];
+  targetBand.currentFreq = vfo.freq;
+  targetBand.bandMode = vfo.mode;
+  targetBand.currentStepIdx = vfo.stepIdx;
+  targetBand.bandwidthIdx = vfo.bandwidthIdx;
+  selectBand(vfo.band, false);
+  currentFrequency = vfo.freq;
+  return true;
+}
+
 static void clickVfo(bool shortPress)
 {
   vfos[vfoIdx] = captureVfo();
@@ -759,6 +820,7 @@ static void clickMenu(int cmd, bool shortPress)
       currentCmd = CMD_SCAN;
       clickScan(true);
       break;
+    case 17: dualRxStart(); break;
   }
 }
 
