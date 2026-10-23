@@ -78,14 +78,14 @@ static void webNavigation(String &out, const char *activePage)
     {"Update", "/update"},
     {"Patches", "/patches"},
   };
-  out += R"HTML(<P ALIGN="CENTER">)HTML";
+  out += R"HTML(<NAV CLASS="NAV">)HTML";
   for(size_t i = 0; i < sizeof(pages) / sizeof(pages[0]); i++)
   {
     if(i) out += "&nbsp;|&nbsp;";
-    if(!strcmp(activePage, pages[i].path)) out += pages[i].name;
+    if(!strcmp(activePage, pages[i].path)) pageAppend(out, R"HTML(<SPAN CLASS="ACTIVE" STYLE="flex:1 1 auto;text-align:center;padding:10px 13px;border:1px solid #286347;border-radius:12px;background:#10271f;color:#56f29a;font-size:.88rem">{{label}}</SPAN>)HTML", {{"label", pages[i].name}});
     else pageAppend(out, R"HTML(<A HREF="{{path}}">{{label}}</A>)HTML", {{"path", pages[i].path}, {"label", pages[i].name}});
   }
-  out += "</P>";
+  out += "</NAV>";
 }
 
 #endif // PAGE_COMMON_H
