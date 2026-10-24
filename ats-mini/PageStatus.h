@@ -122,11 +122,21 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const memoryCount=document.getElementById('memoryQuickCount');
  const memoryStatus=document.getElementById('memoryQuickStatus');
  const memoryArrow=document.getElementById('memoryQuickArrow');
+ // Remember each accordion's open/closed state for this browser.
+ const memoryOpenKey='atsQuickMemoriesOpen';
+ const guideOpenKey='atsFrequencyGuideOpen';
+ const memoryInitiallyOpen=sessionStorage.getItem(memoryOpenKey)==='true';
+ if(memoryInitiallyOpen){
+   memoryList.hidden=false;
+   memoryToggle.setAttribute('aria-expanded','true');
+   memoryArrow.innerHTML='&#9652;';
+ }
  memoryToggle.addEventListener('click',()=>{
    const expanded=memoryToggle.getAttribute('aria-expanded')==='true';
    memoryToggle.setAttribute('aria-expanded',String(!expanded));
    memoryList.hidden=expanded;
    memoryArrow.innerHTML=expanded?'&#9662;':'&#9652;';
+   sessionStorage.setItem(memoryOpenKey,String(!expanded));
  });
  async function refreshQuickMemories(){
    try{
@@ -169,6 +179,12 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const guideArrow=document.getElementById('frequencyGuideArrow');
  const guideGroups=document.getElementById('frequencyGuideGroups');
  const guideStatus=document.getElementById('frequencyGuideStatus');
+ const guideInitiallyOpen=sessionStorage.getItem(guideOpenKey)==='true';
+ if(guideInitiallyOpen){
+   guideList.hidden=false;
+   guideToggle.setAttribute('aria-expanded','true');
+   guideArrow.innerHTML='&#9652;';
+ }
  const guideEntries=[
    {group:'DX BEACONS · NCDXF / IARU',items:[
      {name:'20 m international beacon network',freq:14100000,mode:'USB',detail:'14.100 MHz · one of five coordinated beacon bands'},
@@ -225,6 +241,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    guideToggle.setAttribute('aria-expanded',String(!expanded));
    guideList.hidden=expanded;
    guideArrow.innerHTML=expanded?'&#9662;':'&#9652;';
+   sessionStorage.setItem(guideOpenKey,String(!expanded));
  });
  guideEntries.forEach(group=>{
    const section=document.createElement('div');
