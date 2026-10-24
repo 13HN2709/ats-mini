@@ -385,6 +385,45 @@ static void webInit()
     request->send(200, "text/html", webRadioPage());
   });
 
+  server.on("/rds.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    auto jsonEscape = [](const char *input) -> String {
+      String output;
+      if(!input) return output;
+      while(*input)
+      {
+        const unsigned char c = (unsigned char)*input++;
+        if(c == '"' || c == '\\') { output += '\\'; output += (char)c; }
+        else if(c == '\n') output += "\\n";
+        else if(c == '\r') output += "\\r";
+        else if(c == '\t') output += "\\t";
+        else if(c >= 0x20) output += (char)c;
+      }
+      return output;
+    };
+    String station, radioText;
+    if(currentMode == FM)
+    {
+      const char *ps = getProgramInfo();
+      if(ps && ps[0]) station = ps;
+      const char *rt = getRadioText();
+      if(rt && rt[0]) radioText = rt;
+    }
+    if(station.length() == 0)
+    {
+      uint32_t freqHz = currentMode == FM
+        ? (uint32_t)currentFrequency * 10000UL
+        : (uint32_t)currentFrequency * 1000UL + currentBFO;
+      char memoryName[10] = {};
+      if(findMemoryName(freqHz, currentMode, 255, 255, memoryName) && memoryName[0])
+        station = memoryName;
+    }
+    String json = "{\"station\":\"" + jsonEscape(station.c_str()) + "\",\"text\":\"" + jsonEscape(radioText.c_str()) + "\"}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
+  });
+
   server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Radio tuning is unavailable during a spectrum sweep.\"}");
