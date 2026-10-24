@@ -118,6 +118,7 @@ static void webNavigation(String &out, const char *activePage)
     {"Config", "/config"},
     {"Update", "/update"},
     {"Patches", "/patches"},
+    {"Log", "/log"},
   };
   out += R"HTML(<NAV CLASS="NAV">)HTML";
   for(size_t i = 0; i < sizeof(pages) / sizeof(pages[0]); i++)
