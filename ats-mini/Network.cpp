@@ -408,7 +408,19 @@ static void webInit()
     uint32_t minHz = targetMode == FM ? 64000000UL : 150000UL;
     uint32_t maxHz = targetMode == FM ? 108000000UL : 30000000UL;
     if(freqHz < minHz || freqHz > maxHz)
-      return request->send(422, "application/json", "{\"message\":\"Frequency is outside the receiver range for the selected modulation.\"}");
+      return request->send(422, "application/json", "{\"message\":\"Invalid frequency for the selected modulation. Receiver frequency was not changed.\"}");
+
+    // Without an explicit modulation switch, reject frequencies outside the
+    // active band's limits before queueing any change. Explicit mode requests
+    // can switch from VHF/FM to ALL in the main-loop handler.
+    if(!modeProvided)
+    {
+      Band *activeBand = getCurrentBand();
+      uint16_t targetFreq = freqFromHz((uint32_t)freqHz, targetMode);
+      if(!activeBand || !isFreqInBand(activeBand, targetFreq) ||
+         (isSSB() && targetFreq == activeBand->maximumFreq && (freqHz % 1000UL)))
+        return request->send(422, "application/json", "{\"message\":\"Frequency is outside the current band's limits. Receiver frequency was not changed.\"}");
+    }
     webTuneRequestedMode = modeProvided ? targetMode : -1;
     webTuneFrequencyHz = freqHz;
     return request->send(202, "application/json", "{\"message\":\"Tune command queued.\"}");
