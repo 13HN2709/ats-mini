@@ -122,10 +122,12 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const memoryCount=document.getElementById('memoryQuickCount');
  const memoryStatus=document.getElementById('memoryQuickStatus');
  const memoryArrow=document.getElementById('memoryQuickArrow');
- // Remember each accordion's open/closed state for this browser.
+ // Persist accordion state across reloads and browser sessions until the user closes it.
  const memoryOpenKey='atsQuickMemoriesOpen';
  const guideOpenKey='atsFrequencyGuideOpen';
- const memoryInitiallyOpen=sessionStorage.getItem(memoryOpenKey)==='true';
+ const readAccordionState=key=>{try{return localStorage.getItem(key)==='true';}catch(_){return false;}};
+ const writeAccordionState=(key,isOpen)=>{try{localStorage.setItem(key,String(isOpen));}catch(_){}};
+ const memoryInitiallyOpen=readAccordionState(memoryOpenKey);
  if(memoryInitiallyOpen){
    memoryList.hidden=false;
    memoryToggle.setAttribute('aria-expanded','true');
@@ -136,7 +138,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    memoryToggle.setAttribute('aria-expanded',String(!expanded));
    memoryList.hidden=expanded;
    memoryArrow.innerHTML=expanded?'&#9662;':'&#9652;';
-   sessionStorage.setItem(memoryOpenKey,String(!expanded));
+   writeAccordionState(memoryOpenKey,!expanded);
  });
  async function refreshQuickMemories(){
    try{
@@ -179,7 +181,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const guideArrow=document.getElementById('frequencyGuideArrow');
  const guideGroups=document.getElementById('frequencyGuideGroups');
  const guideStatus=document.getElementById('frequencyGuideStatus');
- const guideInitiallyOpen=sessionStorage.getItem(guideOpenKey)==='true';
+ const guideInitiallyOpen=readAccordionState(guideOpenKey);
  if(guideInitiallyOpen){
    guideList.hidden=false;
    guideToggle.setAttribute('aria-expanded','true');
@@ -241,7 +243,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    guideToggle.setAttribute('aria-expanded',String(!expanded));
    guideList.hidden=expanded;
    guideArrow.innerHTML=expanded?'&#9662;':'&#9652;';
-   sessionStorage.setItem(guideOpenKey,String(!expanded));
+   writeAccordionState(guideOpenKey,!expanded);
  });
  guideEntries.forEach(group=>{
    const section=document.createElement('div');
