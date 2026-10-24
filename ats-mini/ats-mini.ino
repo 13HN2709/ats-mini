@@ -209,6 +209,8 @@ void setup()
   }
 
   diskInit();
+  String bootLog = String("BOOT: reset reason ") + ESP.getResetReason();
+  webDiagLog(bootLog.c_str());
 
   if(!ESP.getPsramSize() || !memoriesInit()) {
     ledcWrite(PIN_LCD_BL, 255);
