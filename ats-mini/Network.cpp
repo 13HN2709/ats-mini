@@ -404,7 +404,10 @@ static void webInit()
     String station, radioText;
     if(currentMode == FM)
     {
-      const char *ps = getProgramInfo();
+      // getProgramInfo() is the RDS program type (e.g. "Pop Music"),
+      // not the station's Program Service (PS) name. Use getStationName()
+      // for the actual RDS station name, with its built-in memory fallback.
+      const char *ps = getStationName();
       if(ps && ps[0]) station = ps;
       const char *rt = getRadioText();
       if(rt && rt[0]) radioText = rt;
