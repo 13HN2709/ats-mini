@@ -1318,19 +1318,30 @@ void webSpectrumTick()
     webTuneRequestedMode = -1;
     if(requestedMode >= 0 && requestedMode != currentMode)
     {
+      // The web controller may request USB/LSB while the radio is still on
+      // the VHF/FM band. Switch the actual band state to ALL first, otherwise
+      // the receiver is reconfigured for SSB while bandIdx and band limits
+      // still describe VHF. ALL is bands[1] in the stock band table.
+      if(requestedMode != FM && bandIdx == 0)
+        selectBand(1, false);
+
       currentMode = requestedMode;
       uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
       if(currentMode == FM)
         rx.setFM(6400, 10800, constrain(targetFreq, 6400, 10800), 10);
       else if(currentMode == AM)
-        rx.setAM(150, 30000, constrain(targetFreq, 150, 30000), 1);
+        rx.setAM(100, 30000, constrain(targetFreq, 100, 30000), 1);
       else
       {
-        rx.setSSB(150, 30000, constrain(targetFreq, 150, 30000), 0, currentMode);
+        rx.setSSB(100, 30000, constrain(targetFreq, 100, 30000), 0, currentMode);
         rx.setSSBConfig(getCurrentBandwidth()->idx, 1, 0, 1, 0, 1);
-        if(currentMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
-        else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
+        Band *activeBand = getCurrentBand();
+        if(currentMode == USB) rx.setSSBBfo(-(currentBFO + (activeBand ? activeBand->usbCal : 0)));
+        else rx.setSSBBfo(-(currentBFO + (activeBand ? activeBand->lsbCal : 0)));
       }
+      currentFrequency = rx.getFrequency();
+      Band *activeBand = getCurrentBand();
+      if(activeBand) activeBand->currentFreq = currentFrequency;
     }
     else if(requestedMode >= 0)
     {
