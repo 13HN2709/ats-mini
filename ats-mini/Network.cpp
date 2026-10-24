@@ -535,6 +535,19 @@ static void webInit()
     request->send(response);
   });
 
+  server.on("/log", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    String html = R"HTML(<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080d12"><title>ATS Debug Log</title><style>
+:root{color-scheme:dark;--bg:#020611;--panel:#030d27;--line:#123a78;--text:#e7f1ff;--muted:#7192c6;--blue:#167bff}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#020611,#000);color:var(--text);font:16px/1.45 system-ui,sans-serif}.APP{max-width:1040px;margin:auto;padding:16px 12px 28px}.STAT{padding:16px;border:1px solid #1454ad;background:linear-gradient(180deg,#030d25,#020712)}.EYEBROW{color:var(--blue);font-size:.74rem;font-weight:750;letter-spacing:.16em;text-transform:uppercase}.SUB,.LABEL{color:var(--muted)}button{padding:10px 14px;border:1px solid #16458f;background:#061d4b;color:#dce5ff;font:inherit;margin:4px 4px 8px 0}textarea{width:100%;min-height:55vh;background:#010713;color:#dce5ff;border:1px solid #16458f;padding:10px;font:12px/1.45 monospace;white-space:pre;overflow:auto}.NAV{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin:0 0 16px;border:1px solid #10356e}.NAV a{padding:12px 4px;text-align:center;color:#dce5ff;text-decoration:none;border-right:1px solid #10356e;font-size:.85rem}.NAV .ACTIVE{color:#80a0ff;background:#1a2946;font-weight:800}@media(max-width:500px){.NAV a{font-size:.7rem;padding:10px 2px}}</style></head><body><main class="APP">
+<nav class="NAV"><a href="/">Radio</a><a href="/memory">Memory</a><a href="/config">Config</a><a href="/update">Update</a><a href="/patches">Patches</a><span class="ACTIVE" style="padding:12px 4px;text-align:center">Log</span></nav>
+<section class="STAT"><div class="EYEBROW">Diagnostics</div><h2>WEB CONTROL LOG</h2><p class="SUB">Actions and errors observed by this browser. The log is stored locally in this browser, not on the receiver.</p>
+<button id="refresh">REFRESH</button><button id="export">EXPORT / COPY LOG</button><button id="clear">CLEAR LOG</button>
+<textarea id="output" readonly></textarea><p id="status" class="LABEL">Ready</p></section></main><script>
+(()=>{const key='atsControlDebugLog',out=document.getElementById('output'),status=document.getElementById('status');function read(){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(_){return []}}function render(){out.value=read().map(e=>e.time+' | '+e.type+' | '+e.message).join('\n');out.scrollTop=out.scrollHeight;status.textContent=read().length+' entries. Log survives page reloads in this browser.'}document.getElementById('refresh').onclick=render;document.getElementById('export').onclick=()=>{out.value=JSON.stringify({exportedAt:new Date().toISOString(),userAgent:navigator.userAgent,entries:read()},null,2);out.focus();out.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}status.textContent=ok?'Log copied. Paste it into the support chat.':'Log selected; copy it and paste into the support chat.'};document.getElementById('clear').onclick=()=>{if(confirm('Delete all browser log entries?')){localStorage.removeItem(key);render()}};render()})();
+</script></body></html>)HTML";
+    request->send(200, "text/html; charset=utf-8", html);
+  });
+
   server.on("/memory", HTTP_GET, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     request->send(200, "text/html", webMemoryPage());
