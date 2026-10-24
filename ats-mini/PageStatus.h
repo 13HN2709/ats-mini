@@ -10,10 +10,12 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   <SPAN CLASS="PILL">&#9679; {{connection}}</SPAN>
 </DIV>
 {{{navigation}}}
-<SECTION CLASS="HERO">
-  <DIV CLASS="EYEBROW">Now receiving</DIV>
+<SECTION CLASS="HERO" STYLE="padding:20px 14px 22px">
+  <DIV ID="rdsStation" CLASS="FREQ LED-FREQ" STYLE="font-size:clamp(1.6rem,5.5vw,2.5rem);line-height:1.2;min-height:1.2em;overflow-wrap:anywhere;text-align:center"> </DIV>
+  <DIV CLASS="EYEBROW" STYLE="margin:4px 0 8px">Now receiving</DIV>
   <DIV CLASS="FREQ LED-FREQ">{{{led_frequency}}}</DIV>
   <DIV CLASS="MODE">{{band}} &nbsp;·&nbsp; {{mode}} {{{stereo}}}</DIV>
+  <DIV ID="rdsText" CLASS="FREQ LED-FREQ" STYLE="font-size:clamp(1.6rem,5.5vw,2.5rem);line-height:1.2;margin-top:12px;min-height:1.2em;overflow-wrap:anywhere;text-align:center"></DIV>
 </SECTION>
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
   <DIV CLASS="EYEBROW">Radio controls</DIV>
@@ -174,6 +176,19 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const unitEnd=document.getElementById('spectrumUnitEnd');
  const button=document.getElementById('spectrumStart');
  const status=document.getElementById('spectrumStatus');
+ const rdsStation=document.getElementById('rdsStation');
+ const rdsText=document.getElementById('rdsText');
+ async function refreshRds(){
+   try{
+     const response=await fetch('/rds.json',{cache:'no-store'});
+     if(!response.ok)return;
+     const data=await response.json();
+     if(rdsStation)rdsStation.textContent=data.station||'';
+     if(rdsText)rdsText.textContent=data.text||'';
+   }catch(_){}
+ }
+ refreshRds();
+ setInterval(refreshRds,2000);
  let lastSamples=[];
  let peakPoints=[];
  let fmMode=false;
