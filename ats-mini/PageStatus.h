@@ -230,6 +230,9 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    event.preventDefault();
    const selectedMode=modeInput.value;
    if(window.atsDebugLog) window.atsDebugLog('SCAN','Start requested: mode='+selectedMode+', range='+startInput.value+'–'+endInput.value+', step='+stepInput.value);
+   lastSamples=[];peakPoints=[];lastSpectrumMode=selectedMode;
+   try{sessionStorage.removeItem('atsSpectrumSnapshotV2');}catch(_){}
+   draw([]);
    const startValue=Number(startInput.value),endValue=Number(endInput.value);
    const fm=selectedMode==='FM';
    const minValue=fm?64:150,maxValue=fm?108:30000;
@@ -261,7 +264,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
        if(data.ready&&data.samples&&data.samples.length){
          draw(data.samples,!!data.fm);
          lastSpectrumMode=data.mode||selectedMode;
-         try{sessionStorage.setItem('atsSpectrumSnapshot',JSON.stringify({fm:!!data.fm,mode:lastSpectrumMode,samples:data.samples}));}catch(_){}
+         try{sessionStorage.setItem('atsSpectrumSnapshotV2',JSON.stringify({fm:!!data.fm,mode:lastSpectrumMode,samples:data.samples}));}catch(_){}
          status.textContent='Sweep complete · '+data.samples.length+' real RSSI samples. Run again to refresh.';
          if(window.atsDebugLog) window.atsDebugLog('SCAN COMPLETE','mode='+lastSpectrumMode+', samples='+data.samples.length);
          return;
@@ -292,10 +295,18 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
 
  let modeSwitchBusy=false;
  modeButtons.forEach(button=>button.addEventListener('click',async()=>{
+   const previousMode=modeInput.value;
    const selectedMode=button.dataset.mode;
    modeInput.value=selectedMode;
    modeButtons.forEach(item=>item.classList.toggle('ACTIVE',item===button));
    updateSpectrumMode();
+   if(previousMode!==selectedMode){
+     lastSamples=[];peakPoints=[];lastSpectrumMode=selectedMode;
+     try{sessionStorage.removeItem('atsSpectrumSnapshotV2');}catch(_){}
+     draw([]);
+     status.textContent='Spectrum reset for '+selectedMode+'. Set the range and scan again.';
+     if(window.atsDebugLog) window.atsDebugLog('SPECTRUM RESET','mode changed '+previousMode+' -> '+selectedMode);
+   }
    try{sessionStorage.setItem('atsSpectrumMode',selectedMode);}catch(_){}
    if(modeSwitchBusy) return;
    modeSwitchBusy=true;
@@ -330,7 +341,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  });
  let restored=false;
  try{
-   const saved=JSON.parse(sessionStorage.getItem('atsSpectrumSnapshot')||'null');
+   const saved=JSON.parse(sessionStorage.getItem('atsSpectrumSnapshotV2')||'null');
    if(saved&&Array.isArray(saved.samples)&&saved.samples.length>1){
      draw(saved.samples,!!saved.fm);
      lastSpectrumMode=saved.mode||(saved.fm?'FM':'AM');
