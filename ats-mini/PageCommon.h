@@ -55,7 +55,7 @@ static const char pageStart[] PROGMEM = R"HTML(<!DOCTYPE HTML>
     .LED-UNIT { margin:0 0 5px 4px; color:#3b8fff; font:700 clamp(.7rem,2vw,1rem) monospace; letter-spacing:.08em; text-shadow:0 0 10px #075dff88; }
     .HERO:before { content:""; position:absolute; left:0; top:0; width:4px; height:100%; background:var(--blue); box-shadow:0 0 18px var(--blue); }
     .TOP { border-bottom:1px solid #10356e; padding-bottom:12px; }
-    .NAV { grid-template-columns:repeat(5,minmax(0,1fr)); gap:0; border:1px solid #10356e; }
+    .NAV { grid-template-columns:repeat(6,minmax(0,1fr)); gap:0; border:1px solid #10356e; }
     .NAV a, .NAV .ACTIVE { border:0; border-right:1px solid #10356e; padding:12px 4px; }
     .NAV a:last-child { border-right:0; }
     .STAT .LABEL { letter-spacing:.12em; text-transform:uppercase; }
