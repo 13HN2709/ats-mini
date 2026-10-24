@@ -44,10 +44,15 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <BUTTON ID="radioStepDown" TYPE="button" aria-label="Tune down one step">− STEP</BUTTON>
     <BUTTON ID="radioStepUp" TYPE="button" aria-label="Tune up one step">+ STEP</BUTTON>
   </DIV>
-  <DIV STYLE="margin-top:16px">
-    <LABEL FOR="radioVolume" CLASS="LABEL" STYLE="display:flex;justify-content:space-between;gap:10px"><SPAN>Volume</SPAN><STRONG ID="radioVolumeValue" STYLE="color:#80a0ff;font-family:monospace;font-weight:900;font-variant-numeric:tabular-nums">{{volume}}</STRONG></LABEL>
-    <INPUT ID="radioVolume" TYPE="range" MIN="0" MAX="63" STEP="1" VALUE="{{volume}}" STYLE="width:100%;accent-color:#80a0ff;margin-top:10px">
-    <DIV ID="radioVolumeStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:6px">Adjust volume · 0–63</DIV>
+  <DIV STYLE="margin-top:16px;border:1px solid #223b68;border-radius:8px;overflow:hidden">
+    <BUTTON ID="radioVolumeToggle" TYPE="button" aria-expanded="false" aria-controls="radioVolumePanel" STYLE="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:12px;background:#091326;color:#eaf0ff;border:0;text-align:left;cursor:pointer">
+      <SPAN STYLE="display:flex;align-items:center;gap:9px"><SPAN STYLE="color:#80a0ff;font-size:1.1em">&#128266;</SPAN><SPAN CLASS="LABEL" STYLE="margin:0">Volume</SPAN></SPAN>
+      <SPAN STYLE="display:flex;align-items:center;gap:12px"><STRONG ID="radioVolumeValue" STYLE="color:#80a0ff;font-family:monospace;font-weight:900;font-variant-numeric:tabular-nums">{{volume}}</STRONG><SPAN ID="radioVolumeArrow" STYLE="color:#80a0ff">&#9662;</SPAN></SPAN>
+    </BUTTON>
+    <DIV ID="radioVolumePanel" hidden STYLE="padding:12px;background:#060d1b">
+      <INPUT ID="radioVolume" TYPE="range" MIN="0" MAX="63" STEP="1" VALUE="{{volume}}" STYLE="width:100%;accent-color:#167bff;margin:2px 0 8px">
+      <DIV ID="radioVolumeStatus" CLASS="LABEL" ROLE="status">Adjust volume · 0–63</DIV>
+    </DIV>
   </DIV>
 </SECTION>
 <SECTION CLASS="SPECTRUM-PANEL">
@@ -166,6 +171,15 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  tuneUnit.addEventListener('change',()=>setFrequencyUnit(tuneUnit.value));
  const stepDown=document.getElementById('radioStepDown');
  const stepUp=document.getElementById('radioStepUp');
+ const volumeToggle=document.getElementById('radioVolumeToggle');
+ const volumePanel=document.getElementById('radioVolumePanel');
+ const volumeArrow=document.getElementById('radioVolumeArrow');
+ volumeToggle.addEventListener('click',()=>{
+   const expanded=volumeToggle.getAttribute('aria-expanded')==='true';
+   volumeToggle.setAttribute('aria-expanded',String(!expanded));
+   volumePanel.hidden=expanded;
+   volumeArrow.innerHTML=expanded?'&#9662;':'&#9652;';
+ });
  const volumeInput=document.getElementById('radioVolume');
  const volumeValue=document.getElementById('radioVolumeValue');
  const volumeStatus=document.getElementById('radioVolumeStatus');
