@@ -383,6 +383,34 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      if(!response.ok) throw new Error((data.message||data.error||'Radio command failed.')+' [HTTP '+response.status+']');
      if(window.atsDebugLog) window.atsDebugLog('RESPONSE',path+' HTTP '+response.status+' '+JSON.stringify(data));
      statusElement.textContent=data.message||'Command accepted.';
+     if(path==='/radio/tune' && Number.isFinite(Number(data.request_id))){
+       const requestId=Number(data.request_id);
+       statusElement.textContent='Command accepted; waiting for receiver confirmation…';
+       const deadline=Date.now()+6000;
+       while(Date.now()<deadline){
+         await new Promise(resolve=>setTimeout(resolve,250));
+         const stateResponse=await fetch('/radio/tune-status.json?ts='+Date.now(),{cache:'no-store'});
+         if(!stateResponse.ok) continue;
+         const state=await stateResponse.json();
+         if(Number(state.completed_id)!==requestId) continue;
+         const modeNames={0:'FM',1:'LSB',2:'USB',3:'AM'};
+         const actualMode=modeNames[Number(state.actual_mode)]||'unknown mode';
+         const actualHz=Number(state.actual_hz);
+         const targetHz=Number(state.target_hz);
+         const fmt=hz=>hz>=64000000?(hz/1000000).toFixed(2)+' MHz':(hz/1000).toFixed(0)+' kHz';
+         if(Number(state.result)===1){
+           statusElement.textContent='Confirmed: '+fmt(actualHz)+' '+actualMode+'.';
+           if(window.atsDebugLog) window.atsDebugLog('CONFIRMED','/radio/tune '+JSON.stringify(state));
+           return true;
+         }
+         statusElement.textContent='Receiver mismatch: requested '+fmt(targetHz)+', receiver reports '+fmt(actualHz)+' '+actualMode+'.';
+         if(window.atsDebugLog) window.atsDebugLog('TUNE MISMATCH','/radio/tune '+JSON.stringify(state));
+         return false;
+       }
+       statusElement.textContent='Tune command was accepted, but receiver confirmation timed out. Check the radio status.';
+       if(window.atsDebugLog) window.atsDebugLog('TUNE TIMEOUT','/radio/tune request_id='+requestId);
+       return false;
+     }
      return true;
    }catch(error){
      if(window.atsDebugLog) window.atsDebugLog('REQUEST ERROR',path+' '+(error.message||error));
