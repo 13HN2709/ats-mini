@@ -88,7 +88,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const hz=inputFrequencyHz();
    tuneUnit.value=nextUnit;
    activeFrequencyUnit=nextUnit;
-   tuneInput.value=Number.isFinite(hz)?(hz/unitScale(nextUnit)).toFixed(nextUnit==='mhz'?4:nextUnit==='khz'?3:0):'';
+   tuneInput.value=Number.isFinite(hz)?(hz/unitScale(nextUnit)).toFixed(nextUnit==='mhz'?2:nextUnit==='khz'?3:0):'';
    tuneInput.dataset.step=String(Math.max(1,frequencyStepHz/unitScale(nextUnit)));
  }
  const initialHz=Number(tuneInput.value);
