@@ -94,7 +94,7 @@ static volatile int8_t webTuneTargetMode = -1;
 static volatile int8_t webTuneResult = 0; // 0 pending, 1 confirmed, 2 frequency mismatch
 static volatile uint32_t webTuneActualHz = 0;
 static volatile int8_t webTuneActualMode = -1;
-static volatile uint8_t webTunePhase = 0; // 0 idle, 1 queued, 2 processing, 3 switching band, 4 configuring receiver, 5 reading receiver, 6 identifying station, 7 complete
+volatile uint8_t webTunePhase = 0; // Tune diagnostics: 0 idle, 1 queued, 2 processing, 3 switching band, 4 configuring receiver, 5 reading receiver, 6 identifying station, 7 complete; 8-12 selectBand stages
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
