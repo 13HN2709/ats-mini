@@ -83,7 +83,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const frequencyStepHz=Number(tuneInput.step)||1000;
  const unitScale=unit=>unit==='mhz'?1000000:unit==='khz'?1000:1;
  let activeFrequencyUnit=tuneUnit.value;
- function inputFrequencyHz(){const raw=String(tuneInput.value).trim().replace(',','.');return raw!==''&&/^[0-9]+(?:\\.[0-9]*)?$/.test(raw)?Number(raw)*unitScale(activeFrequencyUnit):NaN;}
+ function inputFrequencyHz(){const raw=String(tuneInput.value).trim().replace(',','.');return raw!==''&&/^[0-9]+(?:\.[0-9]*)?$/.test(raw)?Number(raw)*unitScale(activeFrequencyUnit):NaN;}
  function setFrequencyUnit(nextUnit){
    const hz=inputFrequencyHz();
    tuneUnit.value=nextUnit;
