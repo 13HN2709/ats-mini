@@ -82,7 +82,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const controlStatus=document.getElementById('radioControlStatus');
  const frequencyStepHz=Number(tuneInput.step)||1000;
  const unitScale=unit=>unit==='mhz'?1000000:unit==='khz'?1000:1;
- let activeFrequencyUnit=tuneUnit.value;
+ let activeFrequencyUnit='hz'; // The template provides the canonical frequency in Hz.
  function inputFrequencyHz(){const raw=String(tuneInput.value).trim().replace(',','.');return raw!==''&&/^[0-9]+(?:\.[0-9]*)?$/.test(raw)?Number(raw)*unitScale(activeFrequencyUnit):NaN;}
  function setFrequencyUnit(nextUnit){
    const hz=inputFrequencyHz();
