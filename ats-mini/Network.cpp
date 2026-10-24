@@ -401,7 +401,7 @@ static void webInit()
       }
       return output;
     };
-    String station, radioText;
+    String station, radioText, programType;
     if(currentMode == FM)
     {
       // getProgramInfo() is the RDS program type (e.g. "Pop Music"),
@@ -411,6 +411,8 @@ static void webInit()
       if(ps && ps[0]) station = ps;
       const char *rt = getRadioText();
       if(rt && rt[0]) radioText = rt;
+      const char *pty = getProgramInfo();
+      if(pty && pty[0]) programType = pty;
     }
     if(station.length() == 0)
     {
@@ -421,7 +423,7 @@ static void webInit()
       if(findMemoryName(freqHz, currentMode, 255, 255, memoryName) && memoryName[0])
         station = memoryName;
     }
-    String json = "{\"station\":\"" + jsonEscape(station.c_str()) + "\",\"text\":\"" + jsonEscape(radioText.c_str()) + "\"}";
+    String json = "{\\"station\\":\\"" + jsonEscape(station.c_str()) + "\\",\\"text\\":\\"" + jsonEscape(radioText.c_str()) + "\\",\\"pty\\":\\"" + jsonEscape(programType.c_str()) + "\\"}";
     AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
     response->addHeader("Cache-Control", "no-store");
     request->send(response);
