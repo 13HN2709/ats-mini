@@ -21,7 +21,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <LABEL FOR="radioFrequency" CLASS="LABEL" STYLE="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px">Frequency
       <SELECT ID="radioFrequencyUnit" aria-label="Frequency unit" STYLE="width:auto;min-width:86px"><OPTION VALUE="hz">Hz</OPTION><OPTION VALUE="khz">kHz</OPTION><OPTION VALUE="mhz">MHz</OPTION></SELECT>
     </LABEL>
-    <INPUT ID="radioFrequency" NAME="freq" TYPE="number" INPUTMODE="decimal" MIN="0" MAX="300000000" STEP="{{frequency_step_hz}}" VALUE="{{frequency_hz}}" STYLE="width:100%;min-width:0" REQUIRED>
+    <INPUT ID="radioFrequency" NAME="freq" TYPE="text" INPUTMODE="decimal" AUTOCOMPLETE="off" VALUE="{{frequency_hz}}" STYLE="width:100%;min-width:0" REQUIRED>
     <BUTTON TYPE="submit">TUNE</BUTTON>
   </FORM>
   <DIV ID="radioControlStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:8px">Enter a frequency supported by the current band.</DIV>
@@ -83,13 +83,13 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const frequencyStepHz=Number(tuneInput.step)||1000;
  const unitScale=unit=>unit==='mhz'?1000000:unit==='khz'?1000:1;
  let activeFrequencyUnit=tuneUnit.value;
- function inputFrequencyHz(){return Number(tuneInput.value)*unitScale(activeFrequencyUnit);}
+ function inputFrequencyHz(){const raw=String(tuneInput.value).trim().replace(',','.');return raw!==''&&/^[0-9]+(?:\\.[0-9]*)?$/.test(raw)?Number(raw)*unitScale(activeFrequencyUnit):NaN;}
  function setFrequencyUnit(nextUnit){
    const hz=inputFrequencyHz();
    tuneUnit.value=nextUnit;
    activeFrequencyUnit=nextUnit;
    tuneInput.value=Number.isFinite(hz)?(hz/unitScale(nextUnit)).toFixed(nextUnit==='mhz'?4:nextUnit==='khz'?3:0):'';
-   tuneInput.step=String(Math.max(1,frequencyStepHz/unitScale(nextUnit)));
+   tuneInput.dataset.step=String(Math.max(1,frequencyStepHz/unitScale(nextUnit)));
  }
  const initialHz=Number(tuneInput.value);
  setFrequencyUnit(initialHz>=64000000?'mhz':'khz');
@@ -279,7 +279,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const frequencyHz=Math.round(sample.f*(fmMode?10000:1000));
    status.textContent='Tuning to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'…';
    const ok=await postRadioCommand('/radio/tune',{freq:String(frequencyHz),mode:lastSpectrumMode},status);
-   if(ok) status.textContent='Tuned to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'. Spectrum retained; scan again whenever you want fresh measurements.';
+   if(ok){status.textContent='Tuned to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'. Updating receiver display…';setTimeout(()=>location.reload(),700);}
  });
  let restored=false;
  try{
