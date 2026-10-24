@@ -23,6 +23,7 @@ struct ScanPoint
 static ScanPoint *scanData = nullptr;
 
 static uint32_t scanTime = millis();
+static uint32_t scanTuneWaitStart = 0;
 static uint8_t  scanStatus = SCAN_OFF;
 
 static uint16_t scanStartFreq;
@@ -79,6 +80,7 @@ static void scanInitRange(uint16_t startFreq, uint16_t endFreq, uint16_t step)
   scanMaxSNR  = 0;
   scanStatus  = SCAN_RUN;
   scanTime    = millis();
+  scanTuneWaitStart = millis();
   scanStartFreq = startFreq;
   scanEndFreq = endFreq;
   // Keep the requested start frequency exact and clear the retained sample buffer.
@@ -96,19 +98,25 @@ static bool scanTickTime()
   // This is our current frequency to scan
   uint16_t freq = scanStartFreq + scanStep * scanCount;
 
-  // Poll for the tuning status
-  rx.getStatus(0, 0);
-  if(!rx.getTuneCompleteTriggered())
-  {
-    scanTime = millis();
-    return(true);
-  }
-
-  // If frequency not yet set, set it and wait until next call to measure
+  // Always issue the first tune command for this sample before waiting
+  // for a completion flag. After switching bands/modes, some receiver states
+  // do not expose a fresh tune-complete flag until a frequency is commanded.
   if(rx.getCurrentFrequency() != freq)
   {
     rx.setFrequency(freq); // Implies tuning delay
+    scanTuneWaitStart = millis();
     scanTime = millis() - SCAN_POLL_TIME;
+    return(true);
+  }
+
+  // Poll for the tuning status. Do not wait forever if the receiver does not
+  // raise the flag after a mode change; the signal-quality read below is still
+  // valid after the normal tuning delay has elapsed.
+  rx.getStatus(0, 0);
+  if(!rx.getTuneCompleteTriggered() &&
+     millis() - scanTuneWaitStart < 350)
+  {
+    scanTime = millis();
     return(true);
   }
 
@@ -130,7 +138,10 @@ static bool scanTickTime()
   if((++scanCount >= SCAN_POINTS) || freq > scanEndFreq || consumeAbortPending())
     scanStatus = SCAN_DONE;
   else
+  {
     rx.setFrequency(freq); // Implies tuning delay
+    scanTuneWaitStart = millis();
+  }
 
   // Save last scan time
   scanTime = millis() - SCAN_POLL_TIME;
