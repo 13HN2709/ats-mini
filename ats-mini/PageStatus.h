@@ -30,6 +30,17 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <DIV ID="memoryQuickStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:8px">Loading saved stations…</DIV>
   </DIV>
 </SECTION>
+<SECTION CLASS="STAT" ID="frequencyGuidePanel" STYLE="margin-top:14px;padding:0;overflow:hidden">
+  <BUTTON ID="frequencyGuideToggle" TYPE="button" aria-expanded="false" aria-controls="frequencyGuideList" STYLE="display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;background:transparent;border:0;color:inherit;text-align:left;cursor:pointer">
+    <SPAN STYLE="display:flex;align-items:center;gap:10px"><SPAN STYLE="color:#35e8ff;font-size:1.15em">&#128225;</SPAN><SPAN CLASS="EYEBROW" STYLE="margin:0">FREQUENCY GUIDE</SPAN><SMALL ID="frequencyGuideCount" CLASS="LABEL">World DX</SMALL></SPAN>
+    <SPAN ID="frequencyGuideArrow" STYLE="color:#35e8ff;font-size:1.1em">&#9662;</SPAN>
+  </BUTTON>
+  <DIV ID="frequencyGuideList" hidden STYLE="padding:0 12px 12px">
+    <DIV CLASS="LABEL" STYLE="margin:0 4px 10px">Worldwide reference frequencies · Tap an entry to tune. Reception and activity depend on propagation and schedule.</DIV>
+    <DIV ID="frequencyGuideGroups" STYLE="display:grid;gap:12px"></DIV>
+    <DIV ID="frequencyGuideStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:10px">Select a frequency to tune the receiver.</DIV>
+  </DIV>
+</SECTION>
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
   <DIV CLASS="EYEBROW">Radio controls</DIV>
   <FORM ID="radioTune" STYLE="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px">
@@ -151,6 +162,101 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    }catch(error){memoryCount.textContent='Unavailable';memoryStatus.textContent=error.message||'Could not load memories.';}
  }
  refreshQuickMemories();
+
+ // Built-in reference guide: static firmware data, independent of personal memories.
+ const guideToggle=document.getElementById('frequencyGuideToggle');
+ const guideList=document.getElementById('frequencyGuideList');
+ const guideArrow=document.getElementById('frequencyGuideArrow');
+ const guideGroups=document.getElementById('frequencyGuideGroups');
+ const guideStatus=document.getElementById('frequencyGuideStatus');
+ const guideEntries=[
+   {group:'DX BEACONS · NCDXF / IARU',items:[
+     {name:'20 m international beacon network',freq:14100000,mode:'USB',detail:'14.100 MHz · one of five coordinated beacon bands'},
+     {name:'17 m international beacon network',freq:18110000,mode:'USB',detail:'18.110 MHz · propagation beacon'},
+     {name:'15 m international beacon network',freq:21150000,mode:'USB',detail:'21.150 MHz · propagation beacon'},
+     {name:'12 m international beacon network',freq:24930000,mode:'USB',detail:'24.930 MHz · propagation beacon'},
+     {name:'10 m international beacon network',freq:28200000,mode:'USB',detail:'28.200 MHz · propagation beacon'}
+   ]},
+   {group:'DWD PINNEBERG · WEATHER / DATA',items:[
+     {name:'DWD RTTY / weather data',freq:3855000,mode:'USB',detail:'3.855 MHz · data signal; external decoder needed'},
+     {name:'DWD RTTY / weather data',freq:4583000,mode:'USB',detail:'4.583 MHz · data signal; external decoder needed'},
+     {name:'DWD RTTY / weather data',freq:7646000,mode:'USB',detail:'7.646 MHz · data signal; external decoder needed'},
+     {name:'DWD weather fax',freq:7880000,mode:'USB',detail:'7.880 MHz · scheduled weather fax; decoder needed'},
+     {name:'DWD RTTY / weather data',freq:10100800,mode:'USB',detail:'10.1008 MHz · data signal; external decoder needed'},
+     {name:'DWD RTTY / weather data',freq:11039000,mode:'USB',detail:'11.039 MHz · data signal; external decoder needed'},
+     {name:'DWD weather fax',freq:13882500,mode:'USB',detail:'13.8825 MHz · scheduled weather fax; decoder needed'},
+     {name:'DWD RTTY / weather data',freq:14467300,mode:'USB',detail:'14.4673 MHz · data signal; external decoder needed'}
+   ]},
+   {group:'TIME SIGNALS · AM',items:[
+     {name:'WWV / WWVH',freq:2500000,mode:'AM',detail:'2.500 MHz · international time and frequency signal'},
+     {name:'WWV / WWVH',freq:5000000,mode:'AM',detail:'5.000 MHz · international time and frequency signal'},
+     {name:'WWV / WWVH',freq:10000000,mode:'AM',detail:'10.000 MHz · international time and frequency signal'},
+     {name:'WWV / WWVH',freq:15000000,mode:'AM',detail:'15.000 MHz · international time and frequency signal'},
+     {name:'WWV',freq:20000000,mode:'AM',detail:'20.000 MHz · US time and frequency signal'},
+     {name:'WWV experimental',freq:25000000,mode:'AM',detail:'25.000 MHz · experimental; availability may change'}
+   ]},
+   {group:'SHORTWAVE · BROADCAST / DX',items:[
+     {name:'Shortwave broadcast band',freq:3950000,mode:'AM',detail:'3.950 MHz · evening listening; activity varies'},
+     {name:'60 m broadcast / utility region',freq:5000000,mode:'AM',detail:'5.000 MHz · signals vary by region and allocation'},
+     {name:'49 m broadcast band',freq:6000000,mode:'AM',detail:'6.000 MHz · often useful after sunset'},
+     {name:'41 m broadcast band',freq:7300000,mode:'AM',detail:'7.300 MHz · international broadcast region'},
+     {name:'31 m broadcast band',freq:9500000,mode:'AM',detail:'9.500 MHz · international shortwave broadcasts'},
+     {name:'25 m broadcast band',freq:11800000,mode:'AM',detail:'11.800 MHz · often useful in daytime'},
+     {name:'19 m broadcast band',freq:15100000,mode:'AM',detail:'15.100 MHz · daytime DX opportunities'},
+     {name:'16 m broadcast band',freq:17500000,mode:'AM',detail:'17.500 MHz · daytime DX opportunities'}
+   ]},
+   {group:'AMATEUR RADIO · DX / BEACONS',items:[
+     {name:'80 m amateur band (SSB activity)',freq:3700000,mode:'LSB',detail:'3.700 MHz · regional contacts, mainly evening'},
+     {name:'40 m amateur band (SSB activity)',freq:7100000,mode:'LSB',detail:'7.100 MHz · regional and long-distance contacts'},
+     {name:'20 m amateur band (SSB activity)',freq:14200000,mode:'USB',detail:'14.200 MHz · international activity'},
+     {name:'17 m amateur band (SSB activity)',freq:18130000,mode:'USB',detail:'18.130 MHz · long-distance contacts'},
+     {name:'15 m amateur band (SSB activity)',freq:21285000,mode:'USB',detail:'21.285 MHz · DX when the band is open'},
+     {name:'12 m amateur band (SSB activity)',freq:24950000,mode:'USB',detail:'24.950 MHz · DX when the band is open'},
+     {name:'10 m amateur band (SSB activity)',freq:28400000,mode:'USB',detail:'28.400 MHz · highly dependent on propagation'}
+   ]},
+   {group:'SIGNAL HUNTING · IDENTIFY BEFORE ASSUMING',items:[
+     {name:'HF data / buzzer hunting',freq:10150000,mode:'USB',detail:'10.150 MHz · listening spot only; no activity guaranteed'},
+     {name:'HF data / buzzer hunting',freq:14070000,mode:'USB',detail:'14.070 MHz · common digital-mode activity nearby; decoder needed'},
+     {name:'HF data / buzzer hunting',freq:21070000,mode:'USB',detail:'21.070 MHz · common digital-mode activity nearby; decoder needed'}
+   ]}
+ ];
+ guideToggle.addEventListener('click',()=>{
+   const expanded=guideToggle.getAttribute('aria-expanded')==='true';
+   guideToggle.setAttribute('aria-expanded',String(!expanded));
+   guideList.hidden=expanded;
+   guideArrow.innerHTML=expanded?'&#9662;':'&#9652;';
+ });
+ guideEntries.forEach(group=>{
+   const section=document.createElement('div');
+   section.style.cssText='border:1px solid #223b68;border-radius:8px;overflow:hidden';
+   const heading=document.createElement('div');
+   heading.textContent=group.group;
+   heading.style.cssText='padding:9px 10px;background:#091326;color:#80a0ff;font-size:.72rem;font-weight:800;letter-spacing:.08em';
+   const items=document.createElement('div');
+   items.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:6px;padding:8px';
+   group.items.forEach(entry=>{
+     const button=document.createElement('button');
+     button.type='button';
+     button.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;text-align:left;padding:9px;border:1px solid #344762;border-radius:6px;background:#101a2b;color:#eaf0ff;font:inherit;cursor:pointer';
+     const name=document.createElement('strong');name.textContent=entry.name;name.style.cssText='font-size:.82rem;line-height:1.25';
+     const freq=document.createElement('span');freq.textContent=(entry.freq>=1000000?(entry.freq/1000000).toFixed(entry.freq%1000000?4:3):(entry.freq/1000).toFixed(1))+' MHz'.replace(' MHz','')+(entry.freq>=1000000?' MHz':' kHz')+' · '+entry.mode;
+     freq.style.cssText='color:#35e8ff;font:700 .78rem monospace';
+     const detail=document.createElement('span');detail.textContent=entry.detail;detail.style.cssText='color:#8ea2ae;font-size:.7rem;line-height:1.3';
+     button.append(name,freq,detail);
+     button.title=entry.name+' · '+entry.detail;
+     button.addEventListener('click',async()=>{
+       guideStatus.textContent='Tuning to '+(entry.freq>=1000000?(entry.freq/1000000).toFixed(4)+' MHz':(entry.freq/1000).toFixed(1)+' kHz')+' ('+entry.mode+')…';
+       guideGroups.querySelectorAll('button').forEach(item=>item.disabled=true);
+       const ok=await postRadioCommand('/radio/tune',{freq:String(entry.freq),mode:entry.mode},guideStatus);
+       if(ok){guideStatus.textContent='Tune command queued. Receiver display will update…';setTimeout(()=>location.reload(),900);}
+       else guideGroups.querySelectorAll('button').forEach(item=>item.disabled=false);
+     });
+     items.append(button);
+   });
+   section.append(heading,items);guideGroups.append(section);
+ });
+ guideToggle.querySelector('#frequencyGuideCount').textContent=guideEntries.reduce((sum,group)=>sum+group.items.length,0)+' frequencies';
+
  const tuneForm=document.getElementById('radioTune');
  const tuneInput=document.getElementById('radioFrequency');
  const tuneUnit=document.getElementById('radioFrequencyUnit');
