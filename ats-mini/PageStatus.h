@@ -142,6 +142,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      });
    }catch(error){memoryCount.textContent='Unavailable';memoryStatus.textContent=error.message||'Could not load memories.';}
  }
+ refreshQuickMemories();
  const tuneForm=document.getElementById('radioTune');
  const tuneInput=document.getElementById('radioFrequency');
  const tuneUnit=document.getElementById('radioFrequencyUnit');
