@@ -1386,12 +1386,18 @@ void webSpectrumTick()
   const uint16_t savedFrequency = currentFrequency;
   const int8_t savedMode = currentMode;
   const int16_t savedBFO = currentBFO;
+  const uint8_t savedBandIdx = bandIdx;
   const int8_t scanMode = (customRange && requestedMode >= 0) ? requestedMode : currentMode;
   uint16_t center = currentFrequency;
   uint16_t step = currentMode == FM ? 10 : 1;
 
   if(customRange && requestedMode >= 0)
   {
+    // Enter ALL band before a non-FM sweep when the receiver was on VHF.
+    // Changing currentMode alone leaves the band's limits and calibration on
+    // VHF, which can break subsequent scans and tuning commands.
+    if(requestedMode != FM && bandIdx == 0)
+      selectBand(1, false);
     currentMode = requestedMode;
     if(currentMode == FM)
     {
@@ -1428,6 +1434,9 @@ void webSpectrumTick()
   {
     // Restore the original receiver state while retaining the scan modulation
     // separately, so selecting a peak can intentionally switch to that mode.
+    // Restore the actual band as well as mode/frequency after every sweep.
+    if(bandIdx != savedBandIdx)
+      selectBand(savedBandIdx, false);
     currentMode = savedMode;
     currentBFO = savedBFO;
     if(savedMode == FM)
