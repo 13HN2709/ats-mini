@@ -114,8 +114,15 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  tuneForm.addEventListener('submit',async event=>{
    event.preventDefault();
    const frequency=inputFrequencyHz();
-   if(!Number.isFinite(frequency)||frequency<100000||frequency>300000000){
-     controlStatus.textContent='Enter a valid frequency between 100 kHz and 300 MHz.';
+   const modeText=(document.querySelector('.HERO .MODE')?.textContent||'').trim();
+   const currentModeMatch=modeText.match(/(?:^|[·\\s])(FM|AM|USB|LSB)(?:$|[·\\s])/);
+   const currentMode=currentModeMatch?currentModeMatch[1]:'FM';
+   const minFrequency=currentMode==='FM'?64000000:150000;
+   const maxFrequency=currentMode==='FM'?108000000:30000000;
+   if(!Number.isFinite(frequency)||frequency<minFrequency||frequency>maxFrequency){
+     controlStatus.textContent=currentMode==='FM'
+       ?'Invalid frequency for FM (64–108 MHz). Receiver frequency was not changed.'
+       :'Invalid frequency for '+currentMode+' (150 kHz–30 MHz). Receiver frequency was not changed.';
      return;
    }
    const button=tuneForm.querySelector('button[type=submit]');
@@ -291,7 +298,6 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      modeButtons.forEach(item=>item.disabled=false);
    }
  }));
- spectrumForm.addEventListener('submit',start);
  spectrumForm.addEventListener('submit',start);
  canvas.addEventListener('click',async event=>{
    if(!peakPoints.length||!lastSamples.length)return;
