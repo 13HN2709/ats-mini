@@ -440,7 +440,7 @@ static void webInit()
       }
       return output;
     };
-    String json = "{\\"memories\\":[";
+    String json = "{\"memories\":[";
     bool first = true;
     for(int i = 0; i < getTotalMemories(); i++)
     {
@@ -448,13 +448,13 @@ static void webInit()
       if(!memory.freq || !memory.name[0] || memory.mode >= getTotalModes()) continue;
       if(!first) json += ",";
       first = false;
-      json += "{\\"slot\\":" + String(i) +
-              ",\\"name\\":\\"" + jsonEscape(memory.name) +
-              "\\",\\"freq\\":" + String(memory.freq) +
-              ",\\"mode\\":\\"" + jsonEscape(bandModeDesc[memory.mode]) +
-              "\\",\\"displayFrequency\\":\\"" +
+      json += "{\"slot\":" + String(i) +
+              ",\"name\":\"" + jsonEscape(memory.name) +
+              "\",\"freq\":" + String(memory.freq) +
+              ",\"mode\":\"" + jsonEscape(bandModeDesc[memory.mode]) +
+              "\",\"displayFrequency\":\"" +
               String(memory.mode == FM ? memory.freq / 1000000.0f : memory.freq / 1000.0f, memory.mode == FM ? 2 : 1) +
-              (memory.mode == FM ? " MHz\\"}" : " kHz\\"}");
+              (memory.mode == FM ? " MHz\"}" : " kHz\"}");
     }
     json += "]}";
     AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
