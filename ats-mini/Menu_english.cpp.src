@@ -959,15 +959,22 @@ bool clickHandler(uint16_t cmd, bool shortPress)
 
 void selectBand(uint8_t idx, bool drawLoadingPatch)
 {
+  // Expose the last reached stage to the web tune diagnostic endpoint.
+  extern volatile uint8_t webTunePhase;
+  webTunePhase = 8;
   muteOn(MUTE_TEMP, true);
   bandIdx = min(idx, LAST_ITEM(bands));
   currentMode = bands[bandIdx].bandMode;
+  webTunePhase = 9;
   loadDSPPatch(getCurrentBandwidth()->idx, drawLoadingPatch);
+  webTunePhase = 10;
   useBand(&bands[bandIdx]);
+  webTunePhase = 11;
   setBandwidth();
   clearStationInfo();
   identifyFrequency(currentFrequency + currentBFO / 1000);
   resetFreqInputPos();
+  webTunePhase = 12;
   muteOn(MUTE_TEMP, false);
 }
 
