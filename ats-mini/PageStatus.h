@@ -392,7 +392,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
        statusElement.textContent='Command accepted; waiting for receiver confirmation…';
        const deadline=Date.now()+6000;
        let lastState=null;
-       const phaseNames={0:'idle',1:'queued',2:'processing',3:'switching band',4:'configuring receiver',5:'reading receiver',6:'identifying station',7:'complete'};
+       const phaseNames={0:'idle',1:'queued',2:'processing',3:'switching band',4:'configuring receiver',5:'reading receiver',6:'identifying station',7:'complete',8:'selectBand: mute on',9:'selectBand: load DSP patch',10:'selectBand: configure receiver',11:'selectBand: bandwidth and station info',12:'selectBand: unmute'};
        while(Date.now()<deadline){
          await new Promise(resolve=>setTimeout(resolve,250));
          const stateResponse=await fetch('/radio/tune-status.json?ts='+Date.now(),{cache:'no-store'});
