@@ -109,7 +109,7 @@ static bool webParseUTCDateTime(const String &text, uint32_t *epoch);
 static const char *WEB_DIAG_PATH = "/web-diagnostics.log";
 void webDiagLog(const char *event)
 {
-  if(!event) return;
+  if(!event || !webDiagEnabled) return;
   if(LittleFS.exists(WEB_DIAG_PATH)) { File oldFile = LittleFS.open(WEB_DIAG_PATH, "r"); size_t oldSize = oldFile ? oldFile.size() : 0; if(oldFile) oldFile.close(); if(oldSize > 49152) LittleFS.remove(WEB_DIAG_PATH); }
   File file = LittleFS.open(WEB_DIAG_PATH, "a");
   if(!file) return;
