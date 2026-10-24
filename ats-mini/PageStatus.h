@@ -76,6 +76,15 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
 <P CLASS="SUB" STYLE="text-align:center;margin:16px 0 0">Offline-ready interface · Served directly by your ATS Mini</P>
 <SCRIPT>
 (()=>{
+ const LOG_KEY='atsControlDebugLog';
+ window.atsDebugLog=function(type,message){
+   try{const entries=JSON.parse(localStorage.getItem(LOG_KEY)||'[]');entries.push({time:new Date().toISOString(),type:String(type),message:String(message)});while(entries.length>250)entries.shift();localStorage.setItem(LOG_KEY,JSON.stringify(entries));}catch(_){}
+ };
+ window.addEventListener('error',e=>window.atsDebugLog('JS ERROR',e.message+' @ '+e.filename+':'+e.lineno));
+ window.addEventListener('unhandledrejection',e=>window.atsDebugLog('PROMISE ERROR',e.reason&&e.reason.message||e.reason||'unknown'));
+ window.atsDebugLog('PAGE','Radio page loaded');
+})();
+(()=>{
  const tuneForm=document.getElementById('radioTune');
  const tuneInput=document.getElementById('radioFrequency');
  const tuneUnit=document.getElementById('radioFrequencyUnit');
@@ -101,12 +110,15 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const volumeStatus=document.getElementById('radioVolumeStatus');
  async function postRadioCommand(path,params,statusElement){
    try{
+     if(window.atsDebugLog) window.atsDebugLog('REQUEST',path+' '+JSON.stringify(params));
      const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params),cache:'no-store'});
      const data=await response.json().catch(()=>({}));
-     if(!response.ok) throw new Error(data.message||data.error||'Radio command failed.');
+     if(!response.ok) throw new Error((data.message||data.error||'Radio command failed.')+' [HTTP '+response.status+']');
+     if(window.atsDebugLog) window.atsDebugLog('RESPONSE',path+' HTTP '+response.status+' '+JSON.stringify(data));
      statusElement.textContent=data.message||'Command accepted.';
      return true;
    }catch(error){
+     if(window.atsDebugLog) window.atsDebugLog('REQUEST ERROR',path+' '+(error.message||error));
      statusElement.textContent=error.message||'Radio command failed.';
      return false;
    }
@@ -217,6 +229,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  async function start(event){
    event.preventDefault();
    const selectedMode=modeInput.value;
+   if(window.atsDebugLog) window.atsDebugLog('SCAN','Start requested: mode='+selectedMode+', range='+startInput.value+'–'+endInput.value+', step='+stepInput.value);
    const startValue=Number(startInput.value),endValue=Number(endInput.value);
    const fm=selectedMode==='FM';
    const minValue=fm?64:150,maxValue=fm?108:30000;
@@ -239,7 +252,8 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    try{
      const params=new URLSearchParams({start_hz:String(startHz),end_hz:String(endHz),mode:selectedMode,step_hz:String(stepHz)});
      const start=await fetch('/spectrum/start',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params,cache:'no-store'});
-     if(!start.ok){const e=await start.json().catch(()=>({}));throw new Error(e.message||e.error||'Scan could not be started.');}
+     if(window.atsDebugLog) window.atsDebugLog('SCAN RESPONSE','/spectrum/start HTTP '+start.status);
+     if(!start.ok){const e=await start.json().catch(()=>({}));throw new Error((e.message||e.error||'Scan could not be started.')+' [HTTP '+start.status+']');}
      for(let i=0;i<45;i++){
        await new Promise(resolve=>setTimeout(resolve,1000));
        const response=await fetch('/spectrum.json',{cache:'no-store'});
@@ -249,12 +263,13 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
          lastSpectrumMode=data.mode||selectedMode;
          try{sessionStorage.setItem('atsSpectrumSnapshot',JSON.stringify({fm:!!data.fm,mode:lastSpectrumMode,samples:data.samples}));}catch(_){}
          status.textContent='Sweep complete · '+data.samples.length+' real RSSI samples. Run again to refresh.';
+         if(window.atsDebugLog) window.atsDebugLog('SCAN COMPLETE','mode='+lastSpectrumMode+', samples='+data.samples.length);
          return;
        }
        status.textContent='Measuring receiver signal… '+(i+1)+' s';
      }
      throw new Error('Sweep timed out. Try again.');
-   }catch(error){status.textContent=error.message||'Spectrum request failed.';}
+   }catch(error){if(window.atsDebugLog) window.atsDebugLog('SCAN ERROR',error.message||error);status.textContent=error.message||'Spectrum request failed.';}
    finally{button.disabled=false;tuneButton.disabled=false;stepDown.disabled=false;stepUp.disabled=false;volumeInput.disabled=false;startInput.disabled=false;endInput.disabled=false;stepInput.disabled=false;modeButtons.forEach(item=>item.disabled=false);}
  }
  function updateSpectrumMode(){
