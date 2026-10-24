@@ -16,6 +16,9 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   <DIV CLASS="FREQ LED-FREQ">{{{led_frequency}}}</DIV>
   <DIV CLASS="MODE">{{band}} &nbsp;·&nbsp; {{mode}} {{{stereo}}}</DIV>
   <DIV ID="rdsText" CLASS="FREQ LED-FREQ" STYLE="line-height:1.2;margin-top:12px;min-height:1.2em;overflow-wrap:anywhere;text-align:center"></DIV>
+  <DIV ID="rdsPtyRow" STYLE="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:8px;min-height:1.4em;color:#80a0ff;font-family:monospace;font-size:1rem;font-weight:700;letter-spacing:.06em;text-align:center;overflow-wrap:anywhere">
+    <SPAN STYLE="opacity:.75">PTY</SPAN><SPAN ID="rdsPty"></SPAN>
+  </DIV>
 </SECTION>
 <SECTION CLASS="STAT" ID="memoryQuickPanel" STYLE="margin-top:14px;padding:0;overflow:hidden">
   <BUTTON ID="memoryQuickToggle" TYPE="button" aria-expanded="false" aria-controls="memoryQuickList" STYLE="display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;background:transparent;border:0;color:inherit;text-align:left;cursor:pointer">
@@ -234,6 +237,8 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const status=document.getElementById('spectrumStatus');
  const rdsStation=document.getElementById('rdsStation');
  const rdsText=document.getElementById('rdsText');
+ const rdsPty=document.getElementById('rdsPty');
+ const rdsPtyRow=document.getElementById('rdsPtyRow');
  async function refreshRds(){
    try{
      const response=await fetch('/rds.json',{cache:'no-store'});
@@ -241,6 +246,8 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      const data=await response.json();
      if(rdsStation)rdsStation.textContent=data.station||'';
      if(rdsText)rdsText.textContent=data.text||'';
+     if(rdsPty)rdsPty.textContent=data.pty||'';
+     if(rdsPtyRow)rdsPtyRow.style.display=data.pty?'flex':'none';
    }catch(_){}
  }
  refreshRds();
