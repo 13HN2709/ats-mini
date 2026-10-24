@@ -19,7 +19,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   <DIV CLASS="EYEBROW">Radio controls</DIV>
   <FORM ID="radioTune" STYLE="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px">
     <LABEL FOR="radioFrequency" CLASS="LABEL" STYLE="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px">Frequency
-      <SELECT ID="radioFrequencyUnit" aria-label="Frequency unit" STYLE="width:auto;min-width:86px"><OPTION VALUE="hz">Hz</OPTION><OPTION VALUE="khz">kHz</OPTION><OPTION VALUE="mhz">MHz</OPTION></SELECT>
+      <SELECT ID="radioFrequencyUnit" aria-label="Frequency unit" STYLE="width:auto;min-width:86px"><OPTION VALUE="khz" SELECTED>kHz</OPTION><OPTION VALUE="mhz">MHz</OPTION></SELECT>
     </LABEL>
     <INPUT ID="radioFrequency" NAME="freq" TYPE="text" INPUTMODE="decimal" AUTOCOMPLETE="off" VALUE="{{frequency_hz}}" STYLE="width:100%;min-width:0" REQUIRED>
     <BUTTON TYPE="submit">TUNE</BUTTON>
