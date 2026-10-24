@@ -423,7 +423,7 @@ static void webInit()
       if(findMemoryName(freqHz, currentMode, 255, 255, memoryName) && memoryName[0])
         station = memoryName;
     }
-    String json = "{\\"station\\":\\"" + jsonEscape(station.c_str()) + "\\",\\"text\\":\\"" + jsonEscape(radioText.c_str()) + "\\",\\"pty\\":\\"" + jsonEscape(programType.c_str()) + "\\"}";
+    String json = "{\"station\":\"" + jsonEscape(station.c_str()) + "\",\"text\":\"" + jsonEscape(radioText.c_str()) + "\",\"pty\":\"" + jsonEscape(programType.c_str()) + "\"}";
     AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
     response->addHeader("Cache-Control", "no-store");
     request->send(response);
