@@ -17,6 +17,16 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   <DIV CLASS="MODE">{{band}} &nbsp;·&nbsp; {{mode}} {{{stereo}}}</DIV>
   <DIV ID="rdsText" CLASS="FREQ LED-FREQ" STYLE="line-height:1.2;margin-top:12px;min-height:1.2em;overflow-wrap:anywhere;text-align:center"></DIV>
 </SECTION>
+<SECTION CLASS="STAT" ID="memoryQuickPanel" STYLE="margin-top:14px;padding:0;overflow:hidden">
+  <BUTTON ID="memoryQuickToggle" TYPE="button" aria-expanded="false" aria-controls="memoryQuickList" STYLE="display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;background:transparent;border:0;color:inherit;text-align:left;cursor:pointer">
+    <SPAN STYLE="display:flex;align-items:center;gap:10px"><SPAN STYLE="color:#80a0ff;font-size:1.15em">&#9835;</SPAN><SPAN CLASS="EYEBROW" STYLE="margin:0">MEMORIES</SPAN><SMALL ID="memoryQuickCount" CLASS="LABEL">Loading…</SMALL></SPAN>
+    <SPAN ID="memoryQuickArrow" STYLE="color:#80a0ff;font-size:1.1em">&#9662;</SPAN>
+  </BUTTON>
+  <DIV ID="memoryQuickList" hidden STYLE="padding:0 12px 12px">
+    <DIV ID="memoryQuickItems" STYLE="display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:7px"></DIV>
+    <DIV ID="memoryQuickStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:8px">Loading saved stations…</DIV>
+  </DIV>
+</SECTION>
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
   <DIV CLASS="EYEBROW">Radio controls</DIV>
   <FORM ID="radioTune" STYLE="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px">
@@ -87,6 +97,51 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  window.atsDebugLog('PAGE','Radio page loaded');
 })();
 (()=>{
+ const memoryToggle=document.getElementById('memoryQuickToggle');
+ const memoryList=document.getElementById('memoryQuickList');
+ const memoryItems=document.getElementById('memoryQuickItems');
+ const memoryCount=document.getElementById('memoryQuickCount');
+ const memoryStatus=document.getElementById('memoryQuickStatus');
+ const memoryArrow=document.getElementById('memoryQuickArrow');
+ memoryToggle.addEventListener('click',()=>{
+   const expanded=memoryToggle.getAttribute('aria-expanded')==='true';
+   memoryToggle.setAttribute('aria-expanded',String(!expanded));
+   memoryList.hidden=expanded;
+   memoryArrow.innerHTML=expanded?'&#9662;':'&#9652;';
+ });
+ async function refreshQuickMemories(){
+   try{
+     const response=await fetch('/memories.json',{cache:'no-store'});
+     if(!response.ok)throw Error('Could not load memories.');
+     const data=await response.json();
+     memoryItems.replaceChildren();
+     const saved=Array.isArray(data.memories)?data.memories:[];
+     memoryCount.textContent=saved.length+' saved';
+     if(!saved.length){memoryStatus.textContent='No named stations saved yet.';return;}
+     memoryStatus.textContent='Tap a station to tune the receiver.';
+     saved.forEach(memory=>{
+       const button=document.createElement('button');
+       button.type='button';
+       button.style.cssText='display:flex;align-items:center;gap:8px;min-width:0;text-align:left;padding:10px;border:1px solid #344762;border-radius:8px;background:#101a2b;color:#eaf0ff;font:inherit;cursor:pointer';
+       const icon=document.createElement('span');
+       icon.textContent='♫';
+       icon.style.cssText='color:#80a0ff;font-size:1.15em;flex-shrink:0';
+       const label=document.createElement('span');
+       label.textContent=memory.name;
+       label.style.cssText='overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700';
+       button.append(icon,label);
+       button.title=memory.name+' · '+memory.displayFrequency+' · '+memory.mode;
+       button.addEventListener('click',async()=>{
+         memoryStatus.textContent='Tuning to '+memory.name+'…';
+         memoryItems.querySelectorAll('button').forEach(item=>item.disabled=true);
+         const ok=await postRadioCommand('/radio/tune',{freq:String(memory.freq),mode:memory.mode},memoryStatus);
+         if(ok){memoryStatus.textContent='Tuned to '+memory.name+'. Updating receiver display…';setTimeout(()=>location.reload(),700);}
+         else memoryItems.querySelectorAll('button').forEach(item=>item.disabled=false);
+       });
+       memoryItems.append(button);
+     });
+   }catch(error){memoryCount.textContent='Unavailable';memoryStatus.textContent=error.message||'Could not load memories.';}
+ }
  const tuneForm=document.getElementById('radioTune');
  const tuneInput=document.getElementById('radioFrequency');
  const tuneUnit=document.getElementById('radioFrequencyUnit');
