@@ -11,11 +11,11 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
 </DIV>
 {{{navigation}}}
 <SECTION CLASS="HERO" STYLE="padding:20px 14px 22px">
-  <DIV ID="rdsStation" CLASS="FREQ LED-FREQ" STYLE="font-size:clamp(1.6rem,5.5vw,2.5rem);line-height:1.2;min-height:1.2em;overflow-wrap:anywhere;text-align:center"> </DIV>
+  <DIV ID="rdsStation" CLASS="FREQ LED-FREQ" STYLE="line-height:1.2;min-height:1.2em;overflow-wrap:anywhere;text-align:center"> </DIV>
   <DIV CLASS="EYEBROW" STYLE="margin:4px 0 8px">Now receiving</DIV>
   <DIV CLASS="FREQ LED-FREQ">{{{led_frequency}}}</DIV>
   <DIV CLASS="MODE">{{band}} &nbsp;·&nbsp; {{mode}} {{{stereo}}}</DIV>
-  <DIV ID="rdsText" CLASS="FREQ LED-FREQ" STYLE="font-size:clamp(1.6rem,5.5vw,2.5rem);line-height:1.2;margin-top:12px;min-height:1.2em;overflow-wrap:anywhere;text-align:center"></DIV>
+  <DIV ID="rdsText" CLASS="FREQ LED-FREQ" STYLE="line-height:1.2;margin-top:12px;min-height:1.2em;overflow-wrap:anywhere;text-align:center"></DIV>
 </SECTION>
 <SECTION CLASS="STAT" STYLE="margin-top:14px">
   <DIV CLASS="EYEBROW">Radio controls</DIV>
