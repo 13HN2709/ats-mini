@@ -239,7 +239,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      button.type='button';
      button.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;text-align:left;padding:9px;border:1px solid #344762;border-radius:6px;background:#101a2b;color:#eaf0ff;font:inherit;cursor:pointer';
      const name=document.createElement('strong');name.textContent=entry.name;name.style.cssText='font-size:.82rem;line-height:1.25';
-     const freq=document.createElement('span');freq.textContent=(entry.freq>=1000000?(entry.freq/1000000).toFixed(entry.freq%1000000?4:3):(entry.freq/1000).toFixed(1))+' MHz'.replace(' MHz','')+(entry.freq>=1000000?' MHz':' kHz')+' · '+entry.mode;
+     const freq=document.createElement('span');freq.textContent=(entry.freq>=1000000?(entry.freq/1000000).toFixed(entry.freq%1000?4:3)+' MHz':(entry.freq/1000).toFixed(1)+' kHz')+' · '+entry.mode;
      freq.style.cssText='color:#35e8ff;font:700 .78rem monospace';
      const detail=document.createElement('span');detail.textContent=entry.detail;detail.style.cssText='color:#8ea2ae;font-size:.7rem;line-height:1.3';
      button.append(name,freq,detail);
