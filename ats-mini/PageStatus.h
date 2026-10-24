@@ -391,11 +391,14 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
        const requestId=Number(data.request_id);
        statusElement.textContent='Command accepted; waiting for receiver confirmation…';
        const deadline=Date.now()+6000;
+       let lastState=null;
+       const phaseNames={0:'idle',1:'queued',2:'processing',3:'switching band',4:'configuring receiver',5:'reading receiver',6:'identifying station',7:'complete'};
        while(Date.now()<deadline){
          await new Promise(resolve=>setTimeout(resolve,250));
          const stateResponse=await fetch('/radio/tune-status.json?ts='+Date.now(),{cache:'no-store'});
          if(!stateResponse.ok) continue;
          const state=await stateResponse.json();
+         lastState=state;
          if(Number(state.completed_id)!==requestId) continue;
          const modeNames={0:'FM',1:'LSB',2:'USB',3:'AM'};
          const actualMode=modeNames[Number(state.actual_mode)]||'unknown mode';
@@ -411,8 +414,9 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
          if(window.atsDebugLog) window.atsDebugLog('TUNE MISMATCH','/radio/tune '+JSON.stringify(state));
          return false;
        }
-       statusElement.textContent='Tune command was accepted, but receiver confirmation timed out. Check the radio status.';
-       if(window.atsDebugLog) window.atsDebugLog('TUNE TIMEOUT','/radio/tune request_id='+requestId);
+       const lastPhase=lastState?phaseNames[Number(lastState.phase)]||'unknown':'status unavailable';
+       statusElement.textContent='Tune confirmation timed out. Last phase: '+lastPhase+'. Check the debug log.';
+       if(window.atsDebugLog) window.atsDebugLog('TUNE TIMEOUT','/radio/tune request_id='+requestId+' last_state='+JSON.stringify(lastState));
        return false;
      }
      return true;
