@@ -308,14 +308,18 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     let startHz=Math.max(150000,Math.floor(entry.freq/1000)*1000),endHz=Math.min(30000000,startHz+1000);
     if(endHz<=startHz){startHz=endHz-1000;}
     const params=new URLSearchParams({start_hz:String(startHz),end_hz:String(endHz),mode,step_hz:String(step)});
+    if(window.atsDebugLog) window.atsDebugLog('GUIDE SCAN REQUEST','/spectrum/start '+JSON.stringify({start_hz:startHz,end_hz:endHz,mode,step_hz:step}));
     const started=await fetch('/spectrum/start',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params,cache:'no-store'});
-    if(!started.ok){const error=await started.json().catch(()=>({}));throw new Error(error.message||error.error||'Could not start scan');}
+    const startData=await started.json().catch(()=>({}));
+    if(window.atsDebugLog) window.atsDebugLog('GUIDE SCAN RESPONSE','/spectrum/start HTTP '+started.status+' '+JSON.stringify(startData));
+    if(!started.ok){throw new Error(startData.message||startData.error||'Could not start scan [HTTP '+started.status+']');}
     for(let wait=0;wait<45;wait++){
       if(guideScanCancelled)return null;
       await new Promise(resolve=>setTimeout(resolve,700));
-      const response=await fetch('/spectrum.json',{cache:'no-store'});if(!response.ok)throw new Error('Receiver scan request failed.');
+      const response=await fetch('/spectrum.json',{cache:'no-store'});if(!response.ok)throw new Error('Receiver scan request failed [HTTP '+response.status+'].');
       const data=await response.json();
       if(data.ready&&data.samples&&data.samples.length){
+        if(window.atsDebugLog) window.atsDebugLog('GUIDE SCAN RESULT','/spectrum.json '+JSON.stringify({ready:data.ready,count:data.samples.length,mode:data.mode}));
         const target=Math.round(entry.freq/1000);let sample=data.samples[0];
         for(const point of data.samples){if(Math.abs(point.f-target)<Math.abs(sample.f-target))sample=point;}
         return {r:Number(sample.r)||0,s:Number(sample.s)||0};
@@ -337,7 +341,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
         completed++;
       }
       guideScanProgress.textContent=(guideScanCancelled?'Scan stopped':'Scan complete')+' · '+completed+' / '+entries.length+' checked · '+hits+' signal indications. Tap TUNE to listen.';
-    }catch(error){guideScanProgress.textContent='Scan stopped at '+completed+' / '+entries.length+': '+(error.message||'unknown error');}
+    }catch(error){guideScanProgress.textContent='Scan stopped at '+completed+' / '+entries.length+': '+(error.message||'unknown error');if(window.atsDebugLog)window.atsDebugLog('GUIDE SCAN ERROR','/spectrum/start or /spectrum.json '+(error.message||error));}
     finally{guideScanStart.disabled=false;guideScanStop.disabled=true;guideGroups.querySelectorAll('button').forEach(item=>item.disabled=false);}
   });
   guideScanStop.addEventListener('click',()=>{guideScanCancelled=true;guideScanStop.disabled=true;guideScanProgress.textContent='Stopping after the current receiver sweep…';});
