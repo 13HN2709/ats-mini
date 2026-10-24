@@ -94,6 +94,7 @@ static volatile int8_t webTuneTargetMode = -1;
 static volatile int8_t webTuneResult = 0; // 0 pending, 1 confirmed, 2 frequency mismatch
 static volatile uint32_t webTuneActualHz = 0;
 static volatile int8_t webTuneActualMode = -1;
+static volatile uint8_t webTunePhase = 0; // 0 idle, 1 queued, 2 processing, 3 switching band, 4 configuring receiver, 5 reading receiver, 6 identifying station, 7 complete
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -482,7 +483,8 @@ static void webInit()
       ",\"target_hz\":" + String((uint32_t)webTuneTargetHz) +
       ",\"actual_hz\":" + String((uint32_t)webTuneActualHz) +
       ",\"target_mode\":" + String((int)webTuneTargetMode) +
-      ",\"actual_mode\":" + String((int)webTuneActualMode) + "}";
+      ",\"actual_mode\":" + String((int)webTuneActualMode) +
+      ",\"phase\":" + String((int)webTunePhase) + "}";
     AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
     response->addHeader("Cache-Control", "no-store");
     request->send(response);
@@ -530,6 +532,7 @@ static void webInit()
     webTuneTargetHz = (uint32_t)freqHz;
     webTuneTargetMode = targetMode;
     webTuneResult = 0;
+    webTunePhase = 1;
     webTuneRequestedMode = modeProvided ? targetMode : -1;
     webTuneFrequencyHz = freqHz;
     String response = "{\"message\":\"Tune command queued.\",\"request_id\":" + String(requestId) + "}";
@@ -1451,6 +1454,7 @@ void webSpectrumTick()
     webTuneFrequencyHz = 0;
     int8_t requestedMode = webTuneRequestedMode;
     webTuneRequestedMode = -1;
+    webTunePhase = 2;
     if(requestedMode >= 0)
     {
       // An explicit web tune must configure the receiver for the requested
@@ -1461,8 +1465,12 @@ void webSpectrumTick()
       // If switching from the VHF/FM band to HF, move the band state to ALL
       // before configuring AM/SSB so band limits and calibration are correct.
       if(requestedMode != FM && bandIdx == 0)
+      {
+        webTunePhase = 3;
         selectBand(1, false);
+      }
 
+      webTunePhase = 4;
       currentMode = requestedMode;
       uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
       if(currentMode == FM)
@@ -1477,6 +1485,7 @@ void webSpectrumTick()
         if(currentMode == USB) rx.setSSBBfo(-(currentBFO + (activeBand ? activeBand->usbCal : 0)));
         else rx.setSSBBfo(-(currentBFO + (activeBand ? activeBand->lsbCal : 0)));
       }
+      webTunePhase = 5;
       currentFrequency = rx.getFrequency();
       Band *activeBand = getCurrentBand();
       if(activeBand) activeBand->currentFreq = currentFrequency;
@@ -1491,6 +1500,7 @@ void webSpectrumTick()
     currentFrequency = rx.getFrequency();
     Band *band = getCurrentBand();
     if(band) band->currentFreq = currentFrequency;
+    webTunePhase = 6;
     clearStationInfo();
     identifyFrequency(currentFrequency + currentBFO / 1000);
     webTuneActualHz = (uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL);
@@ -1500,6 +1510,7 @@ void webSpectrumTick()
     webTuneResult = (webTuneActualMode == webTuneTargetMode &&
                      (webTuneActualHz > expectedHz ? webTuneActualHz - expectedHz : expectedHz - webTuneActualHz) <=
                      (currentMode == FM ? 10000UL : 1000UL)) ? 1 : 2;
+    webTunePhase = 7;
     webTuneCompletedId = webTuneRequestId;
   }
   if(!webSpectrumRequested) return;
