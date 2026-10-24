@@ -87,6 +87,13 @@ static volatile uint16_t webSpectrumEndFreq = 0;
 static volatile bool webSpectrumCustomRange = false;
 static volatile int8_t webSpectrumRequestedMode = -1;
 static volatile uint16_t webSpectrumStep = 1;
+static volatile uint32_t webTuneRequestId = 0;
+static volatile uint32_t webTuneCompletedId = 0;
+static volatile uint32_t webTuneTargetHz = 0;
+static volatile int8_t webTuneTargetMode = -1;
+static volatile int8_t webTuneResult = 0; // 0 pending, 1 confirmed, 2 frequency mismatch
+static volatile uint32_t webTuneActualHz = 0;
+static volatile int8_t webTuneActualMode = -1;
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -467,6 +474,20 @@ static void webInit()
     request->send(response);
   });
 
+  server.on("/radio/tune-status.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    String json = "{\"request_id\":" + String((uint32_t)webTuneRequestId) +
+      ",\"completed_id\":" + String((uint32_t)webTuneCompletedId) +
+      ",\"result\":" + String((int)webTuneResult) +
+      ",\"target_hz\":" + String((uint32_t)webTuneTargetHz) +
+      ",\"actual_hz\":" + String((uint32_t)webTuneActualHz) +
+      ",\"target_mode\":" + String((int)webTuneTargetMode) +
+      ",\"actual_mode\":" + String((int)webTuneActualMode) + "}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
+  });
+
   server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Radio tuning is unavailable during a spectrum sweep.\"}");
@@ -503,9 +524,16 @@ static void webInit()
          (isSSB() && targetFreq == activeBand->maximumFreq && (freqHz % 1000UL)))
         return request->send(422, "application/json", "{\"message\":\"Frequency is outside the current band's limits. Receiver frequency was not changed.\"}");
     }
+    uint32_t requestId = (uint32_t)webTuneRequestId + 1;
+    if(requestId == 0) requestId = 1;
+    webTuneRequestId = requestId;
+    webTuneTargetHz = (uint32_t)freqHz;
+    webTuneTargetMode = targetMode;
+    webTuneResult = 0;
     webTuneRequestedMode = modeProvided ? targetMode : -1;
     webTuneFrequencyHz = freqHz;
-    return request->send(202, "application/json", "{\"message\":\"Tune command queued.\"}");
+    String response = "{\"message\":\"Tune command queued.\",\"request_id\":" + String(requestId) + "}";
+    return request->send(202, "application/json", response);
   });
   server.on("/radio/step", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
@@ -1465,6 +1493,14 @@ void webSpectrumTick()
     if(band) band->currentFreq = currentFrequency;
     clearStationInfo();
     identifyFrequency(currentFrequency + currentBFO / 1000);
+    webTuneActualHz = (uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL);
+    webTuneActualMode = currentMode;
+    uint32_t expectedHz = (uint32_t)freqFromHz((uint32_t)requestedHz, currentMode) *
+                          (currentMode == FM ? 10000UL : 1000UL);
+    webTuneResult = (webTuneActualMode == webTuneTargetMode &&
+                     (webTuneActualHz > expectedHz ? webTuneActualHz - expectedHz : expectedHz - webTuneActualHz) <=
+                     (currentMode == FM ? 10000UL : 1000UL)) ? 1 : 2;
+    webTuneCompletedId = webTuneRequestId;
   }
   if(!webSpectrumRequested) return;
   webSpectrumRequested = false;
