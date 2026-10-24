@@ -28,6 +28,7 @@
 #include <LittleFS.h>
 #include <time.h>
 #include <esp_heap_caps.h>
+#include <esp_system.h>
 
 #define CONNECT_TIME  3000  // Time of inactivity to start connecting WiFi
 #define WIFI_MULTI_TOTAL_TIMEOUT  30000
@@ -104,6 +105,18 @@ static void webPatchesComplete(AsyncWebServerRequest *request);
 static void webUploadPatch(AsyncWebServerRequest *request, const String &filename,
                            size_t index, uint8_t *data, size_t len, bool final);
 static bool webParseUTCDateTime(const String &text, uint32_t *epoch);
+
+static const char *WEB_DIAG_PATH = "/web-diagnostics.log";
+void webDiagLog(const char *event)
+{
+  if(!event) return;
+  if(LittleFS.exists(WEB_DIAG_PATH)) { File oldFile = LittleFS.open(WEB_DIAG_PATH, "r"); size_t oldSize = oldFile ? oldFile.size() : 0; if(oldFile) oldFile.close(); if(oldSize > 49152) LittleFS.remove(WEB_DIAG_PATH); }
+  File file = LittleFS.open(WEB_DIAG_PATH, "a");
+  if(!file) return;
+  file.printf("%lu ms | %s | phase=%u freq=%u mode=%u band=%d heap=%u\n", (unsigned long)millis(), event, (unsigned)webTunePhase, (unsigned)currentFrequency, (unsigned)currentMode, bandIdx, (unsigned)ESP.getFreeHeap());
+  file.flush(); file.close();
+}
+
 
 static String webPage(const char *body, const char *title, std::initializer_list<PageValue> values,
                       std::initializer_list<PageFragment> fragments = {});
@@ -473,6 +486,13 @@ static void webInit()
     AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
     response->addHeader("Cache-Control", "no-store");
     request->send(response);
+  });
+
+  server.on("/radio/diagnostics.log", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(!LittleFS.exists(WEB_DIAG_PATH)) return request->send(404, "text/plain", "No diagnostic log yet.");
+    AsyncWebServerResponse *response = request->beginResponse(LittleFS, WEB_DIAG_PATH, "text/plain", true);
+    response->addHeader("Cache-Control", "no-store"); response->addHeader("Content-Disposition", "attachment; filename=ats-mini-diagnostics.log"); request->send(response);
   });
 
   server.on("/radio/tune-status.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
@@ -1455,6 +1475,7 @@ void webSpectrumTick()
     int8_t requestedMode = webTuneRequestedMode;
     webTuneRequestedMode = -1;
     webTunePhase = 2;
+    webDiagLog("TUNE START");
     if(requestedMode >= 0)
     {
       // An explicit web tune must configure the receiver for the requested
@@ -1467,10 +1488,11 @@ void webSpectrumTick()
       if(requestedMode != FM && bandIdx == 0)
       {
         webTunePhase = 3;
-        selectBand(1, false);
+        { webDiagLog("TUNE before selectBand ALL"); selectBand(1, false); webDiagLog("TUNE after selectBand ALL"); }
       }
 
       webTunePhase = 4;
+      webDiagLog("TUNE before receiver configuration");
       currentMode = requestedMode;
       uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
       if(currentMode == FM)
@@ -1485,6 +1507,7 @@ void webSpectrumTick()
         if(currentMode == USB) rx.setSSBBfo(-(currentBFO + (activeBand ? activeBand->usbCal : 0)));
         else rx.setSSBBfo(-(currentBFO + (activeBand ? activeBand->lsbCal : 0)));
       }
+      webDiagLog("TUNE receiver configuration returned");
       webTunePhase = 5;
       currentFrequency = rx.getFrequency();
       Band *activeBand = getCurrentBand();
@@ -1512,6 +1535,7 @@ void webSpectrumTick()
                      (currentMode == FM ? 10000UL : 1000UL)) ? 1 : 2;
     webTunePhase = 7;
     webTuneCompletedId = webTuneRequestId;
+    webDiagLog("TUNE COMPLETE");
   }
   if(!webSpectrumRequested) return;
   webSpectrumRequested = false;
