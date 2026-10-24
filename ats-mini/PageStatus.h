@@ -260,12 +260,38 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    else {startInput.value='3000';endInput.value='3600';stepInput.value='5000';}
    Array.from(stepInput.options).forEach(option=>{option.disabled=(fm&&option.value!=='100000')||(!fm&&option.value==='100000');});
  }
- modeButtons.forEach(button=>button.addEventListener('click',()=>{
-   modeInput.value=button.dataset.mode;
+ // Restore the selected modulation after the page reloads so the user can
+ // switch the receiver mode immediately and still keep the matching scan range.
+ let savedScanMode='FM';
+ try{savedScanMode=sessionStorage.getItem('atsSpectrumMode')||'FM';}catch(_){}
+ if(['FM','AM','USB','LSB'].includes(savedScanMode)) modeInput.value=savedScanMode;
+ modeButtons.forEach(item=>item.classList.toggle('ACTIVE',item.dataset.mode===modeInput.value));
+ updateSpectrumMode();
+
+ let modeSwitchBusy=false;
+ modeButtons.forEach(button=>button.addEventListener('click',async()=>{
+   const selectedMode=button.dataset.mode;
+   modeInput.value=selectedMode;
    modeButtons.forEach(item=>item.classList.toggle('ACTIVE',item===button));
    updateSpectrumMode();
+   try{sessionStorage.setItem('atsSpectrumMode',selectedMode);}catch(_){}
+   if(modeSwitchBusy) return;
+   modeSwitchBusy=true;
+   modeButtons.forEach(item=>item.disabled=true);
+   status.textContent='Switching receiver to '+selectedMode+'…';
+   // Non-FM modes use a safe shortwave starting frequency (3000 kHz).
+   // FM keeps the receiver at 88 MHz until the scan is explicitly started.
+   const targetHz=selectedMode==='FM'?88000000:3000000;
+   const ok=await postRadioCommand('/radio/tune',{freq:String(targetHz),mode:selectedMode},status);
+   if(ok){
+     status.textContent='Receiver switched to '+selectedMode+'. Set the range and press SCAN RANGE.';
+     setTimeout(()=>location.reload(),800);
+   }else{
+     modeSwitchBusy=false;
+     modeButtons.forEach(item=>item.disabled=false);
+   }
  }));
- updateSpectrumMode();
+ spectrumForm.addEventListener('submit',start);
  spectrumForm.addEventListener('submit',start);
  canvas.addEventListener('click',async event=>{
    if(!peakPoints.length||!lastSamples.length)return;
