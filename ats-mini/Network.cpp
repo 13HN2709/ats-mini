@@ -424,6 +424,44 @@ static void webInit()
     request->send(response);
   });
 
+  server.on("/memories.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    auto jsonEscape = [](const char *input) -> String {
+      String output;
+      if(!input) return output;
+      while(*input)
+      {
+        const unsigned char c = (unsigned char)*input++;
+        if(c == '"' || c == '\\') { output += '\\'; output += (char)c; }
+        else if(c == '\n') output += "\\n";
+        else if(c == '\r') output += "\\r";
+        else if(c == '\t') output += "\\t";
+        else if(c >= 0x20) output += (char)c;
+      }
+      return output;
+    };
+    String json = "{\\"memories\\":[";
+    bool first = true;
+    for(int i = 0; i < getTotalMemories(); i++)
+    {
+      const Memory memory = getMemory(i);
+      if(!memory.freq || !memory.name[0] || memory.mode >= getTotalModes()) continue;
+      if(!first) json += ",";
+      first = false;
+      json += "{\\"slot\\":" + String(i) +
+              ",\\"name\\":\\"" + jsonEscape(memory.name) +
+              "\\",\\"freq\\":" + String(memory.freq) +
+              ",\\"mode\\":\\"" + jsonEscape(bandModeDesc[memory.mode]) +
+              "\\",\\"displayFrequency\\":\\"" +
+              String(memory.mode == FM ? memory.freq / 1000000.0f : memory.freq / 1000.0f, memory.mode == FM ? 2 : 1) +
+              (memory.mode == FM ? " MHz\\"}" : " kHz\\"}");
+    }
+    json += "]}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
+  });
+
   server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
     if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Radio tuning is unavailable during a spectrum sweep.\"}");
