@@ -232,6 +232,11 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      {name:'12 m amateur band (SSB activity)',freq:24950000,mode:'USB',detail:'24.950 MHz · DX when the band is open'},
      {name:'10 m amateur band (SSB activity)',freq:28400000,mode:'USB',detail:'28.400 MHz · highly dependent on propagation'}
    ]},
+   {group:'MYSTERY SIGNALS · NUMBERS STATIONS',items:[
+     {name:'The Buzzer · UVB-76 / UZB-76',freq:4625000,mode:'USB',detail:'4.625 MHz · Russian military channel marker; voice messages sometimes interrupt the buzzing'},
+     {name:'V32 · Persian numbers station',freq:7910000,mode:'USB',detail:'7.910 MHz · Persian number groups; reported daily at 02:00 and 18:00 UTC in 2026'},
+     {name:'V32 · alternate / interference frequency',freq:7842000,mode:'USB',detail:'7.842 MHz · reported alternate frequency after jamming; activity may vary'}
+   ]},
    {group:'SIGNAL HUNTING · IDENTIFY BEFORE ASSUMING',items:[
      {name:'HF data / buzzer hunting',freq:10150000,mode:'USB',detail:'10.150 MHz · listening spot only; no activity guaranteed'},
      {name:'HF data / buzzer hunting',freq:14070000,mode:'USB',detail:'14.070 MHz · common digital-mode activity nearby; decoder needed'},
