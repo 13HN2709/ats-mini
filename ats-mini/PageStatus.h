@@ -229,6 +229,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  async function start(event){
    event.preventDefault();
    const selectedMode=modeInput.value;
+   saveSpectrumRange();
    if(window.atsDebugLog) window.atsDebugLog('SCAN','Start requested: mode='+selectedMode+', range='+startInput.value+'–'+endInput.value+', step='+stepInput.value);
    lastSamples=[];peakPoints=[];lastSpectrumMode=selectedMode;
    try{sessionStorage.removeItem('atsSpectrumSnapshotV2');}catch(_){}
@@ -275,15 +276,30 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    }catch(error){if(window.atsDebugLog) window.atsDebugLog('SCAN ERROR',error.message||error);status.textContent=error.message||'Spectrum request failed.';}
    finally{button.disabled=false;tuneButton.disabled=false;stepDown.disabled=false;stepUp.disabled=false;volumeInput.disabled=false;startInput.disabled=false;endInput.disabled=false;stepInput.disabled=false;modeButtons.forEach(item=>item.disabled=false);}
  }
- function updateSpectrumMode(){
+ function saveSpectrumRange(){
+   try{sessionStorage.setItem('atsSpectrumRangeV1',JSON.stringify({mode:modeInput.value,start:startInput.value,end:endInput.value,step:stepInput.value}));}catch(_){}
+ }
+ function updateSpectrumMode(restoreSaved=false){
    const fm=modeInput.value==='FM';
    unitStart.textContent=fm?'MHz':'kHz';unitEnd.textContent=fm?'MHz':'kHz';
    startInput.min=fm?'64':'150';endInput.min=fm?'64':'150';
    startInput.max=fm?'108':'30000';endInput.max=fm?'108':'30000';
    startInput.step=fm?'0.1':'1';endInput.step=fm?'0.1':'1';
-   if(fm){startInput.value='88.00';endInput.value='108.00';stepInput.value='100000';}
-   else {startInput.value='3000';endInput.value='3600';stepInput.value='5000';}
+   let restoredRange=null;
+   if(restoreSaved){try{restoredRange=JSON.parse(sessionStorage.getItem('atsSpectrumRangeV1')||'null');}catch(_){}}
+   const savedMatches=restoredRange&&restoredRange.mode===modeInput.value;
+   const startValue=savedMatches?Number(restoredRange.start):Number(startInput.value);
+   const endValue=savedMatches?Number(restoredRange.end):Number(endInput.value);
+   const minValue=fm?64:150,maxValue=fm?108:30000;
+   const valid=Number.isFinite(startValue)&&Number.isFinite(endValue)&&startValue>=minValue&&endValue<=maxValue&&endValue>startValue;
+   if(valid){startInput.value=String(startValue);endInput.value=String(endValue);}
+   else if(fm){startInput.value='88.00';endInput.value='108.00';}
+   else {startInput.value='3000';endInput.value='3600';}
+   if(savedMatches&&restoredRange.step)stepInput.value=restoredRange.step;
+   else if(!valid)stepInput.value=fm?'100000':'5000';
    Array.from(stepInput.options).forEach(option=>{option.disabled=(fm&&option.value!=='100000')||(!fm&&option.value==='100000');});
+   if(fm)stepInput.value='100000';
+   else if(stepInput.value==='100000')stepInput.value='5000';
  }
  // Restore the selected modulation after the page reloads so the user can
  // switch the receiver mode immediately and still keep the matching scan range.
@@ -291,7 +307,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  try{savedScanMode=sessionStorage.getItem('atsSpectrumMode')||'FM';}catch(_){}
  if(['FM','AM','USB','LSB'].includes(savedScanMode)) modeInput.value=savedScanMode;
  modeButtons.forEach(item=>item.classList.toggle('ACTIVE',item.dataset.mode===modeInput.value));
- updateSpectrumMode();
+ updateSpectrumMode(true);
 
  let modeSwitchBusy=false;
  modeButtons.forEach(button=>button.addEventListener('click',async()=>{
@@ -299,7 +315,9 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const selectedMode=button.dataset.mode;
    modeInput.value=selectedMode;
    modeButtons.forEach(item=>item.classList.toggle('ACTIVE',item===button));
+   // Preserve a user-entered range when switching modulation; only use defaults if it is invalid for the new mode.
    updateSpectrumMode();
+   saveSpectrumRange();
    if(previousMode!==selectedMode){
      lastSamples=[];peakPoints=[];lastSpectrumMode=selectedMode;
      try{sessionStorage.removeItem('atsSpectrumSnapshotV2');}catch(_){}
@@ -314,10 +332,12 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    status.textContent='Switching receiver to '+selectedMode+'…';
    // Non-FM modes use a safe shortwave starting frequency (3000 kHz).
    // FM keeps the receiver at 88 MHz until the scan is explicitly started.
-   const targetHz=selectedMode==='FM'?88000000:3000000;
+   const rangeStart=Number(startInput.value);
+   const targetHz=Math.round(rangeStart*(selectedMode==='FM'?1000000:1000));
    const ok=await postRadioCommand('/radio/tune',{freq:String(targetHz),mode:selectedMode},status);
    if(ok){
-     status.textContent='Receiver switched to '+selectedMode+'. Set the range and press SCAN RANGE.';
+     saveSpectrumRange();
+     status.textContent='Receiver switched to '+selectedMode+' and tuned to '+startInput.value+' '+(selectedMode==='FM'?'MHz':'kHz')+'. Press SCAN RANGE to scan this range.';
      setTimeout(()=>location.reload(),800);
    }else{
      modeSwitchBusy=false;
