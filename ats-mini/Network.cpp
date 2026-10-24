@@ -1423,12 +1423,15 @@ void webSpectrumTick()
     webTuneFrequencyHz = 0;
     int8_t requestedMode = webTuneRequestedMode;
     webTuneRequestedMode = -1;
-    if(requestedMode >= 0 && requestedMode != currentMode)
+    if(requestedMode >= 0)
     {
-      // The web controller may request USB/LSB while the radio is still on
-      // the VHF/FM band. Switch the actual band state to ALL first, otherwise
-      // the receiver is reconfigured for SSB while bandIdx and band limits
-      // still describe VHF. ALL is bands[1] in the stock band table.
+      // An explicit web tune must configure the receiver for the requested
+      // mode even when currentMode already has that value. The stored mode can
+      // get out of sync with the physical receiver after a spectrum scan or
+      // a previous mode switch; changing frequency alone would then leave the
+      // receiver on the old modulation.
+      // If switching from the VHF/FM band to HF, move the band state to ALL
+      // before configuring AM/SSB so band limits and calibration are correct.
       if(requestedMode != FM && bandIdx == 0)
         selectBand(1, false);
 
@@ -1449,11 +1452,6 @@ void webSpectrumTick()
       currentFrequency = rx.getFrequency();
       Band *activeBand = getCurrentBand();
       if(activeBand) activeBand->currentFreq = currentFrequency;
-    }
-    else if(requestedMode >= 0)
-    {
-      uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
-      rx.setFrequency(targetFreq);
     }
     else
     {
