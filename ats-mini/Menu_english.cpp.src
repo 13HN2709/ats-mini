@@ -1668,58 +1668,6 @@ static void drawInfo(int x, int y, int sx)
 }
 
 
-static const char *fullMenuDescription(int idx)
-{
-  static const char *const mainDescriptions[] = {
-    "Select FM, AM, USB or LSB reception.",
-    "Choose the frequency band.",
-    "Adjust the audio playback volume.",
-    "Enter a frequency directly with the keypad.",
-    "Switch reception between two VFOs.",
-    "Manage the two A and B frequency slots.",
-    "Tune the frequency with the encoder.",
-    "Fine-tune audio pitch during SSB reception.",
-    "Set the tuning step size.",
-    "Search for the next receivable station.",
-    "Start or stop the scanning process.",
-    "Manage a station frequency memory.",
-    "Mutes signals below the squelch threshold.",
-    "Set the receiver bandwidth.",
-    "Adjust automatic gain control and attenuation.",
-    "Adjust automatic volume control.",
-    "Reduce interference from weak signals.",
-    "Open additional radio and display options."
-  };
-  static const char *const settingsDescriptions[] = {
-    "Adjust display brightness.",
-    "Set the date and time.",
-    "Set the local time offset from UTC.",
-    "Set the automatic sleep timer.",
-    "Choose sleep-mode behaviour.",
-    "Select the interface colour theme.",
-    "Choose the display layout.",
-    "Show menu items in a larger size.",
-    "Set the menu scroll direction.",
-    "Configure RDS information and display options.",
-    "Choose stereo or mono FM reception.",
-    "Select the FM region and frequency spacing.",
-    "Adjust SSB frequency calibration.",
-    "Manage receiver DSP patches.",
-    "Load the EiBi broadcast schedule.",
-    "Check for a firmware update.",
-    "Configure the USB connection mode.",
-    "Configure the TCP connection mode.",
-    "Configure Bluetooth features.",
-    "Configure Wi-Fi networking.",
-    "Show firmware and device information.",
-    "Enable the diagnostic log for troubleshooting."
-  };
-  if(currentCmd == CMD_SETTINGS)
-    return settingsDescriptions[wrap_range(idx, 0, 0, LAST_ITEM(settings))];
-  return mainDescriptions[wrap_range(idx, 0, 0, LAST_ITEM(menu))];
-}
-
-
 static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
 {
   // Large, high-contrast vector icons sized for the XXL menu.
