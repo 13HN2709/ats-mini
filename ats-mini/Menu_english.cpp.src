@@ -1,5 +1,6 @@
 #include "math.h"
 #include "Common.h"
+#include "XXLMenuIcons.h"
 #include "Themes.h"
 #include "Utils.h"
 #include "Draw.h"
@@ -1668,89 +1669,13 @@ static void drawInfo(int x, int y, int sx)
 }
 
 
-static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
+static static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
 {
-  // High-contrast vector icons, framed larger for the XXL menu.
-  if(settingsPage) {
-    switch(idx) {
-      case 0: // Brightness
-        spr.drawCircle(x+23,y+23,7,color); spr.drawCircle(x+23,y+23,3,color);
-        spr.drawLine(x+15,y,x+23,y+8,color); spr.drawLine(x+23,y+39,x+23,y+45,color);
-        spr.drawLine(x,y+15,x+8,y+23,color); spr.drawLine(x+39,y+23,x+45,y+23,color); break;
-      case 1: case 2: // Date / UTC
-        spr.drawRoundRect(x+5,y+8,17,16,2,color); spr.drawLine(x+5,y+17,x+41,y+17,color);
-        spr.drawLine(x+9,y,x+14,y+12,color); spr.drawLine(x+23,y,x+35,y+12,color); break;
-      case 3: case 4: // Sleep
-        spr.drawCircle(x+23,y+23,8,color); spr.drawLine(x+23,y+9,x+23,y+23,color);
-        spr.drawLine(x+23,y+23,x+35,y+30,color); break;
-      case 5: case 6: case 7: case 8: // UI appearance / scroll
-        spr.drawRoundRect(x+3,y+5,19,16,2,color); spr.drawLine(x+3,y+17,x+44,y+17,color);
-        spr.drawLine(x+17,y+21,x+17,y+36,color); spr.drawLine(x+30,y+21,x+30,y+36,color); break;
-      case 9: case 10: case 11: // FM/RDS
-        spr.drawCircle(x+23,y+23,3,color); spr.drawCircle(x+23,y+23,7,color);
-        spr.drawLine(x+23,y+23,x+44,y+3,color); break;
-      case 12: case 13: // Calibration / DSP
-        spr.drawLine(x+3,y+9,x+44,y+9,color); spr.drawLine(x+3,y+23,x+44,y+23,color);
-        spr.drawLine(x+3,y+36,x+44,y+36,color); spr.fillCircle(x+14,y+9,2,color);
-        spr.fillCircle(x+32,y+23,2,color); spr.fillCircle(x+21,y+36,2,color); break;
-      case 14: case 15: // EiBi / update
-        spr.drawRoundRect(x+8,y+3,14,19,2,color); spr.drawLine(x+14,y+14,x+32,y+14,color);
-        spr.drawLine(x+14,y+23,x+32,y+23,color); spr.drawLine(x+14,y+32,x+27,y+32,color); break;
-      case 16: case 17: // USB/TCP
-        spr.drawLine(x+23,y+44,x+23,y+5,color); spr.drawLine(x+23,y+5,x+9,y+18,color);
-        spr.drawLine(x+23,y+5,x+36,y+18,color); spr.drawLine(x+9,y+18,x+9,y+30,color);
-        spr.drawLine(x+36,y+18,x+36,y+30,color); break;
-      case 18: case 19: // Bluetooth / Wi-Fi
-        spr.drawLine(x+15,y,x+23,y+45,color); spr.drawLine(x+23,y+5,x+41,y+17,color);
-        spr.drawLine(x+41,y+17,x+23,y+23,color); spr.drawLine(x+23,y+23,x+41,y+32,color);
-        spr.drawLine(x+41,y+32,x+23,y+45,color); break;
-      default:
-        spr.drawCircle(x+23,y+23,8,color); spr.drawLine(x+23,y+18,x+23,y+32,color);
-        spr.fillCircle(x+23,y+12,1,color); break;
-    }
-    return;
-  }
-  switch(idx) {
-    case 0: // Mode
-      spr.drawCircle(x+23,y+23,4,color); spr.drawCircle(x+23,y+23,8,color);
-      spr.drawLine(x+23,y+23,x+44,y+3,color); break;
-    case 1: // Band
-      spr.drawLine(x+8,y+44,x+8,y+27,color); spr.drawLine(x+23,y+44,x+23,y+17,color);
-      spr.drawLine(x+39,y+44,x+39,y+5,color); break;
-    case 2: // Volume
-      spr.fillRect(x+5,y+17,5,8,color); spr.drawLine(x+17,y+17,x+35,y+5,color);
-      spr.drawLine(x+17,y+35,x+35,y+45,color); spr.drawLine(x+39,y+12,x+45,y+39,color); break;
-    case 3: // Keypad
-      spr.drawRoundRect(x+3,y+3,19,19,2,color); spr.fillCircle(x+14,y+14,2,color);
-      spr.fillCircle(x+35,y+14,2,color); spr.fillCircle(x+14,y+35,2,color);
-      spr.fillCircle(x+35,y+35,2,color); break;
-    case 4: case 5: // Dual RX / VFO
-      spr.drawCircle(x+12,y+23,4,color); spr.drawCircle(x+36,y+23,4,color);
-      spr.drawLine(x+21,y+23,x+27,y+23,color); break;
-    case 6: case 7: // Frequency / BFO
-      spr.drawLine(x+3,y+39,x+12,y+26,color); spr.drawLine(x+12,y+26,x+21,y+32,color);
-      spr.drawLine(x+21,y+32,x+32,y+9,color); spr.drawLine(x+32,y+9,x+45,y+18,color); break;
-    case 8: case 9: case 10: // Step / seek / scan
-      spr.drawLine(x+3,y+9,x+45,y+9,color); spr.drawLine(x+3,y+23,x+35,y+23,color);
-      spr.drawLine(x+3,y+36,x+45,y+36,color); break;
-    case 11: // Memory
-      spr.drawRoundRect(x+8,y+3,15,19,2,color); spr.drawLine(x+14,y+14,x+35,y+14,color);
-      spr.drawLine(x+14,y+23,x+35,y+23,color); spr.drawLine(x+14,y+32,x+30,y+32,color); break;
-    case 12: // Squelch
-      spr.drawLine(x+3,y+9,x+45,y+9,color); spr.drawLine(x+8,y+9,x+18,y+27,color);
-      spr.drawLine(x+41,y+9,x+30,y+27,color); spr.drawLine(x+18,y+27,x+18,y+44,color);
-      spr.drawLine(x+30,y+27,x+30,y+44,color); break;
-    case 13: case 14: case 15: case 16: // Bandwidth / AGC / AVC / Softmute
-      spr.drawLine(x+3,y+9,x+45,y+9,color); spr.drawLine(x+3,y+23,x+45,y+23,color);
-      spr.drawLine(x+3,y+36,x+45,y+36,color); spr.fillCircle(x+17,y+9,2,color);
-      spr.fillCircle(x+35,y+23,2,color); spr.fillCircle(x+23,y+36,2,color); break;
-    default:
-      spr.drawCircle(x+23,y+23,7,color); spr.drawCircle(x+23,y+23,3,color);
-      spr.drawLine(x+15,y,x+23,y+8,color); spr.drawLine(x+23,y+39,x+23,y+45,color);
-      spr.drawLine(x,y+15,x+8,y+23,color); spr.drawLine(x+39,y+23,x+45,y+23,color); break;
-  }
+  const int icon = settingsPage
+    ? (idx >= 0 && idx < (int)sizeof(XXL_ICON_SETTINGS_MAP) ? XXL_ICON_SETTINGS_MAP[idx] : 0)
+    : (idx >= 0 && idx < (int)sizeof(XXL_ICON_MENU_MAP) ? XXL_ICON_MENU_MAP[idx] : 0);
+  drawXXLBitmapIcon(icon, x, y, color);
 }
-
 
 // XXL menu text renderer: explicit UTF-8 umlauts and stronger strokes.
 // Kept local to the full-screen menu so radio layouts remain unchanged.
