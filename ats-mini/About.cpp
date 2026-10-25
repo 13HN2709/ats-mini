@@ -5,12 +5,12 @@
 #include "Draw.h"
 
 // ATS Mini About pages: compact vector artwork, optimized for 320x170 pixels.
-static constexpr uint16_t ABOUT_BG      = 0x0008;
-static constexpr uint16_t ABOUT_PANEL   = 0x000F;
-static constexpr uint16_t ABOUT_BLUE    = 0x041F;
+static constexpr uint16_t ABOUT_BG      = 0x0000;
+static constexpr uint16_t ABOUT_PANEL   = 0x0000;
+static constexpr uint16_t ABOUT_BLUE    = 0x001F;
 static constexpr uint16_t ABOUT_CYAN    = 0x07FF;
 static constexpr uint16_t ABOUT_GREEN   = 0x07FF;
-static constexpr uint16_t ABOUT_RED     = 0xF800;
+static constexpr uint16_t ABOUT_RED     = 0x07FF;
 static constexpr uint16_t ABOUT_WHITE   = 0xFFFF;
 static constexpr uint16_t ABOUT_MUTED   = 0xBDF7;
 static constexpr uint16_t ABOUT_EARTH   = 0x039F;
