@@ -82,7 +82,7 @@ int8_t menuIdx = MENU_KEYPAD;
 static const char *menu[] =
 {
   "AM-SSB",
-  "BAENDER",
+  "BÄNDER",
   "LAUTST.",
   "KEYPAD",
   "DUAL RX",
@@ -1657,6 +1657,129 @@ static void drawInfo(int x, int y, int sx)
     spr.drawString(label, 6+x, 64+y+(2*16), FONT_SMALL);
     spr.drawString(clock, 48+x, 64+y+(2*16), FONT_SMALL);
   }
+}
+
+
+static const char *fullMenuDescription(int idx)
+{
+  static const char *const mainDescriptions[] = {
+    "Wählt FM, AM, USB oder LSB.",
+    "Wählt das Frequenzband.",
+    "Regelt die Wiedergabelautstärke.",
+    "Frequenz direkt über das Keypad eingeben.",
+    "Empfang zwischen zwei VFOs wechseln.",
+    "Zwei Frequenzplätze A und B verwalten.",
+    "Frequenz mit dem Drehgeber abstimmen.",
+    "Feinabstimmung der Tonhöhe bei SSB.",
+    "Legt die Abstimmungsschrittweite fest.",
+    "Sucht den nächsten empfangbaren Sender.",
+    "Startet oder beendet den Suchlauf.",
+    "Senderfrequenz als Speicherplatz verwalten.",
+    "Blendet schwache Signale unterhalb der Schwelle aus.",
+    "Legt die Empfangsbandbreite fest.",
+    "Regelt automatische Verstärkung und Dämpfung.",
+    "Regelt die automatische Lautstärkeanpassung.",
+    "Reduziert Störungen durch schwache Signale.",
+    "Öffnet weitere Geräte- und Anzeigeoptionen."
+  };
+  static const char *const settingsDescriptions[] = {
+    "Stellt die Displayhelligkeit ein.",
+    "Uhrzeit und Datum einstellen.",
+    "Lokalen Zeitversatz zu UTC festlegen.",
+    "Automatische Abschaltzeit einstellen.",
+    "Verhalten im Schlafmodus festlegen.",
+    "Farbschema der Oberfläche auswählen.",
+    "Display-Layout auswählen.",
+    "Menüelemente vergrößert anzeigen.",
+    "Scrollrichtung des Menüs einstellen.",
+    "RDS-Informationen und Anzeigeoptionen.",
+    "Stereo- oder Monoempfang für UKW.",
+    "UKW-Frequenzraster und Region wählen.",
+    "SSB-Frequenzkalibrierung anpassen.",
+    "DSP-Patches für den Empfang verwalten.",
+    "EiBi-Sendeplan laden.",
+    "Nach einer Firmwareaktualisierung suchen.",
+    "USB-Verbindungsmodus einstellen.",
+    "TCP-Verbindungsmodus einstellen.",
+    "Bluetooth-Funktion konfigurieren.",
+    "WLAN-Verbindung konfigurieren.",
+    "Firmware- und Geräteinformationen anzeigen.",
+    "Diagnoseprotokoll für die Fehlersuche aktivieren."
+  };
+  if(currentCmd == CMD_SETTINGS)
+    return settingsDescriptions[wrap_range(idx, 0, 0, LAST_ITEM(settings))];
+  return mainDescriptions[wrap_range(idx, 0, 0, LAST_ITEM(menu))];
+}
+
+void drawFullScreenMenu(uint16_t cmd)
+{
+  const uint16_t bg = 0x0000;
+  const uint16_t blue = 0x001F;
+  const uint16_t cyan = 0x07FF;
+  const uint16_t white = 0xFFFF;
+  const uint16_t muted = 0x7BEF;
+  const bool settingsPage = cmd == CMD_SETTINGS;
+  const int idx = settingsPage ? settingsIdx : menuIdx;
+  const int count = settingsPage ? ITEM_COUNT(settings) : ITEM_COUNT(menu);
+  const char *title = settingsPage ? "EINSTELLUNGEN" : "HAUPTMENÜ";
+  const char *selected = settingsPage ? settingLabel(idx) : menu[idx];
+  const char *previous = settingsPage ? settingLabel((idx + count - 1) % count) : menu[(idx + count - 1) % count];
+  const char *next = settingsPage ? settingLabel((idx + 1) % count) : menu[(idx + 1) % count];
+
+  spr.fillSprite(bg);
+  spr.drawRect(3, 3, 314, 164, blue);
+  spr.fillRect(4, 4, 312, 23, 0x0841);
+  spr.setTextDatum(TL_DATUM);
+  spr.setTextColor(cyan);
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.drawString(title, 12, 9);
+  spr.setTextDatum(TR_DATUM);
+  spr.setTextColor(muted);
+  spr.setFont(FONT_SMALL);
+  char counter[12];
+  snprintf(counter, sizeof(counter), "%02d / %02d", idx + 1, count);
+  spr.drawString(counter, 307, 9);
+
+  spr.setTextDatum(TL_DATUM);
+  spr.setTextColor(muted);
+  spr.setFont(FONT_SMALL);
+  spr.drawString(previous, 14, 34);
+
+  spr.fillRoundRect(8, 51, 304, 70, 5, 0x082A);
+  spr.drawRoundRect(8, 51, 304, 70, 5, blue);
+  spr.fillRect(8, 51, 3, 70, cyan);
+  spr.setTextColor(cyan);
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.drawString(selected, 18, 59);
+
+  spr.setTextColor(white);
+  spr.setFont(FONT_SMALL);
+  const char *description = fullMenuDescription(idx);
+  char line[48];
+  size_t len = strlen(description);
+  size_t split = len;
+  if(len > 39) {
+    split = 39;
+    while(split > 0 && description[split] != ' ') split--;
+    if(split == 0) split = 39;
+  }
+  if(split >= sizeof(line)) split = sizeof(line) - 1;
+  memcpy(line, description, split);
+  line[split] = '\0';
+  spr.drawString(line, 18, 82);
+  if(len > split) {
+    const char *second = description + split;
+    while(*second == ' ') second++;
+    spr.drawString(second, 18, 99);
+  }
+
+  spr.setTextColor(muted);
+  spr.drawString(next, 14, 130);
+  spr.drawLine(10, 151, 310, 151, blue);
+  spr.setTextColor(cyan);
+  spr.drawString("DREHEN: AUSWÄHLEN", 12, 154);
+  spr.setTextDatum(TR_DATUM);
+  spr.drawString("KLICK: ÖFFNEN", 308, 154);
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
