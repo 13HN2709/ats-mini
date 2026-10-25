@@ -74,8 +74,8 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   <FORM ID="spectrumRange" CLASS="RANGE-FORM">
     <LABEL>START <SPAN ID="spectrumUnitStart">MHz</SPAN><INPUT ID="spectrumStartMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="88.00" REQUIRED></LABEL>
     <LABEL>STOP <SPAN ID="spectrumUnitEnd">MHz</SPAN><INPUT ID="spectrumEndMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="108.00" REQUIRED></LABEL>
-    <LABEL STYLE="grid-column:1/-1">MODULATION<DIV ID="spectrumModes" STYLE="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:6px"><BUTTON TYPE="button" CLASS="MOD-BUTTON ACTIVE" DATA-MODE="FM">FM</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="AM">AM</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="USB">USB</BUTTON><BUTTON TYPE="button" CLASS="MOD-BUTTON" DATA-MODE="LSB">LSB</BUTTON></DIV></LABEL>
-    <LABEL>STEP<SELECT ID="spectrumStep" STYLE="width:100%;margin-top:6px"><OPTION VALUE="100000" SELECTED>100 kHz</OPTION><OPTION VALUE="1000">1 kHz</OPTION><OPTION VALUE="5000">5 kHz</OPTION><OPTION VALUE="10000">10 kHz</OPTION><OPTION VALUE="25000">25 kHz</OPTION></SELECT></LABEL>
+    <LABEL>MODULATION<DIV STYLE="margin-top:6px;padding:10px 12px;border:1px solid #167bff;background:#102a55;color:#eaf0ff;font-weight:800;text-align:center">FM ONLY</DIV></LABEL>
+    <LABEL>STEP<SELECT ID="spectrumStep" STYLE="width:100%;margin-top:6px"><OPTION VALUE="100000" SELECTED>100 kHz</OPTION></SELECT></LABEL>
     <BUTTON ID="spectrumStart" TYPE="submit">▶ SCAN RANGE</BUTTON>
   </FORM>
   <DIV CLASS="SPECTRUM-FRAME">
@@ -405,7 +405,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  const startInput=document.getElementById('spectrumStartMHz');
  const endInput=document.getElementById('spectrumEndMHz');
  const modeInput={value:'FM'};
- const modeButtons=Array.from(document.querySelectorAll('[data-mode]'));
+ const modeButtons=[]; // Spectrum scanning is intentionally FM-only.
  const stepInput=document.getElementById('spectrumStep');
  const unitStart=document.getElementById('spectrumUnitStart');
  const unitEnd=document.getElementById('spectrumUnitEnd');
@@ -489,13 +489,13 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    try{sessionStorage.removeItem('atsSpectrumSnapshotV2');}catch(_){}
    draw([]);
    const startValue=Number(startInput.value),endValue=Number(endInput.value);
-   const fm=selectedMode==='FM';
-   const minValue=fm?64:150,maxValue=fm?108:30000;
+   const fm=true;
+   const minValue=64,maxValue=108;
    const stepHz=Number(stepInput.value);
-   const startHz=Math.round(startValue*(fm?1000000:1000));
-   const endHz=Math.round(endValue*(fm?1000000:1000));
+   const startHz=Math.round(startValue*1000000);
+   const endHz=Math.round(endValue*1000000);
    if(!Number.isFinite(startValue)||!Number.isFinite(endValue)||startValue<minValue||endValue>maxValue||endValue<=startValue){
-     status.textContent=fm?'Enter a valid FM range: 64–108 MHz.':'Enter a valid AM/SSB range: 150–30000 kHz.';
+     status.textContent='Enter a valid FM range: 64–108 MHz.';
      return;
    }
    if(Math.floor((endHz-startHz)/stepHz)+1>256){
@@ -534,32 +534,30 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    try{sessionStorage.setItem('atsSpectrumRangeV1',JSON.stringify({mode:modeInput.value,start:startInput.value,end:endInput.value,step:stepInput.value}));}catch(_){}
  }
  function updateSpectrumMode(restoreSaved=false){
-   const fm=modeInput.value==='FM';
-   unitStart.textContent=fm?'MHz':'kHz';unitEnd.textContent=fm?'MHz':'kHz';
-   startInput.min=fm?'64':'150';endInput.min=fm?'64':'150';
-   startInput.max=fm?'108':'30000';endInput.max=fm?'108':'30000';
-   startInput.step=fm?'0.1':'1';endInput.step=fm?'0.1':'1';
+   const fm=true;
+   unitStart.textContent='MHz';unitEnd.textContent='MHz';
+   startInput.min='64';endInput.min='64';
+   startInput.max='108';endInput.max='108';
+   startInput.step='0.1';endInput.step='0.1';
    let restoredRange=null;
    if(restoreSaved){try{restoredRange=JSON.parse(sessionStorage.getItem('atsSpectrumRangeV1')||'null');}catch(_){}}
    const savedMatches=restoredRange&&restoredRange.mode===modeInput.value;
    const startValue=savedMatches?Number(restoredRange.start):Number(startInput.value);
    const endValue=savedMatches?Number(restoredRange.end):Number(endInput.value);
-   const minValue=fm?64:150,maxValue=fm?108:30000;
+   const minValue=64,maxValue=108;
    const valid=Number.isFinite(startValue)&&Number.isFinite(endValue)&&startValue>=minValue&&endValue<=maxValue&&endValue>startValue;
    if(valid){startInput.value=String(startValue);endInput.value=String(endValue);}
    else if(fm){startInput.value='88.00';endInput.value='108.00';}
-   else {startInput.value='3000';endInput.value='3600';}
+   else {startInput.value='88.00';endInput.value='108.00';}
    if(savedMatches&&restoredRange.step)stepInput.value=restoredRange.step;
    else if(!valid)stepInput.value=fm?'100000':'5000';
-   Array.from(stepInput.options).forEach(option=>{option.disabled=(fm&&option.value!=='100000')||(!fm&&option.value==='100000');});
-   if(fm)stepInput.value='100000';
-   else if(stepInput.value==='100000')stepInput.value='5000';
+   stepInput.value='100000';
  }
  // Restore the selected modulation after the page reloads so the user can
  // switch the receiver mode immediately and still keep the matching scan range.
  let savedScanMode='FM';
- try{savedScanMode=sessionStorage.getItem('atsSpectrumMode')||'FM';}catch(_){}
- if(['FM','AM','USB','LSB'].includes(savedScanMode)) modeInput.value=savedScanMode;
+ modeInput.value='FM';
+ try{sessionStorage.setItem('atsSpectrumMode','FM');}catch(_){}
  modeButtons.forEach(item=>item.classList.toggle('ACTIVE',item.dataset.mode===modeInput.value));
  updateSpectrumMode(true);
 
@@ -616,10 +614,10 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
  let restored=false;
  try{
    const saved=JSON.parse(sessionStorage.getItem('atsSpectrumSnapshotV2')||'null');
-   if(saved&&Array.isArray(saved.samples)&&saved.samples.length>1){
-     draw(saved.samples,!!saved.fm);
-     lastSpectrumMode=saved.mode||(saved.fm?'FM':'AM');
-     status.textContent='Previous sweep restored · '+saved.samples.length+' samples. Scan again whenever you want fresh measurements.';
+   if(saved&&saved.fm===true&&Array.isArray(saved.samples)&&saved.samples.length>1){
+     draw(saved.samples,true);
+     lastSpectrumMode='FM';
+     status.textContent='Previous FM sweep restored · '+saved.samples.length+' samples. Scan again whenever you want fresh measurements.';
      restored=true;
    }
  }catch(_){}
