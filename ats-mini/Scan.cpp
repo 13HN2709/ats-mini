@@ -169,7 +169,10 @@ static void scanRunRangeInternal(uint16_t startFreq, uint16_t endFreq, uint16_t 
   rx.setMaxDelaySetFrequency(currentMode == FM ? TUNE_DELAY_FM : TUNE_DELAY_AM_SSB);
   muteOn(MUTE_TEMP, true);
   seekStop = false;
-  uint16_t curFreq = rx.getFrequency();
+  // Preserve the software-tracked frequency instead of calling the
+  // blocking SI4735 getFrequency() read before the sweep. This scan is
+  // executed in the main loop and must not hang the whole radio here.
+  uint16_t curFreq = currentFrequency;
   for(scanInitRange(startFreq, endFreq, step); scanTickTime(););
   rx.setFrequency(curFreq);
   muteOn(MUTE_TEMP, false);
