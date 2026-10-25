@@ -37,6 +37,6 @@ static void drawXXLBitmapIcon(int icon, int x, int y, uint16_t accent)
       if(XXL_ICON_BITMAPS[icon][row] & (0x80 >> col))
       {
         uint16_t c = ((row + col + icon) % 5 == 0) ? red : (((row + col) % 3 == 0) ? blue : cyan);
-        spr.fillRect(x + col * 3, y + row * 3, 3, 3, c);
+        spr.fillRect(x + col * 5, y + row * 5, 5, 5, c);
       }
 }
