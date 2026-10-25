@@ -1914,7 +1914,9 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setTextDatum(TL_DATUM);
   spr.drawString("DREHEN: AUSWÄHLEN", 12, 153);
   spr.setTextDatum(TR_DATUM);
-  drawXXLText("KLICK: ÖFFNEN", 212, 151, cyan, FONT_DEFAULT);
+  spr.setFont(FONT_DEFAULT);
+  spr.setTextColor(cyan);
+  spr.drawString("KLICK: ÖFFNEN", 307, 153);
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
