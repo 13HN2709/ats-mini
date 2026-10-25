@@ -593,41 +593,30 @@ static void webInit()
     {
       if(!hasStart || !hasEnd)
         return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Provide both start and end frequencies.\"}");
-      if(!request->hasParam("mode", true))
-        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Select FM, AM, USB or LSB.\"}");
-      String modeValue = request->getParam("mode", true)->value();
-      int8_t requestedMode = -1;
-      if(modeValue == "FM") requestedMode = FM;
-      else if(modeValue == "AM") requestedMode = AM;
-      else if(modeValue == "USB") requestedMode = USB;
-      else if(modeValue == "LSB") requestedMode = LSB;
-      if(requestedMode < 0)
-        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Unsupported modulation.\"}");
+      String modeValue = request->hasParam("mode", true) ? request->getParam("mode", true)->value() : String("FM");
+      if(modeValue != "FM")
+        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Spectrum scanning is FM-only. Select a 64–108 MHz range.\"}");
+      const int8_t requestedMode = FM;
       String startValue = request->getParam("start_hz", true)->value();
       String endValue = request->getParam("end_hz", true)->value();
       char *startEnd = nullptr, *endEnd = nullptr;
       long startHz = strtol(startValue.c_str(), &startEnd, 10);
       long endHz = strtol(endValue.c_str(), &endEnd, 10);
-      long minHz = requestedMode == FM ? 64000000L : 150000L;
-      long maxHz = requestedMode == FM ? 108000000L : 30000000L;
-      if(!startEnd || *startEnd || !endEnd || *endEnd || startHz < minHz || endHz > maxHz || endHz <= startHz)
-        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Range is outside the receiver's supported range for this modulation.\"}");
-      requestedStart = freqFromHz((uint32_t)startHz, requestedMode);
-      requestedEnd = freqFromHz((uint32_t)endHz, requestedMode);
-      uint32_t stepHz = requestedMode == FM ? 100000UL : 1000UL;
+      if(!startEnd || *startEnd || !endEnd || *endEnd || startHz < 64000000L || endHz > 108000000L || endHz <= startHz)
+        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"FM range must be between 64 and 108 MHz.\"}");
+      requestedStart = freqFromHz((uint32_t)startHz, FM);
+      requestedEnd = freqFromHz((uint32_t)endHz, FM);
+      uint32_t stepHz = 100000UL;
       if(request->hasParam("step_hz", true))
       {
         String stepValue = request->getParam("step_hz", true)->value();
         char *stepEnd = nullptr;
         long parsedStep = strtol(stepValue.c_str(), &stepEnd, 10);
-        if(!stepEnd || *stepEnd || parsedStep <= 0)
-          return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Invalid scan step.\"}");
+        if(!stepEnd || *stepEnd || parsedStep != 100000L)
+          return request->send(422, "application/json", "{\"ready\":false,\"error\":\"FM spectrum scan uses a fixed 100 kHz step.\"}");
         stepHz = (uint32_t)parsedStep;
       }
-      if((requestedMode == FM && stepHz != 100000UL) ||
-         (requestedMode != FM && stepHz != 1000UL && stepHz != 5000UL && stepHz != 10000UL && stepHz != 25000UL))
-        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Unsupported scan resolution for this modulation.\"}");
-      uint16_t step = requestedMode == FM ? 10 : (uint16_t)(stepHz / 1000UL);
+      uint16_t step = 10;
       uint32_t points = ((uint32_t)requestedEnd - requestedStart) / step + 1;
       if(points < 2 || points > 256)
         return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Range must contain 2–256 samples at the selected resolution.\"}");
