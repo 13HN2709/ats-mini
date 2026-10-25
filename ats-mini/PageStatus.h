@@ -38,13 +38,6 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   <DIV ID="frequencyGuideList" hidden STYLE="padding:0 12px 12px">
     <DIV CLASS="LABEL" STYLE="margin:0 4px 10px">Worldwide reference frequencies · Tap an entry to tune. Reception and activity depend on propagation and schedule.</DIV>
     <DIV ID="frequencyGuideGroups" STYLE="display:grid;gap:12px"></DIV>
-    <DIV STYLE="margin-top:12px;padding:12px;border:1px solid #16458f;border-radius:8px;background:#030d25">
-      <DIV STYLE="font-weight:800;color:#35e8ff;letter-spacing:.08em;font-size:.8rem;margin-bottom:6px">GUIDE SIGNAL SCAN</DIV>
-      <DIV CLASS="LABEL" STYLE="margin-bottom:10px">Checks every guide frequency in its listed mode twice. Results indicate receiver signal strength, not confirmed station identification.</DIV>
-      <DIV STYLE="display:grid;grid-template-columns:1fr 1fr;gap:8px"><BUTTON ID="guideScanStart" TYPE="button">▶ SCAN ALL GUIDE</BUTTON><BUTTON ID="guideScanStop" TYPE="button" disabled>■ STOP</BUTTON></DIV>
-      <DIV ID="guideScanProgress" CLASS="LABEL" ROLE="status" STYLE="margin-top:9px">Ready to scan.</DIV>
-      <DIV ID="guideScanResults" STYLE="display:grid;gap:7px;margin-top:10px"></DIV>
-    </DIV>
     <DIV ID="frequencyGuideStatus" CLASS="LABEL" ROLE="status" STYLE="margin-top:10px">Select a frequency to tune the receiver.</DIV>
   </DIV>
 </SECTION>
@@ -287,65 +280,6 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    section.append(heading,items);guideGroups.append(section);
  });
  guideToggle.querySelector('#frequencyGuideCount').textContent=guideEntries.reduce((sum,group)=>sum+group.items.length,0)+' frequencies';
-
-  const guideScanStart=document.getElementById('guideScanStart');
-  const guideScanStop=document.getElementById('guideScanStop');
-  const guideScanProgress=document.getElementById('guideScanProgress');
-  const guideScanResults=document.getElementById('guideScanResults');
-  let guideScanCancelled=false;
-  function guideFrequencyLabel(freq){return freq>=1000000?(freq/1000000).toFixed(freq%1000?4:3)+' MHz':(freq/1000).toFixed(1)+' kHz';}
-  function guideResultRow(entry,signal,noise,classification){
-    const row=document.createElement('div');row.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px;border:1px solid #23436d;border-radius:7px;background:#07152b';
-    const info=document.createElement('div');const name=document.createElement('strong');name.textContent=entry.name;name.style.cssText='display:block;font-size:.82rem;line-height:1.3;color:#e7f1ff';
-    const meta=document.createElement('div');meta.textContent=guideFrequencyLabel(entry.freq)+' · '+entry.mode+' · RSSI '+signal+' / SNR '+noise;meta.style.cssText='font:700 .73rem monospace;color:#35e8ff;margin-top:4px';
-    const state=document.createElement('div');state.textContent=classification;state.style.cssText='font-size:.7rem;color:#9ab4c7;margin-top:3px';info.append(name,meta,state);
-    const tune=document.createElement('button');tune.type='button';tune.textContent='TUNE';tune.style.cssText='padding:9px 11px;border:1px solid #167bff;border-radius:5px;background:#071e45;color:#35e8ff;font-weight:800';
-    tune.addEventListener('click',async()=>{guideGroups.querySelectorAll('button').forEach(item=>item.disabled=true);tune.disabled=true;guideScanStart.disabled=true;guideScanStop.disabled=true;guideScanProgress.textContent='Tuning to '+guideFrequencyLabel(entry.freq)+' ('+entry.mode+')…';const ok=await postRadioCommand('/radio/tune',{freq:String(entry.freq),mode:entry.mode},guideStatus);if(ok){guideStatus.textContent='Tune command queued. Receiver display will update…';setTimeout(()=>location.reload(),900);}else{guideGroups.querySelectorAll('button').forEach(item=>item.disabled=false);tune.disabled=false;guideScanStart.disabled=false;}});
-    row.append(info,tune);return row;
-  }
-  async function guideRunSingleSweep(entry){
-    const mode=entry.mode,step=1000;
-    let startHz=Math.max(150000,Math.floor(entry.freq/1000)*1000),endHz=Math.min(30000000,startHz+1000);
-    if(endHz<=startHz){startHz=endHz-1000;}
-    const params=new URLSearchParams({start_hz:String(startHz),end_hz:String(endHz),mode,step_hz:String(step)});
-    if(window.atsDebugLog) window.atsDebugLog('GUIDE SCAN REQUEST','/spectrum/start '+JSON.stringify({start_hz:startHz,end_hz:endHz,mode,step_hz:step}));
-    const started=await fetch('/spectrum/start',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params,cache:'no-store'});
-    const startData=await started.json().catch(()=>({}));
-    if(window.atsDebugLog) window.atsDebugLog('GUIDE SCAN RESPONSE','/spectrum/start HTTP '+started.status+' '+JSON.stringify(startData));
-    if(!started.ok){throw new Error(startData.message||startData.error||'Could not start scan [HTTP '+started.status+']');}
-    for(let wait=0;wait<45;wait++){
-      if(guideScanCancelled)return null;
-      await new Promise(resolve=>setTimeout(resolve,700));
-      const response=await fetch('/spectrum.json',{cache:'no-store'});if(!response.ok)throw new Error('Receiver scan request failed [HTTP '+response.status+'].');
-      const data=await response.json();
-      if(data.ready&&data.samples&&data.samples.length){
-        if(window.atsDebugLog) window.atsDebugLog('GUIDE SCAN RESULT','/spectrum.json '+JSON.stringify({ready:data.ready,count:data.samples.length,mode:data.mode}));
-        const target=Math.round(entry.freq/1000);let sample=data.samples[0];
-        for(const point of data.samples){if(Math.abs(point.f-target)<Math.abs(sample.f-target))sample=point;}
-        return {r:Number(sample.r)||0,s:Number(sample.s)||0};
-      }
-    }
-    throw new Error('Sweep timed out at '+guideFrequencyLabel(entry.freq));
-  }
-  guideScanStart.addEventListener('click',async()=>{
-    if(guideScanStart.disabled)return;guideScanCancelled=false;guideScanStart.disabled=true;guideScanStop.disabled=false;guideGroups.querySelectorAll('button').forEach(item=>item.disabled=true);guideScanResults.replaceChildren();
-    const entries=guideEntries.flatMap(group=>group.items);let hits=0,completed=0;guideScanProgress.textContent='Starting scan of '+entries.length+' guide frequencies…';
-    try{
-      for(const entry of entries){
-        if(guideScanCancelled)break;
-        guideScanProgress.textContent='Checking '+(completed+1)+' / '+entries.length+' · '+entry.name+' ('+guideFrequencyLabel(entry.freq)+' '+entry.mode+')';
-        const first=await guideRunSingleSweep(entry);if(guideScanCancelled||!first)break;
-        const second=await guideRunSingleSweep(entry);if(guideScanCancelled||!second)break;
-        const rssi=Math.round((first.r+second.r)/2),snr=Math.round((first.s+second.s)/2),stable=Math.abs(first.r-second.r)<=5;
-        if(rssi>=10){hits++;guideScanResults.append(guideResultRow(entry,rssi,snr,stable?'Signal detected · repeatable':'Possible interference · fluctuating'));}
-        completed++;
-      }
-      guideScanProgress.textContent=(guideScanCancelled?'Scan stopped':'Scan complete')+' · '+completed+' / '+entries.length+' checked · '+hits+' signal indications. Tap TUNE to listen.';
-    }catch(error){guideScanProgress.textContent='Scan stopped at '+completed+' / '+entries.length+': '+(error.message||'unknown error');if(window.atsDebugLog)window.atsDebugLog('GUIDE SCAN ERROR','/spectrum/start or /spectrum.json '+(error.message||error));}
-    finally{guideScanStart.disabled=false;guideScanStop.disabled=true;guideGroups.querySelectorAll('button').forEach(item=>item.disabled=false);}
-  });
-  guideScanStop.addEventListener('click',()=>{guideScanCancelled=true;guideScanStop.disabled=true;guideScanProgress.textContent='Stopping after the current receiver sweep…';});
-
 
  const tuneForm=document.getElementById('radioTune');
  const tuneInput=document.getElementById('radioFrequency');
