@@ -9,6 +9,11 @@
   By <a href="https://github.com/13HN2709">13HN2709</a> · Callsign: 13HN2709
 </p>
 
+<p align="center">
+  <strong>🌐 Language / Sprache / Lingua</strong><br>
+  <a href="README.md">🇬🇧 English</a> · <a href="README_DE.md">🇩🇪 Deutsch</a> · <a href="README_IT.md">🇮🇹 Italiano</a>
+</p>
+
 This repository contains my development fork of the ATS Mini firmware for the SI4732-based ATS Mini V4 receiver. The project combines the upstream receiver firmware with custom display layouts, usability improvements and web-control features.
 
 ## Downloads
