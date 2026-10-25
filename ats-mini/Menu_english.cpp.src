@@ -1669,7 +1669,7 @@ static void drawInfo(int x, int y, int sx)
 }
 
 
-static static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
+static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
 {
   const int icon = settingsPage
     ? (idx >= 0 && idx < (int)sizeof(XXL_ICON_SETTINGS_MAP) ? XXL_ICON_SETTINGS_MAP[idx] : 0)
