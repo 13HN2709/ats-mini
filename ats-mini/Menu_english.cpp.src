@@ -1759,9 +1759,11 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.fillRoundRect(12, 35, 296, 103, 3, bg);
 
   // Center the label in the available area to the right of the icon.
-  drawFullMenuIcon(idx, 18, 57, red, settingsPage);
-  const int textLeft = 72;
-  const int textRight = 300;
+  // Keep the icon and label vertically centered in the red frame.
+  // Use rawIdx for settings icons: idx is adjusted only for the menu counter.
+  drawFullMenuIcon(settingsPage ? rawIdx : idx, 25, 66, cyan, settingsPage);
+  const int textLeft = 18;
+  const int textRight = 302;
   const int textCenter = (textLeft + textRight) / 2;
   char firstLine[40];
   char secondLine[40];
@@ -1781,13 +1783,13 @@ void drawFullScreenMenu(uint16_t cmd)
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
       int w1 = spr.textWidth(firstLine, &lgfx::fonts::Orbitron_Light_24);
       int w2 = spr.textWidth(secondLine, &lgfx::fonts::Orbitron_Light_24);
-      drawXXLText(firstLine, textCenter - w1 / 2, 50, cyan, &lgfx::fonts::Orbitron_Light_24);
-      drawXXLText(secondLine, textCenter - w2 / 2, 80, cyan, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(firstLine, textCenter - w1 / 2, 58, cyan, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(secondLine, textCenter - w2 / 2, 84, cyan, &lgfx::fonts::Orbitron_Light_24);
     } else {
       int width = spr.textWidth(selected, &lgfx::fonts::Orbitron_Light_24);
       const lgfx::IFont *font = width > (textRight - textLeft) ? FONT_LARGE : &lgfx::fonts::Orbitron_Light_24;
       width = spr.textWidth(selected, font);
-      drawXXLText(selected, textCenter - width / 2, 65, cyan, font);
+      drawXXLText(selected, textCenter - width / 2, 75, cyan, font);
     }
   } else {
     int width = spr.textWidth(selected, &lgfx::fonts::Orbitron_Light_24);
