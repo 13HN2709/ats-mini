@@ -216,7 +216,7 @@ void drawFrequency(uint32_t freq, int x, int y, int ux, int uy, uint8_t hl)
     spr.drawFloat(freq/100.00, 2, x, y, FONT_DIGITS);
     spr.setTextDatum(ML_DATUM);
     spr.setTextColor(unitColor);
-    spr.drawString("MHz", ux, uy);
+    spr.drawString("MHz", ux, uy + 10, &lgfx::fonts::FreeSansBold9pt7b);
   }
   else
   {
@@ -240,7 +240,8 @@ else
 }
 
     spr.setTextColor(unitColor);
-    spr.drawString("kHz", ux, uy);
+    spr.setTextDatum(ML_DATUM);
+    spr.drawString("kHz", ux, uy + 10, &lgfx::fonts::FreeSansBold9pt7b);
   }
 
   if(li)
