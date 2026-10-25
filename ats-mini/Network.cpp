@@ -1509,7 +1509,9 @@ void webSpectrumTick()
       }
       webDiagLog("TUNE receiver configuration returned");
       webTunePhase = 5;
+      webDiagLog("TUNE before getFrequency after mode configuration");
       currentFrequency = rx.getFrequency();
+      webDiagLog("TUNE after getFrequency after mode configuration");
       Band *activeBand = getCurrentBand();
       if(activeBand) activeBand->currentFreq = currentFrequency;
     }
@@ -1520,12 +1522,16 @@ void webSpectrumTick()
       uint32_t maxFreq = currentMode == FM ? 10800UL : 30000UL;
       if(targetFreq >= minFreq && targetFreq <= maxFreq) rx.setFrequency(targetFreq);
     }
+    webDiagLog("TUNE before final getFrequency");
     currentFrequency = rx.getFrequency();
+    webDiagLog("TUNE after final getFrequency");
     Band *band = getCurrentBand();
     if(band) band->currentFreq = currentFrequency;
     webTunePhase = 6;
+    webDiagLog("TUNE before station identification");
     clearStationInfo();
     identifyFrequency(currentFrequency + currentBFO / 1000);
+    webDiagLog("TUNE after station identification");
     webTuneActualHz = (uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL);
     webTuneActualMode = currentMode;
     uint32_t expectedHz = (uint32_t)freqFromHz((uint32_t)requestedHz, currentMode) *
