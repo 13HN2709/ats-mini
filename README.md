@@ -60,7 +60,6 @@ These are fork-specific additions, not a claim that every feature is present in 
 - `development` is used for ongoing development and testing.
 - Temporary feature branches are removed after their tested changes have been promoted.
 
-See [PROJECT_STATUS.md](PROJECT_STATUS.md) for the current project handover, branch strategy and next steps.
 
 ## Documentation
 
