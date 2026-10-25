@@ -1754,20 +1754,25 @@ static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool setting
 
 // Orbitron XXL menu renderer. The extra 1px pass strengthens the Light face toward Bold.
 // UTF-8 umlauts are drawn explicitly so they remain visible with ASCII font tables.
+// XXL menu text renderer: ASCII glyphs plus explicit UTF-8 umlaut marks.
+// Keep the menu font independent from all normal radio/layout rendering.
 static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgfx::IFont *font)
 {
   spr.setFont(font);
   spr.setTextColor(color);
   spr.setTextDatum(TL_DATUM);
   int cursor = x;
-  while (*text) {
+  while (*text)
+  {
     char glyph[2] = {0, 0};
     bool umlaut = false;
     bool sharpS = false;
     char base = *text++;
-    if ((uint8_t)base == 0xC3 && *text) {
+    if ((uint8_t)base == 0xC3 && *text)
+    {
       uint8_t next = (uint8_t)*text++;
-      switch (next) {
+      switch (next)
+      {
         case 0x84: base='A'; umlaut=true; break;
         case 0x96: base='O'; umlaut=true; break;
         case 0x9C: base='U'; umlaut=true; break;
@@ -1781,18 +1786,19 @@ static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgf
     glyph[0] = base;
     int width = spr.textWidth(glyph);
     spr.drawString(glyph, cursor, y);
-    spr.drawString(glyph, cursor + 1, y); // subtle bold pass
-    if (sharpS) {
-      // Keep ß legible on fonts without a dedicated Latin-1 glyph.
+    spr.drawString(glyph, cursor + 1, y);
+    if (sharpS)
+    {
       spr.drawString("s", cursor + width, y);
       spr.drawString("s", cursor + width + 1, y);
       cursor += width * 2;
       continue;
     }
-    if (umlaut) {
+    if (umlaut)
+    {
       int center = cursor + width / 2;
-      spr.fillCircle(center - 3, y - 2, 1, color);
-      spr.fillCircle(center + 3, y - 2, 1, color);
+      spr.fillCircle(center - 3, y - 3, 1, color);
+      spr.fillCircle(center + 3, y - 3, 1, color);
     }
     cursor += width;
   }
