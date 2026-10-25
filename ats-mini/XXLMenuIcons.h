@@ -29,10 +29,11 @@ static const uint8_t XXL_ICON_SETTINGS_MAP[22] = {14,13,13,15,15,14,14,14,14,1,1
 static void drawXXLBitmapIcon(int icon, int x, int y, uint16_t accent)
 {
   // Clean vector-like line icons: readable at 320x170 without chunky pixels.
-  const uint16_t cyan = 0x07FF;
-  const uint16_t blue = 0x03FF;
-  const uint16_t red = 0xF800;
-  const uint16_t c = accent ? accent : cyan;
+  // Test pass: every icon uses the same cyan as the menu text, with no red accent.
+  const uint16_t cyan = accent ? accent : 0x07FF;
+  const uint16_t blue = cyan;
+  const uint16_t red = cyan;
+  const uint16_t c = cyan;
   const int cx = x + 20, cy = y + 20;
   switch(icon)
   {
