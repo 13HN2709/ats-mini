@@ -53,7 +53,6 @@ Questo elenco descrive le aggiunte specifiche di questo fork e non significa che
 - `development` è usato per lo sviluppo e i test in corso.
 - I branch temporanei dedicati alle funzioni vengono eliminati dopo l'integrazione delle modifiche testate.
 
-Per lo stato aggiornato, la strategia dei branch e i prossimi passi, consulta [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Documentazione
 
