@@ -1107,8 +1107,8 @@ static void drawBfo(int x, int y, int sx)
   drawZoomedMenu("BFO");
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(currentBFO, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
-  spr.drawString("Hz", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
+  spr.drawNumber(currentBFO, 40+x+(sx/2), 60+y, FONT_LARGE);
+  spr.drawString("Hz", 40+x+(sx/2), 90+y, FONT_LARGE);
 }
 
 static void drawMenu(int x, int y, int sx)
@@ -1473,7 +1473,7 @@ static void drawAgc(int x, int y, int sx)
   spr.setTextColor(TH.menu_param);
   if(!agcNdx && !agcIdx)
   {
-    spr.setFont(&lgfx::fonts::Orbitron_Light_24);
+    spr.setFont(FONT_LARGE);
     spr.drawString("AGC", 40+x+(sx/2), 48+y);
     spr.drawString("On", 40+x+(sx/2), 72+y);
     spr.setFont(FONT_DEFAULT);
@@ -1494,13 +1494,13 @@ static void drawSquelch(int x, int y, int sx)
   bool squelchParam = currentSquelch[currentMode] & 0x80;
   if(squelchValue)
   {
-    spr.drawNumber(squelchValue, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
-    spr.drawString(squelchParam? "dB":"dBuV", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
+    spr.drawNumber(squelchValue, 40+x+(sx/2), 60+y, FONT_LARGE);
+    spr.drawString(squelchParam? "dB":"dBuV", 40+x+(sx/2), 90+y, FONT_LARGE);
   }
   else
   {
-    spr.drawString("Off", 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
-    spr.drawString(squelchParam? "(snr)":"(rssi)", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
+    spr.drawString("Off", 40+x+(sx/2), 60+y, FONT_LARGE);
+    spr.drawString(squelchParam? "(snr)":"(rssi)", 40+x+(sx/2), 90+y, FONT_LARGE);
   }
 }
 
@@ -1511,8 +1511,8 @@ static void drawSoftMuteMaxAtt(int x, int y, int sx)
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
   spr.drawString("Max Attn", 40+x+(sx/2), 32+y, FONT_SMALL);
-  spr.drawNumber(softMuteMaxAttIdx, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
-  spr.drawString("dB", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
+  spr.drawNumber(softMuteMaxAttIdx, 40+x+(sx/2), 60+y, FONT_LARGE);
+  spr.drawString("dB", 40+x+(sx/2), 90+y, FONT_LARGE);
 }
 
 static void drawCal(int x, int y, int sx)
@@ -1524,15 +1524,15 @@ static void drawCal(int x, int y, int sx)
   if (currentMode == USB)
   {
     spr.drawString("USB", 40+x+(sx/2), 35+y, FONT_SMALL);
-    spr.drawNumber(getCurrentBand()->usbCal, 40+x+(sx/2), 65+y, &lgfx::fonts::Orbitron_Light_24);
+    spr.drawNumber(getCurrentBand()->usbCal, 40+x+(sx/2), 65+y, FONT_LARGE);
   }
   else if (currentMode == LSB)
   {
     spr.drawString("LSB", 40+x+(sx/2), 35+y, FONT_SMALL);
-    spr.drawNumber(getCurrentBand()->lsbCal, 40+x+(sx/2), 65+y, &lgfx::fonts::Orbitron_Light_24);
+    spr.drawNumber(getCurrentBand()->lsbCal, 40+x+(sx/2), 65+y, FONT_LARGE);
   }
-  else spr.drawNumber(0, 40+x+(sx/2), 65+y, &lgfx::fonts::Orbitron_Light_24);
-  spr.drawString("Hz", 40+x+(sx/2), 95+y, &lgfx::fonts::Orbitron_Light_24);
+  else spr.drawNumber(0, 40+x+(sx/2), 65+y, FONT_LARGE);
+  spr.drawString("Hz", 40+x+(sx/2), 95+y, FONT_LARGE);
 }
 
 static void drawAvc(int x, int y, int sx)
@@ -1541,13 +1541,13 @@ static void drawAvc(int x, int y, int sx)
   drawZoomedMenu(menu[MENU_AVC]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  if(isSSB() && ssbAvcHold) { spr.drawString("Hold", 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24); return; }
+  if(isSSB() && ssbAvcHold) { spr.drawString("Hold", 40+x+(sx/2), 60+y, FONT_LARGE); return; }
   spr.drawString("Max Gain", 40+x+(sx/2), 32+y, FONT_SMALL);
   if(currentMode!=FM)
   {
     int currentAvc = isSSB()? SsbAvcIdx : AmAvcIdx;
-    spr.drawNumber(currentAvc, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
-    spr.drawString("dB", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
+    spr.drawNumber(currentAvc, 40+x+(sx/2), 60+y, FONT_LARGE);
+    spr.drawString("dB", 40+x+(sx/2), 90+y, FONT_LARGE);
   }
 }
 
@@ -1602,7 +1602,7 @@ static void drawBrt(int x, int y, int sx)
   drawZoomedMenu(settings[MENU_BRIGHTNESS]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(currentBrt, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
+  spr.drawNumber(currentBrt, 40+x+(sx/2), 60+y, FONT_LARGE);
 }
 
 static void drawSleep(int x, int y, int sx)
@@ -1611,7 +1611,7 @@ static void drawSleep(int x, int y, int sx)
   drawZoomedMenu(settings[MENU_SLEEP]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(currentSleep, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
+  spr.drawNumber(currentSleep, 40+x+(sx/2), 60+y, FONT_LARGE);
 }
 
 static void drawZoom(int x, int y, int sx)
@@ -1620,7 +1620,7 @@ static void drawZoom(int x, int y, int sx)
   drawZoomedMenu(settings[MENU_ZOOM]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawString(zoomMenu ? "On" : "Off", 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
+  spr.drawString(zoomMenu ? "On" : "Off", 40+x+(sx/2), 60+y, FONT_LARGE);
 }
 
 static void drawScrollDir(int x, int y, int sx)
