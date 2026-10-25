@@ -954,7 +954,7 @@ static const char *settingLabel(int idx)
   return settings[idx];
 }
 
-static void doSettings(int16_t enc) { settingsIdx = wrap_range(settingsIdx, enc, 0, LAST_ITEM(settings)); }
+static void doSettings(int16_t enc) { settingsIdx = wrap_range(settingsIdx, enc, 0, LAST_ITEM(settings)); if(settingsIdx == MENU_ZOOM) settingsIdx = (enc >= 0) ? MENU_ZOOM + 1 : MENU_ZOOM - 1; }
 
 static void clickSettings(int cmd, bool shortPress)
 {
@@ -1820,76 +1820,86 @@ static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool setting
 
 void drawFullScreenMenu(uint16_t cmd)
 {
-  const uint16_t bg = 0x0000;
-  const uint16_t blue = 0x001F;
+  // ATS Control palette: deep navy, vivid red and bright cyan.
+  const uint16_t bg = 0x0008;
+  const uint16_t panel = 0x000F;
+  const uint16_t blue = 0x041F;
+  const uint16_t red = 0xF800;
   const uint16_t cyan = 0x07FF;
   const uint16_t white = 0xFFFF;
-  const uint16_t muted = 0x7BEF;
   const bool settingsPage = cmd == CMD_SETTINGS;
-  const int idx = settingsPage ? settingsIdx : menuIdx;
-  const int count = settingsPage ? ITEM_COUNT(settings) : ITEM_COUNT(menu);
+  const int rawIdx = settingsPage ? settingsIdx : menuIdx;
+  const int idx = (settingsPage && rawIdx > MENU_ZOOM) ? rawIdx - 1 : rawIdx;
+  const int count = settingsPage ? ITEM_COUNT(settings) - 1 : ITEM_COUNT(menu);
   const char *title = settingsPage ? "EINSTELLUNGEN" : "HAUPTMENÜ";
-  const char *selected = settingsPage ? settingLabel(idx) : menu[idx];
-  const char *previous = settingsPage ? settingLabel((idx + count - 1) % count) : menu[(idx + count - 1) % count];
-  const char *next = settingsPage ? settingLabel((idx + 1) % count) : menu[(idx + 1) % count];
+  const char *selected = settingsPage ? settingLabel(rawIdx) : menu[idx];
 
   spr.fillSprite(bg);
-  spr.drawRect(3, 3, 314, 164, blue);
-  spr.fillRect(4, 4, 312, 23, 0x0841);
+  spr.fillRoundRect(3, 3, 314, 164, 5, panel);
+  spr.drawRoundRect(3, 3, 314, 164, 5, blue);
+  spr.drawRoundRect(5, 5, 310, 160, 4, red);
+
   spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(cyan);
+  spr.setTextColor(white);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.drawString(title, 12, 9);
   spr.setTextDatum(TR_DATUM);
-  spr.setTextColor(muted);
+  spr.setTextColor(cyan);
   spr.setFont(FONT_SMALL);
   char counter[12];
   snprintf(counter, sizeof(counter), "%02d / %02d", idx + 1, count);
   spr.drawString(counter, 307, 9);
 
+  // Use nearly the whole display for the selected entry; no descriptions or
+  // neighbouring abbreviations, which were reducing readability.
+  spr.fillRoundRect(9, 32, 302, 109, 5, bg);
+  spr.drawRoundRect(9, 32, 302, 109, 5, blue);
+  spr.fillRoundRect(9, 32, 4, 109, 2, red);
+  spr.drawRoundRect(14, 37, 292, 99, 4, red);
+
+  spr.setTextColor(red);
   spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(muted);
-  spr.setFont(FONT_SMALL);
-  drawFullMenuIcon((idx + count - 1) % count, 14, 33, muted, settingsPage);
-  spr.drawString(previous, 31, 34);
-
-  spr.fillRoundRect(8, 51, 304, 70, 5, 0x082A);
-  spr.drawRoundRect(8, 51, 304, 70, 5, blue);
-  spr.fillRect(8, 51, 3, 70, cyan);
-  spr.setTextColor(cyan);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  drawFullMenuIcon(idx, 18, 60, cyan, settingsPage);
-  spr.drawString(selected, 36, 59);
+  drawFullMenuIcon(idx, 22, 76, red, settingsPage);
 
-  spr.setTextColor(white);
-  spr.setFont(FONT_SMALL);
-  const char *description = fullMenuDescription(idx);
-  char line[48];
-  size_t len = strlen(description);
-  size_t split = len;
-  if(len > 39) {
-    split = 39;
-    while(split > 0 && description[split] != ' ') split--;
-    if(split == 0) split = 39;
-  }
-  if(split >= sizeof(line)) split = sizeof(line) - 1;
-  memcpy(line, description, split);
-  line[split] = '\0';
-  spr.drawString(line, 18, 82);
-  if(len > split) {
-    const char *second = description + split;
-    while(*second == ' ') second++;
-    spr.drawString(second, 18, 99);
+  // Keep long names readable: split at a natural space or hyphen if needed.
+  char firstLine[40];
+  char secondLine[40];
+  const size_t nameLen = strlen(selected);
+  const int textX = 49;
+  if(nameLen > 13) {
+    size_t split = nameLen / 2;
+    while(split < nameLen && selected[split] != ' ' && selected[split] != '-') split++;
+    if(split >= nameLen) {
+      split = nameLen / 2;
+      while(split > 0 && selected[split] != ' ' && selected[split] != '-') split--;
+    }
+    if(split > 0 && split < sizeof(firstLine)) {
+      memcpy(firstLine, selected, split);
+      firstLine[split] = '\\0';
+      const char *rest = selected + split + 1;
+      while(*rest == ' ' || *rest == '-') rest++;
+      snprintf(secondLine, sizeof(secondLine), "%s", rest);
+      spr.setTextColor(white);
+      spr.drawString(firstLine, textX, 64);
+      spr.setTextColor(red);
+      spr.drawString(secondLine, textX, 91);
+    } else {
+      spr.setTextColor(white);
+      spr.drawString(selected, textX, 76);
+    }
+  } else {
+    spr.setTextColor(white);
+    spr.drawString(selected, textX, 76);
   }
 
-  spr.setTextColor(muted);
-  drawFullMenuIcon((idx + 1) % count, 14, 129, muted, settingsPage);
-  spr.drawString(next, 31, 130);
-  spr.drawLine(10, 151, 310, 151, blue);
+  spr.drawFastHLine(12, 149, 296, blue);
   spr.setTextColor(cyan);
-  spr.drawString("DREHEN: AUSWÄHLEN", 12, 154);
+  spr.setFont(FONT_SMALL);
+  spr.setTextDatum(TL_DATUM);
+  spr.drawString("DREHEN: AUSWÄHLEN", 12, 153);
   spr.setTextDatum(TR_DATUM);
-  spr.drawString("KLICK: ÖFFNEN", 308, 154);
+  spr.drawString("KLICK: ÖFFNEN", 308, 153);
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
