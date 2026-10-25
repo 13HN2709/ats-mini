@@ -2,6 +2,9 @@
 #include "Utils.h"
 #include "Menu.h"
 
+// Web diagnostics log is implemented in Network.cpp.
+void webDiagLog(const char *event);
+
 // Tuning delays after rx.setFrequency()
 #define TUNE_DELAY_DEFAULT 30
 #define TUNE_DELAY_FM      60
@@ -125,6 +128,16 @@ static bool scanTickTime()
   scanData[scanCount].rssi = rx.getCurrentRSSI();
   scanData[scanCount].snr  = rx.getCurrentSNR();
 
+  // Keep the diagnostic log small: record only the first three raw samples.
+  if(scanCount < 3)
+  {
+    char diag[96];
+    snprintf(diag, sizeof(diag), "SPECTRUM SAMPLE idx=%u freq=%u rssi=%u snr=%u",
+             (unsigned)scanCount, (unsigned)freq,
+             (unsigned)scanData[scanCount].rssi, (unsigned)scanData[scanCount].snr);
+    webDiagLog(diag);
+  }
+
   // Measure range of values
   scanMinRSSI = min(scanData[scanCount].rssi, scanMinRSSI);
   scanMaxRSSI = max(scanData[scanCount].rssi, scanMaxRSSI);
@@ -174,6 +187,13 @@ static void scanRunRangeInternal(uint16_t startFreq, uint16_t endFreq, uint16_t 
   // executed in the main loop and must not hang the whole radio here.
   uint16_t curFreq = currentFrequency;
   for(scanInitRange(startFreq, endFreq, step); scanTickTime(););
+  {
+    char diag[112];
+    snprintf(diag, sizeof(diag), "SPECTRUM SAMPLE SUMMARY count=%u rssi=%u..%u snr=%u..%u",
+             (unsigned)scanCount, (unsigned)scanMinRSSI, (unsigned)scanMaxRSSI,
+             (unsigned)scanMinSNR, (unsigned)scanMaxSNR);
+    webDiagLog(diag);
+  }
   rx.setFrequency(curFreq);
   muteOn(MUTE_TEMP, false);
   rx.setMaxDelaySetFrequency(TUNE_DELAY_DEFAULT);
