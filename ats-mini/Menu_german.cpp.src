@@ -1707,58 +1707,6 @@ static void drawInfo(int x, int y, int sx)
 }
 
 
-static const char *fullMenuDescription(int idx)
-{
-  static const char *const mainDescriptions[] = {
-    "Wählt FM, AM, USB oder LSB.",
-    "Wählt das Frequenzband.",
-    "Regelt die Wiedergabelautstärke.",
-    "Frequenz direkt über das Keypad eingeben.",
-    "Empfang zwischen zwei VFOs wechseln.",
-    "Zwei Frequenzplätze A und B verwalten.",
-    "Frequenz mit dem Drehgeber abstimmen.",
-    "Feinabstimmung der Tonhöhe bei SSB.",
-    "Legt die Abstimmungsschrittweite fest.",
-    "Sucht den nächsten empfangbaren Sender.",
-    "Startet oder beendet den Suchlauf.",
-    "Senderfrequenz als Speicherplatz verwalten.",
-    "Blendet schwache Signale unterhalb der Schwelle aus.",
-    "Legt die Empfangsbandbreite fest.",
-    "Regelt automatische Verstärkung und Dämpfung.",
-    "Regelt die automatische Lautstärkeanpassung.",
-    "Reduziert Störungen durch schwache Signale.",
-    "Öffnet weitere Geräte- und Anzeigeoptionen."
-  };
-  static const char *const settingsDescriptions[] = {
-    "Stellt die Displayhelligkeit ein.",
-    "Uhrzeit und Datum einstellen.",
-    "Lokalen Zeitversatz zu UTC festlegen.",
-    "Automatische Abschaltzeit einstellen.",
-    "Verhalten im Schlafmodus festlegen.",
-    "Farbschema der Oberfläche auswählen.",
-    "Display-Layout auswählen.",
-    "Menüelemente vergrößert anzeigen.",
-    "Scrollrichtung des Menüs einstellen.",
-    "RDS-Informationen und Anzeigeoptionen.",
-    "Stereo- oder Monoempfang für UKW.",
-    "UKW-Frequenzraster und Region wählen.",
-    "SSB-Frequenzkalibrierung anpassen.",
-    "DSP-Patches für den Empfang verwalten.",
-    "EiBi-Sendeplan laden.",
-    "Nach einer Firmwareaktualisierung suchen.",
-    "USB-Verbindungsmodus einstellen.",
-    "TCP-Verbindungsmodus einstellen.",
-    "Bluetooth-Funktion konfigurieren.",
-    "WLAN-Verbindung konfigurieren.",
-    "Firmware- und Geräteinformationen anzeigen.",
-    "Diagnoseprotokoll für die Fehlersuche aktivieren."
-  };
-  if(currentCmd == CMD_SETTINGS)
-    return settingsDescriptions[wrap_range(idx, 0, 0, LAST_ITEM(settings))];
-  return mainDescriptions[wrap_range(idx, 0, 0, LAST_ITEM(menu))];
-}
-
-
 static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
 {
   // Large, high-contrast vector icons sized for the XXL menu.
