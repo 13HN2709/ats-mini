@@ -209,8 +209,6 @@ void setup()
   }
 
   diskInit();
-  String bootLog = String("BOOT: reset reason ") + ESP.getResetReason();
-  webDiagLog(bootLog.c_str());
 
   if(!ESP.getPsramSize() || !memoriesInit()) {
     ledcWrite(PIN_LCD_BL, 255);
@@ -248,6 +246,8 @@ void setup()
     while(digitalRead(ENCODER_PUSH_BUTTON)!=LOW) delay(100);
     while(digitalRead(ENCODER_PUSH_BUTTON)==LOW) delay(100);
   }
+
+  webDiagLog("BOOT: startup");
 
   if(!prefsLoad(SAVE_MEMORIES|SAVE_VERIFY)) prefsSave(SAVE_MEMORIES);
   if(!prefsLoad(SAVE_BANDS|SAVE_VERIFY)) prefsSave(SAVE_BANDS);
