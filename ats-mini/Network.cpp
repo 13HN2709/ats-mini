@@ -1523,9 +1523,22 @@ void webSpectrumTick()
       uint32_t maxFreq = currentMode == FM ? 10800UL : 30000UL;
       if(targetFreq >= minFreq && targetFreq <= maxFreq) rx.setFrequency(targetFreq);
     }
-    webDiagLog("TUNE before final getFrequency");
-    currentFrequency = rx.getFrequency();
-    webDiagLog("TUNE after final getFrequency");
+    // After an explicit web mode configuration (FM/AM/SSB), the SI4735
+    // getFrequency() call can stall when returning from FM to SSB. The
+    // requested frequency was already supplied to setFM/setAM/setSSB above,
+    // so retain that known target instead of querying the receiver here.
+    // For frequency-only tunes, keep reading back the actual receiver value.
+    if(requestedMode < 0)
+    {
+      webDiagLog("TUNE before final getFrequency");
+      currentFrequency = rx.getFrequency();
+      webDiagLog("TUNE after final getFrequency");
+    }
+    else
+    {
+      currentFrequency = freqFromHz((uint32_t)requestedHz, currentMode);
+      webDiagLog("TUNE mode configured; using requested frequency");
+    }
     Band *band = getCurrentBand();
     if(band) band->currentFreq = currentFrequency;
     webTunePhase = 6;
