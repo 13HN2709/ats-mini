@@ -1905,7 +1905,7 @@ void drawFullScreenMenu(uint16_t cmd)
       drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
     }
   } else {
-    drawXXLText(selected, textX, 65, white, FONT_LARGE);
+    drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
   }
 
   spr.drawFastHLine(12, 149, 296, red);
