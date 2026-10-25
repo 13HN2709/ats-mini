@@ -1834,8 +1834,8 @@ static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgf
     if (umlaut)
     {
       int center = cursor + width / 2;
-      spr.fillCircle(center - 3, y - 3, 1, color);
-      spr.fillCircle(center + 3, y - 3, 1, color);
+      spr.fillCircle(center - 3, y + 2, 1, color);
+      spr.fillCircle(center + 3, y + 2, 1, color);
     }
     cursor += width;
   }
