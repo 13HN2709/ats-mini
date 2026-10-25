@@ -1476,13 +1476,11 @@ void webSpectrumTick()
     webTuneRequestedMode = -1;
     webTunePhase = 2;
     webDiagLog("TUNE START");
-    if(requestedMode >= 0)
+    if(requestedMode >= 0 && requestedMode != currentMode)
     {
-      // An explicit web tune must configure the receiver for the requested
-      // mode even when currentMode already has that value. The stored mode can
-      // get out of sync with the physical receiver after a spectrum scan or
-      // a previous mode switch; changing frequency alone would then leave the
-      // receiver on the old modulation.
+      // Reconfigure the receiver only when the requested modulation actually
+      // changes. Reapplying setSSB()/setSSBBfo() on an already active USB/LSB
+      // mode can shift the displayed tuning by the current BFO offset.
       // If switching from the VHF/FM band to HF, move the band state to ALL
       // before configuring AM/SSB so band limits and calibration are correct.
       if(requestedMode != FM && bandIdx == 0)
@@ -1509,10 +1507,17 @@ void webSpectrumTick()
       }
       webDiagLog("TUNE receiver configuration returned");
       webTunePhase = 5;
-      // Use the requested frequency as the initial software value instead of
-      // querying the SI4735 immediately after a mode switch. The subsequent
-      // final read below remains instrumented for diagnosis.
       currentFrequency = freqFromHz((uint32_t)requestedHz, currentMode);
+      Band *activeBand = getCurrentBand();
+      if(activeBand) activeBand->currentFreq = currentFrequency;
+    }
+    else if(requestedMode >= 0)
+    {
+      // The requested mode is already active: tune only the frequency.
+      // Avoid resetting the SSB BFO/calibration for a simple guide selection.
+      uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
+      rx.setFrequency(targetFreq);
+      currentFrequency = targetFreq;
       Band *activeBand = getCurrentBand();
       if(activeBand) activeBand->currentFreq = currentFrequency;
     }
