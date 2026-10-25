@@ -95,7 +95,8 @@ const char *getRadioText()
 
 const char *getProgramInfo()
 {
-  return(getRDSMode() & RDS_RT? bufProgramInfo : "");
+  // Program info stores the RDS PTY (program type), not RadioText.
+  return(getRDSMode() & RDS_PT? bufProgramInfo : "");
 }
 
 uint16_t getRdsPiCode()

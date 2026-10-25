@@ -230,8 +230,10 @@ void drawLayoutTEF6686()
   // 1. Background
   spr.fillSprite(COLOR_BLACK);
 
-  // 2. Battery / voltage
-  drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+  // 2. Battery, WiFi and Bluetooth indicators (same positions as Layout Default)
+  drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
+  bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+  drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
   // 3. Band name
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);

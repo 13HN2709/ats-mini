@@ -137,6 +137,8 @@ bool doSideBar(uint16_t cmd, int16_t enc, int16_t enca);
 void doSelectDigit(int16_t enc);
 bool clickHandler(uint16_t cmd, bool shortPress);
 void selectBand(uint8_t idx, bool drawLoadingPatch = true);
+extern bool webDiagEnabled;
+void webDiagLog(const char *event);
 void applyFmStereo();
 int getTotalBands();
 int getTotalModes();

@@ -28,6 +28,7 @@
 #include <LittleFS.h>
 #include <time.h>
 #include <esp_heap_caps.h>
+#include <esp_system.h>
 
 #define CONNECT_TIME  3000  // Time of inactivity to start connecting WiFi
 #define WIFI_MULTI_TOTAL_TIMEOUT  30000
@@ -74,6 +75,27 @@ static void webSetMemories(AsyncWebServerRequest *request);
 static void webUploadSplash(AsyncWebServerRequest *request, const String &filename,
                             size_t index, uint8_t *data, size_t len, bool final);
 static bool webIsAuthenticated(AsyncWebServerRequest *request);
+static volatile bool webSpectrumRequested = false;
+static volatile bool webSpectrumReady = false;
+static volatile bool webSpectrumBusy = false;
+static volatile int32_t webTuneFrequencyHz = 0;
+static volatile int8_t webTuneRequestedMode = -1;
+static volatile int8_t webSpectrumResultMode = -1;
+static volatile int16_t webRequestedVolume = -1;
+static volatile int8_t webTuneStep = 0;
+static volatile uint16_t webSpectrumStartFreq = 0;
+static volatile uint16_t webSpectrumEndFreq = 0;
+static volatile bool webSpectrumCustomRange = false;
+static volatile int8_t webSpectrumRequestedMode = -1;
+static volatile uint16_t webSpectrumStep = 1;
+static volatile uint32_t webTuneRequestId = 0;
+static volatile uint32_t webTuneCompletedId = 0;
+static volatile uint32_t webTuneTargetHz = 0;
+static volatile int8_t webTuneTargetMode = -1;
+static volatile int8_t webTuneResult = 0; // 0 pending, 1 confirmed, 2 frequency mismatch
+static volatile uint32_t webTuneActualHz = 0;
+static volatile int8_t webTuneActualMode = -1;
+volatile uint8_t webTunePhase = 0; // Tune diagnostics: 0 idle, 1 queued, 2 processing, 3 switching band, 4 configuring receiver, 5 reading receiver, 6 identifying station, 7 complete; 8-12 selectBand stages
 static void webUploadFirmwareComplete(AsyncWebServerRequest *request);
 static void webUpdatePage(AsyncWebServerRequest *request, const OtaStatus &status = otaStatus(), int code = 0);
 static void webUploadFirmware(AsyncWebServerRequest *request, const String &filename,
@@ -83,6 +105,18 @@ static void webPatchesComplete(AsyncWebServerRequest *request);
 static void webUploadPatch(AsyncWebServerRequest *request, const String &filename,
                            size_t index, uint8_t *data, size_t len, bool final);
 static bool webParseUTCDateTime(const String &text, uint32_t *epoch);
+
+static const char *WEB_DIAG_PATH = "/web-diagnostics.log";
+void webDiagLog(const char *event)
+{
+  if(!event || !webDiagEnabled) return;
+  if(LittleFS.exists(WEB_DIAG_PATH)) { File oldFile = LittleFS.open(WEB_DIAG_PATH, "r"); size_t oldSize = oldFile ? oldFile.size() : 0; if(oldFile) oldFile.close(); if(oldSize > 49152) LittleFS.remove(WEB_DIAG_PATH); }
+  File file = LittleFS.open(WEB_DIAG_PATH, "a");
+  if(!file) return;
+  file.printf("%lu ms | %s | phase=%u freq=%u mode=%u band=%d heap=%u\n", (unsigned long)millis(), event, (unsigned)webTunePhase, (unsigned)currentFrequency, (unsigned)currentMode, bandIdx, (unsigned)ESP.getFreeHeap());
+  file.flush(); file.close();
+}
+
 
 static String webPage(const char *body, const char *title, std::initializer_list<PageValue> values,
                       std::initializer_list<PageFragment> fragments = {});
@@ -370,6 +404,270 @@ static void webInit()
 {
   server.on("/", HTTP_ANY, [] (AsyncWebServerRequest *request) {
     request->send(200, "text/html", webRadioPage());
+  });
+
+  server.on("/rds.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    auto jsonEscape = [](const char *input) -> String {
+      String output;
+      if(!input) return output;
+      while(*input)
+      {
+        const unsigned char c = (unsigned char)*input++;
+        if(c == '"' || c == '\\') { output += '\\'; output += (char)c; }
+        else if(c == '\n') output += "\\n";
+        else if(c == '\r') output += "\\r";
+        else if(c == '\t') output += "\\t";
+        else if(c >= 0x20) output += (char)c;
+      }
+      return output;
+    };
+    String station, radioText, programType;
+    if(currentMode == FM)
+    {
+      // getProgramInfo() is the RDS program type (e.g. "Pop Music"),
+      // not the station's Program Service (PS) name. Use getStationName()
+      // for the actual RDS station name, with its built-in memory fallback.
+      const char *ps = getStationName();
+      if(ps && ps[0]) station = ps;
+      const char *rt = getRadioText();
+      if(rt && rt[0]) radioText = rt;
+      const char *pty = getProgramInfo();
+      if(pty && pty[0]) programType = pty;
+    }
+    if(station.length() == 0)
+    {
+      uint32_t freqHz = currentMode == FM
+        ? (uint32_t)currentFrequency * 10000UL
+        : (uint32_t)currentFrequency * 1000UL + currentBFO;
+      char memoryName[10] = {};
+      if(findMemoryName(freqHz, currentMode, 255, 255, memoryName) && memoryName[0])
+        station = memoryName;
+    }
+    String json = "{\"station\":\"" + jsonEscape(station.c_str()) + "\",\"text\":\"" + jsonEscape(radioText.c_str()) + "\",\"pty\":\"" + jsonEscape(programType.c_str()) + "\"}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
+  });
+
+  server.on("/memories.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    auto jsonEscape = [](const char *input) -> String {
+      String output;
+      if(!input) return output;
+      while(*input)
+      {
+        const unsigned char c = (unsigned char)*input++;
+        if(c == '"' || c == '\\') { output += '\\'; output += (char)c; }
+        else if(c == '\n') output += "\\n";
+        else if(c == '\r') output += "\\r";
+        else if(c == '\t') output += "\\t";
+        else if(c >= 0x20) output += (char)c;
+      }
+      return output;
+    };
+    String json = "{\"memories\":[";
+    bool first = true;
+    for(int i = 0; i < getTotalMemories(); i++)
+    {
+      const Memory memory = getMemory(i);
+      if(!memory.freq || !memory.name[0] || memory.mode >= getTotalModes()) continue;
+      if(!first) json += ",";
+      first = false;
+      json += "{\"slot\":" + String(i) +
+              ",\"name\":\"" + jsonEscape(memory.name) +
+              "\",\"freq\":" + String(memory.freq) +
+              ",\"mode\":\"" + jsonEscape(bandModeDesc[memory.mode]) +
+              "\",\"displayFrequency\":\"" +
+              String(memory.mode == FM ? memory.freq / 1000000.0f : memory.freq / 1000.0f, memory.mode == FM ? 2 : 1) +
+              (memory.mode == FM ? " MHz\"}" : " kHz\"}");
+    }
+    json += "]}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
+  });
+
+  server.on("/radio/diagnostics.log", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(!LittleFS.exists(WEB_DIAG_PATH)) return request->send(404, "text/plain", "No diagnostic log yet.");
+    AsyncWebServerResponse *response = request->beginResponse(LittleFS, WEB_DIAG_PATH, "text/plain", true);
+    response->addHeader("Cache-Control", "no-store"); response->addHeader("Content-Disposition", "attachment; filename=ats-mini-diagnostics.log"); request->send(response);
+  });
+
+  server.on("/radio/tune-status.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    String json = "{\"request_id\":" + String((uint32_t)webTuneRequestId) +
+      ",\"completed_id\":" + String((uint32_t)webTuneCompletedId) +
+      ",\"result\":" + String((int)webTuneResult) +
+      ",\"target_hz\":" + String((uint32_t)webTuneTargetHz) +
+      ",\"actual_hz\":" + String((uint32_t)webTuneActualHz) +
+      ",\"target_mode\":" + String((int)webTuneTargetMode) +
+      ",\"actual_mode\":" + String((int)webTuneActualMode) +
+      ",\"phase\":" + String((int)webTunePhase) + "}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
+  });
+
+  server.on("/radio/tune", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Radio tuning is unavailable during a spectrum sweep.\"}");
+    if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\"message\":\"Tuning is unavailable during Dual RX.\"}");
+    if(!request->hasParam("freq", true)) return request->send(400, "application/json", "{\"message\":\"Missing frequency.\"}");
+    String value = request->getParam("freq", true)->value();
+    char *end = nullptr;
+    long freqHz = strtol(value.c_str(), &end, 10);
+    if(!end || *end || freqHz < 100000 || freqHz > 300000000) return request->send(400, "application/json", "{\"message\":\"Invalid frequency.\"}");
+    int8_t targetMode = currentMode;
+    bool modeProvided = request->hasParam("mode", true);
+    if(modeProvided)
+    {
+      String modeValue = request->getParam("mode", true)->value();
+      if(modeValue == "FM") targetMode = FM;
+      else if(modeValue == "AM") targetMode = AM;
+      else if(modeValue == "USB") targetMode = USB;
+      else if(modeValue == "LSB") targetMode = LSB;
+      else return request->send(400, "application/json", "{\"message\":\"Unsupported modulation.\"}");
+    }
+    uint32_t minHz = targetMode == FM ? 64000000UL : 150000UL;
+    uint32_t maxHz = targetMode == FM ? 108000000UL : 30000000UL;
+    if(freqHz < minHz || freqHz > maxHz)
+      return request->send(422, "application/json", "{\"message\":\"Invalid frequency for the selected modulation. Receiver frequency was not changed.\"}");
+
+    // Without an explicit modulation switch, reject frequencies outside the
+    // active band's limits before queueing any change. Explicit mode requests
+    // can switch from VHF/FM to ALL in the main-loop handler.
+    if(!modeProvided)
+    {
+      Band *activeBand = getCurrentBand();
+      uint16_t targetFreq = freqFromHz((uint32_t)freqHz, targetMode);
+      if(!activeBand || !isFreqInBand(activeBand, targetFreq) ||
+         (isSSB() && targetFreq == activeBand->maximumFreq && (freqHz % 1000UL)))
+        return request->send(422, "application/json", "{\"message\":\"Frequency is outside the current band's limits. Receiver frequency was not changed.\"}");
+    }
+    uint32_t requestId = (uint32_t)webTuneRequestId + 1;
+    if(requestId == 0) requestId = 1;
+    webTuneRequestId = requestId;
+    webTuneTargetHz = (uint32_t)freqHz;
+    webTuneTargetMode = targetMode;
+    webTuneResult = 0;
+    webTunePhase = 1;
+    webTuneRequestedMode = modeProvided ? targetMode : -1;
+    webTuneFrequencyHz = freqHz;
+    String response = "{\"message\":\"Tune command queued.\",\"request_id\":" + String(requestId) + "}";
+    return request->send(202, "application/json", response);
+  });
+  server.on("/radio/step", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Radio tuning is unavailable during a spectrum sweep.\"}");
+    if(currentCmd == CMD_DUAL_RX) return request->send(409, "application/json", "{\"message\":\"Tuning is unavailable during Dual RX.\"}");
+    if(!request->hasParam("direction", true)) return request->send(400, "application/json", "{\"message\":\"Missing direction.\"}");
+    String value = request->getParam("direction", true)->value();
+    if(value != "up" && value != "down") return request->send(400, "application/json", "{\"message\":\"Direction must be up or down.\"}");
+    webTuneStep = value == "up" ? 1 : -1;
+    return request->send(202, "application/json", "{\"message\":\"Step tune queued.\"}");
+  });
+  server.on("/radio/volume", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(webSpectrumBusy || webSpectrumRequested) return request->send(409, "application/json", "{\"message\":\"Volume changes are unavailable during a spectrum sweep.\"}");
+    if(!request->hasParam("volume", true)) return request->send(400, "application/json", "{\"message\":\"Missing volume.\"}");
+    String value = request->getParam("volume", true)->value();
+    char *end = nullptr;
+    long requested = strtol(value.c_str(), &end, 10);
+    if(!end || *end || requested < 0 || requested > 63) return request->send(400, "application/json", "{\"message\":\"Volume must be 0–63.\"}");
+    webRequestedVolume = requested;
+    return request->send(202, "application/json", "{\"message\":\"Volume change queued.\"}");
+  });
+  server.on("/spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(currentCmd == CMD_DUAL_RX)
+      return request->send(409, "application/json", "{\"ready\":false,\"error\":\"Stop Dual RX before scanning.\"}");
+    if(webSpectrumBusy || webSpectrumRequested)
+      return request->send(409, "application/json", "{\"ready\":false,\"error\":\"A spectrum scan is already running.\"}");
+
+    bool hasStart = request->hasParam("start_hz", true);
+    bool hasEnd = request->hasParam("end_hz", true);
+    if(!hasStart || !hasEnd)
+      return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Provide both start and end frequencies for the FM spectrum scan.\"}");
+    uint16_t requestedStart = 0, requestedEnd = 0;
+    {
+      String modeValue = request->hasParam("mode", true) ? request->getParam("mode", true)->value() : String("FM");
+      if(modeValue != "FM")
+        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Spectrum scanning is FM-only. Select a 64–108 MHz range.\"}");
+      const int8_t requestedMode = FM;
+      String startValue = request->getParam("start_hz", true)->value();
+      String endValue = request->getParam("end_hz", true)->value();
+      char *startEnd = nullptr, *endEnd = nullptr;
+      long startHz = strtol(startValue.c_str(), &startEnd, 10);
+      long endHz = strtol(endValue.c_str(), &endEnd, 10);
+      if(!startEnd || *startEnd || !endEnd || *endEnd || startHz < 64000000L || endHz > 108000000L || endHz <= startHz)
+        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"FM range must be between 64 and 108 MHz.\"}");
+      requestedStart = freqFromHz((uint32_t)startHz, FM);
+      requestedEnd = freqFromHz((uint32_t)endHz, FM);
+      uint32_t stepHz = 100000UL;
+      if(request->hasParam("step_hz", true))
+      {
+        String stepValue = request->getParam("step_hz", true)->value();
+        char *stepEnd = nullptr;
+        long parsedStep = strtol(stepValue.c_str(), &stepEnd, 10);
+        if(!stepEnd || *stepEnd || parsedStep != 100000L)
+          return request->send(422, "application/json", "{\"ready\":false,\"error\":\"FM spectrum scan uses a fixed 100 kHz step.\"}");
+        stepHz = (uint32_t)parsedStep;
+      }
+      uint16_t step = 10;
+      uint32_t points = ((uint32_t)requestedEnd - requestedStart) / step + 1;
+      if(points < 2 || points > 256)
+        return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Range must contain 2–256 samples at the selected resolution.\"}");
+      webSpectrumRequestedMode = requestedMode;
+      webSpectrumStep = step;
+    }
+
+    webSpectrumStartFreq = requestedStart;
+    webSpectrumEndFreq = requestedEnd;
+    webSpectrumCustomRange = true;
+    webSpectrumRequestedMode = FM;
+    webSpectrumReady = false;
+    webSpectrumBusy = true;
+    webSpectrumRequested = true;
+    request->send(202, "application/json", "{\"ready\":false}");
+  });
+
+  server.on("/spectrum.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(!webSpectrumReady)
+      return request->send(200, "application/json", "{\"ready\":false}");
+    String json;
+    json.reserve(7200);
+    int8_t resultMode = webSpectrumResultMode >= 0 ? webSpectrumResultMode : currentMode;
+    String modeName = resultMode == FM ? "FM" : resultMode == AM ? "AM" : resultMode == USB ? "USB" : "LSB";
+    json = "{\"ready\":true,\"fm\":" + String(resultMode == FM ? "true" : "false") + ",\"mode\":\"" + modeName + "\",\"samples\":[";
+    uint16_t count = scanGetCount();
+    for(uint16_t i = 0; i < count; i++)
+    {
+      uint16_t freq = 0;
+      uint8_t signal = 0, noise = 0;
+      if(!scanGetPoint(i, &freq, &signal, &noise)) break;
+      if(i) json += ',';
+      json += "{\"f\":" + String(freq) + ",\"r\":" + String(signal) + ",\"s\":" + String(noise) + "}";
+    }
+    json += "]}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
+  });
+
+  server.on("/log", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    String html = R"HTML(<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080d12"><title>ATS Debug Log</title><style>
+:root{color-scheme:dark;--bg:#020611;--panel:#030d27;--line:#123a78;--text:#e7f1ff;--muted:#7192c6;--blue:#167bff}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#020611,#000);color:var(--text);font:16px/1.45 system-ui,sans-serif}.APP{max-width:1040px;margin:auto;padding:16px 12px 28px}.STAT{padding:16px;border:1px solid #1454ad;background:linear-gradient(180deg,#030d25,#020712)}.EYEBROW{color:var(--blue);font-size:.74rem;font-weight:750;letter-spacing:.16em;text-transform:uppercase}.SUB,.LABEL{color:var(--muted)}button{padding:10px 14px;border:1px solid #16458f;background:#061d4b;color:#dce5ff;font:inherit;margin:4px 4px 8px 0}textarea{width:100%;min-height:55vh;background:#010713;color:#dce5ff;border:1px solid #16458f;padding:10px;font:12px/1.45 monospace;white-space:pre;overflow:auto}.NAV{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));margin:0 0 16px;border:1px solid #10356e}.NAV a{padding:12px 4px;text-align:center;color:#dce5ff;text-decoration:none;border-right:1px solid #10356e;font-size:.85rem}.NAV .ACTIVE{color:#80a0ff;background:#1a2946;font-weight:800}@media(max-width:500px){.NAV a{font-size:.7rem;padding:10px 2px}}</style></head><body><main class="APP">
+<nav class="NAV"><a href="/">Radio</a><a href="/memory">Memory</a><a href="/config">Config</a><a href="/update">Update</a><a href="/patches">Patches</a><span class="ACTIVE" style="padding:12px 4px;text-align:center">Log</span></nav>
+<section class="STAT"><div class="EYEBROW">Diagnostics</div><h2>WEB CONTROL LOG</h2><p class="SUB">Actions and errors observed by this browser. The log is stored locally in this browser, not on the receiver.</p>
+<button id="refresh">REFRESH</button><button id="export">EXPORT / COPY LOG</button><button id="clear">CLEAR LOG</button>
+<textarea id="output" readonly></textarea><p id="status" class="LABEL">Ready</p></section></main><script>
+(()=>{const key='atsControlDebugLog',out=document.getElementById('output'),status=document.getElementById('status');function read(){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(_){return []}}function render(){out.value=read().map(e=>e.time+' | '+e.type+' | '+e.message).join('\n');out.scrollTop=out.scrollHeight;status.textContent=read().length+' entries. Log survives page reloads in this browser.'}document.getElementById('refresh').onclick=render;document.getElementById('export').onclick=()=>{out.value=JSON.stringify({exportedAt:new Date().toISOString(),userAgent:navigator.userAgent,entries:read()},null,2);out.focus();out.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}status.textContent=ok?'Log copied. Paste it into the support chat.':'Log selected; copy it and paste into the support chat.'};document.getElementById('clear').onclick=()=>{if(confirm('Delete all browser log entries?')){localStorage.removeItem(key);render()}};render()})();
+</script></body></html>)HTML";
+    request->send(200, "text/html; charset=utf-8", html);
   });
 
   server.on("/memory", HTTP_GET, [] (AsyncWebServerRequest *request) {
@@ -671,6 +969,46 @@ static String webPage(const char *body, const char *title, std::initializer_list
   return page;
 }
 
+static String webLedFrequency(const String &text)
+{
+  String out;
+  out.reserve(text.length() * 620);
+  const char *segments[10] = {
+    "abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgcde", "abc",
+    "abcdefg", "abfgcd"
+  };
+  for(size_t i = 0; i < text.length(); i++)
+  {
+    char ch = text[i];
+    if(ch >= '0' && ch <= '9')
+    {
+      out += F("<svg class=\"LED-DIGIT\" viewBox=\"0 0 24 37\" aria-hidden=\"true\">");
+      const char *on = segments[ch - '0'];
+      const char *names = "abcdefg";
+      const int x[7] = {4,20,20,4,1,1,4};
+      const int y[7] = {2,5,20,32,20,5,17};
+      const int w[7] = {16,3,3,16,3,3,16};
+      const int h[7] = {3,12,12,3,12,12,3};
+      for(uint8_t s = 0; s < 7; s++)
+      {
+        bool lit = strchr(on, names[s]) != nullptr;
+        out += F("<rect x=\"");
+        out += String(x[s]); out += F("\" y=\"");
+        out += String(y[s]); out += F("\" width=\"");
+        out += String(w[s]); out += F("\" height=\"");
+        out += String(h[s]); out += F("\" fill=\"");
+        out += lit ? F("#167bff") : F("#061630");
+        out += F("\"/>");
+      }
+      out += F("</svg>");
+    }
+    else if(ch == '.')
+      out += F("<svg class=\"LED-DOT\" viewBox=\"0 0 8 37\" aria-hidden=\"true\"><rect x=\"1\" y=\"31\" width=\"6\" height=\"6\" fill=\"#167bff\"/></svg>");
+  }
+  out += currentMode == FM ? F("<span class=\"LED-UNIT\">MHz</span>") : F("<span class=\"LED-UNIT\">kHz</span>");
+  return out;
+}
+
 static const String webRadioPage()
 {
   String ip = "";
@@ -712,15 +1050,22 @@ static const String webRadioPage()
     ssid = String(apSSID);
   }
 
+  String connection = WiFi.status() == WL_CONNECTED ? "Wi-Fi connected" :
+                      WiFi.getMode() == WIFI_AP || WiFi.getMode() == WIFI_AP_STA ?
+                      "Local access point" : "Radio online";
+
   return webPage(pageStatus, pageStatusTitle, {
     {"title", pageStatusTitle},
+    {"connection", connection},
     {"ip", ip}, {"ssid", ssid},
     {"mac", String(getMACAddress())}, {"version", String(getVersion(true))},
     {"time", receiverTime}, {"band", getCurrentBand()->bandName},
-    {"frequency", freq}, {"mode", bandModeDesc[currentMode]},
+    {"frequency", freq}, {"frequency_hz", String((uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL))}, {"frequency_step_hz", currentMode == FM ? "10000" : "1000"}, {"volume", String(volume)}, {"mode", bandModeDesc[currentMode]},
+    {"stereo", currentMode == FM && fmStereoIdx != FM_STEREO_MONO && rx.getCurrentPilot()? String("<SPAN CLASS=\"STEREO\">STEREO</SPAN>") : String("")},
     {"rssi", String(rssi)}, {"snr", String(snr)}, {"battery", String(batteryMonitor())}
   }, {
-    {"navigation", [](String &out) { webNavigation(out, "/"); }}
+    {"navigation", [](String &out) { webNavigation(out, "/"); }},
+    {"led_frequency", [freq](String &out) { out += webLedFrequency(freq); }}
   });
 }
 
@@ -1074,4 +1419,247 @@ static void webPatchesPage(AsyncWebServerRequest *request)
   response->addHeader("Cache-Control", "no-store");
   if(busy) response->addHeader("Refresh", "2; url=/patches");
   request->send(response);
+}
+
+// Run receiver commands and sweeps only from the main loop, never inside the async web task.
+void webSpectrumTick()
+{
+  // Do not let commands accepted just before Dual RX starts execute later,
+  // after Dual RX has stopped. Dual RX owns the receiver while active.
+  if(currentCmd == CMD_DUAL_RX)
+  {
+    webTuneStep = 0;
+    webRequestedVolume = -1;
+    webTuneFrequencyHz = 0;
+    webTuneRequestedMode = -1;
+    webSpectrumRequested = false;
+    webSpectrumCustomRange = false;
+    webSpectrumRequestedMode = -1;
+    webSpectrumStep = 1;
+    webSpectrumBusy = false;
+    return;
+  }
+
+  int8_t requestedStep = webTuneStep;
+  if(requestedStep)
+  {
+    webTuneStep = 0;
+    int step = getCurrentStep()->step;
+    if(isSSB()) updateBFO(currentBFO + requestedStep * step, true);
+    else updateFrequency(currentFrequency + requestedStep * step, true);
+    clearStationInfo();
+    identifyFrequency(currentFrequency + currentBFO / 1000);
+  }
+  int16_t requestedVolume = webRequestedVolume;
+  if(requestedVolume >= 0)
+  {
+    webRequestedVolume = -1;
+    volume = (uint8_t)requestedVolume;
+    rx.setVolume(volume);
+  }
+  int32_t requestedHz = webTuneFrequencyHz;
+  if(requestedHz > 0)
+  {
+    webTuneFrequencyHz = 0;
+    int8_t requestedMode = webTuneRequestedMode;
+    webTuneRequestedMode = -1;
+    webTunePhase = 2;
+    webDiagLog("TUNE START");
+    if(requestedMode >= 0 && requestedMode != currentMode)
+    {
+      // Reconfigure the receiver only when the requested modulation actually
+      // changes. Reapplying setSSB()/setSSBBfo() on an already active USB/LSB
+      // mode can shift the displayed tuning by the current BFO offset.
+      // If switching from the VHF/FM band to HF, move the band state to ALL
+      // before configuring AM/SSB so band limits and calibration are correct.
+      if(requestedMode != FM && bandIdx == 0)
+      {
+        webTunePhase = 3;
+        { webDiagLog("TUNE before selectBand ALL"); selectBand(1, false); webDiagLog("TUNE after selectBand ALL"); }
+      }
+
+      webTunePhase = 4;
+      webDiagLog("TUNE before receiver configuration");
+      currentMode = requestedMode;
+      uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
+      if(currentMode == FM)
+        rx.setFM(6400, 10800, constrain(targetFreq, 6400, 10800), 10);
+      else if(currentMode == AM)
+        rx.setAM(100, 30000, constrain(targetFreq, 100, 30000), 1);
+      else
+      {
+        rx.setSSB(100, 30000, constrain(targetFreq, 100, 30000), 0, currentMode);
+        rx.setSSBConfig(getCurrentBandwidth()->idx, 1, 0, 1, 0, 1);
+        Band *activeBand = getCurrentBand();
+        if(currentMode == USB) rx.setSSBBfo(-(currentBFO + (activeBand ? activeBand->usbCal : 0)));
+        else rx.setSSBBfo(-(currentBFO + (activeBand ? activeBand->lsbCal : 0)));
+      }
+      webDiagLog("TUNE receiver configuration returned");
+      webTunePhase = 5;
+      currentFrequency = freqFromHz((uint32_t)requestedHz, currentMode);
+      Band *activeBand = getCurrentBand();
+      if(activeBand) activeBand->currentFreq = currentFrequency;
+    }
+    else if(requestedMode >= 0)
+    {
+      // The requested mode is already active: tune only the frequency.
+      // Avoid resetting the SSB BFO/calibration for a simple guide selection.
+      uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
+      rx.setFrequency(targetFreq);
+      currentFrequency = targetFreq;
+      Band *activeBand = getCurrentBand();
+      if(activeBand) activeBand->currentFreq = currentFrequency;
+    }
+    else
+    {
+      uint16_t targetFreq = freqFromHz((uint32_t)requestedHz, currentMode);
+      uint32_t minFreq = currentMode == FM ? 6400UL : 150UL;
+      uint32_t maxFreq = currentMode == FM ? 10800UL : 30000UL;
+      if(targetFreq >= minFreq && targetFreq <= maxFreq) rx.setFrequency(targetFreq);
+    }
+    // After an explicit web mode configuration (FM/AM/SSB), the SI4735
+    // getFrequency() call can stall when returning from FM to SSB. The
+    // requested frequency was already supplied to setFM/setAM/setSSB above,
+    // so retain that known target instead of querying the receiver here.
+    // For frequency-only tunes, keep reading back the actual receiver value.
+    if(requestedMode < 0)
+    {
+      webDiagLog("TUNE before final getFrequency");
+      currentFrequency = rx.getFrequency();
+      webDiagLog("TUNE after final getFrequency");
+    }
+    else
+    {
+      currentFrequency = freqFromHz((uint32_t)requestedHz, currentMode);
+      webDiagLog("TUNE mode configured; using requested frequency");
+    }
+    Band *band = getCurrentBand();
+    if(band) band->currentFreq = currentFrequency;
+    webTunePhase = 6;
+    webDiagLog("TUNE before station identification");
+    clearStationInfo();
+    identifyFrequency(currentFrequency + currentBFO / 1000);
+    webDiagLog("TUNE after station identification");
+    webTuneActualHz = (uint32_t)currentFrequency * (currentMode == FM ? 10000UL : 1000UL);
+    webTuneActualMode = currentMode;
+    uint32_t expectedHz = (uint32_t)freqFromHz((uint32_t)requestedHz, currentMode) *
+                          (currentMode == FM ? 10000UL : 1000UL);
+    webTuneResult = (webTuneActualMode == webTuneTargetMode &&
+                     (webTuneActualHz > expectedHz ? webTuneActualHz - expectedHz : expectedHz - webTuneActualHz) <=
+                     (currentMode == FM ? 10000UL : 1000UL)) ? 1 : 2;
+    webTunePhase = 7;
+    webTuneCompletedId = webTuneRequestId;
+    webDiagLog("TUNE COMPLETE");
+  }
+  if(!webSpectrumRequested) return;
+  webDiagLog("SPECTRUM request received");
+  webSpectrumRequested = false;
+  bool customRange = webSpectrumCustomRange;
+  uint16_t rangeStart = webSpectrumStartFreq;
+  uint16_t rangeEnd = webSpectrumEndFreq;
+  int8_t requestedMode = webSpectrumRequestedMode;
+  uint16_t customStep = webSpectrumStep;
+  webSpectrumCustomRange = false;
+  webSpectrumRequestedMode = -1;
+  webSpectrumStep = 1;
+  const uint16_t savedFrequency = currentFrequency;
+  const int8_t savedMode = currentMode;
+  const int16_t savedBFO = currentBFO;
+  const uint8_t savedBandIdx = bandIdx;
+  const int8_t scanMode = (customRange && requestedMode >= 0) ? requestedMode : currentMode;
+  uint16_t center = currentFrequency;
+  uint16_t step = currentMode == FM ? 10 : 1;
+
+  webDiagLog("SPECTRUM preparation start");
+  if(customRange && requestedMode >= 0)
+  {
+    webDiagLog("SPECTRUM before mode/band setup");
+    // Enter ALL band before a non-FM sweep when the receiver was on VHF.
+    // Changing currentMode alone leaves the band's limits and calibration on
+    // VHF, which can break subsequent scans and tuning commands.
+    if(requestedMode != FM && bandIdx == 0)
+      selectBand(1, false);
+    currentMode = requestedMode;
+    if(currentMode == FM)
+    {
+      center = constrain(center, 6400, 10800);
+      rx.setFM(6400, 10800, center, 10);
+    }
+    else if(currentMode == AM)
+    {
+      center = constrain(center, 150, 30000);
+      rx.setAM(150, 30000, center, 1);
+    }
+    else
+    {
+      center = constrain(center, 150, 30000);
+      rx.setSSB(150, 30000, center, 0, currentMode);
+      rx.setSSBConfig(getCurrentBandwidth()->idx, 1, 0, 1, 0, 1);
+      if(currentMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
+      else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
+    }
+    // The receiver's blocking getFrequency() read can hang after an SSB
+    // mode setup. setFM/setAM/setSSB already received this exact center
+    // frequency, so use the configured target instead of querying the chip.
+    currentFrequency = center;
+    Band *setupBand = getCurrentBand();
+    if(setupBand) setupBand->currentFreq = currentFrequency;
+    webDiagLog("SPECTRUM setup frequency recorded; skipped getFrequency");
+  }
+
+  webDiagLog("SPECTRUM scan call start");
+  if(customRange)
+  {
+    step = customStep;
+    webDiagLog("SPECTRUM scanRunRange start");
+    scanRunRange(rangeStart, rangeEnd, step);
+    webDiagLog("SPECTRUM scanRunRange returned");
+  }
+  else {
+    scanRun(center, currentMode == FM ? 10 : 5);
+    webDiagLog("SPECTRUM scan returned");
+  }
+
+  webDiagLog("SPECTRUM scan result processing");
+  webSpectrumResultMode = scanMode;
+  webSpectrumReady = scanGetCount() > 0;
+
+  if(customRange)
+  {
+    webDiagLog("SPECTRUM restore start");
+    // Restore the original receiver state while retaining the scan modulation
+    // separately, so selecting a peak can intentionally switch to that mode.
+    // Restore the actual band as well as mode/frequency after every sweep.
+    if(bandIdx != savedBandIdx)
+    {
+      webDiagLog("SPECTRUM restore selectBand start");
+      selectBand(savedBandIdx, false);
+      webDiagLog("SPECTRUM restore selectBand returned");
+    }
+    currentMode = savedMode;
+    currentBFO = savedBFO;
+    if(savedMode == FM)
+      rx.setFM(6400, 10800, constrain(savedFrequency, 6400, 10800), 10);
+    else if(savedMode == AM)
+      rx.setAM(150, 30000, constrain(savedFrequency, 150, 30000), 1);
+    else
+    {
+      rx.setSSB(150, 30000, constrain(savedFrequency, 150, 30000), 0, savedMode);
+      rx.setSSBConfig(getCurrentBandwidth()->idx, 1, 0, 1, 0, 1);
+      if(savedMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
+      else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
+    }
+    // The restore calls above already commanded savedFrequency. Avoid a
+    // blocking SI4735 getFrequency() read here as well, especially after SSB.
+    currentFrequency = savedFrequency;
+    Band *band = getCurrentBand();
+    if(band) band->currentFreq = currentFrequency;
+    webDiagLog("SPECTRUM restore frequency recorded; skipped getFrequency");
+    clearStationInfo();
+    webDiagLog("SPECTRUM restore identify start");
+    identifyFrequency(currentFrequency + currentBFO / 1000);
+    webDiagLog("SPECTRUM restore identify returned");
+  }
+  webSpectrumBusy = false;
+  webDiagLog("SPECTRUM COMPLETE");
 }

@@ -192,6 +192,7 @@ void prefsSave(uint32_t items)
     prefs.putUChar("Volume",   volume);            // Current volume
     prefs.putUChar("Band",     bandIdx);           // Current band
     prefs.putUChar("WiFiMode", wifiModeIdx);       // WiFi connection mode
+    prefs.putBool("WebDiag", webDiagEnabled);      // Persistent web diagnostic logging
 
     // Save additional global settings
     prefs.putUShort("Brightness", currentBrt);     // Brightness
@@ -281,6 +282,7 @@ bool prefsLoad(uint32_t items)
     volume         = prefs.getUChar("Volume", volume);          // Current volume
     bandIdx        = prefs.getUChar("Band", bandIdx);           // Current band
     wifiModeIdx    = prefs.getUChar("WiFiMode", wifiModeIdx);   // WiFi connection mode
+    webDiagEnabled = prefs.getBool("WebDiag", webDiagEnabled); // Persistent web diagnostic logging
     currentBrt     = prefs.getUShort("Brightness", currentBrt); // Brightness
     FmAgcIdx       = prefs.getUChar("FmAGC", FmAgcIdx);         // FM AGC/ATTN
     AmAgcIdx       = prefs.getUChar("AmAGC", AmAgcIdx);         // AM AGC/ATTN

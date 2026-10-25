@@ -247,6 +247,8 @@ void setup()
     while(digitalRead(ENCODER_PUSH_BUTTON)==LOW) delay(100);
   }
 
+  webDiagLog("BOOT: startup");
+
   if(!prefsLoad(SAVE_MEMORIES|SAVE_VERIFY)) prefsSave(SAVE_MEMORIES);
   if(!prefsLoad(SAVE_BANDS|SAVE_VERIFY)) prefsSave(SAVE_BANDS);
 
@@ -923,6 +925,7 @@ void loop()
 
   prefsTickTime();
   netTickTime();
+  webSpectrumTick();
   needRedraw |= patchesTick();
   needRedraw |= clockUpdate();
 

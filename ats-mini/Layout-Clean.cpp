@@ -183,8 +183,10 @@ void drawLayoutClean()
   const uint16_t COLOR_BLACK = 0x0000;
   const uint16_t COLOR_GREY  = 0x2104;
 
-  // 1. Battery
-  drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+  // 1. Battery, WiFi and Bluetooth indicators (same positions as Layout Default)
+  drawBleIndicator(BLE_OFFSET_X, BLE_OFFSET_Y);
+  bool has_voltage = drawBattery(BATT_OFFSET_X, BATT_OFFSET_Y);
+  drawWiFiIndicator(has_voltage ? WIFI_OFFSET_X : BATT_OFFSET_X - 13, WIFI_OFFSET_Y);
 
   // 2. Band name
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);

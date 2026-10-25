@@ -7,7 +7,7 @@ static const char pageConfigTitle[] PROGMEM = "ATS-Mini Config";
 
 static const char pageConfig[] PROGMEM = R"HTML(<H1>{{title}}</H1>
 {{{navigation}}}
-<FORM ACTION="/setconfig" METHOD="POST" ENCTYPE="multipart/form-data" ONSUBMIT="browserDateTime(true)">
+<FORM ACTION="/setconfig" METHOD="POST" ENCTYPE="multipart/form-data" ONSUBMIT="browserDateTime(true)" CLASS="CONFIGFORM">
   <TABLE COLUMNS="2">
     <TR><TH COLSPAN="2" CLASS="HEADING">WiFi Network 1</TH></TR>
     <TR><TD CLASS="LABEL">SSID</TD><TD><INPUT TYPE="TEXT" NAME="wifissid1" VALUE="{{ssid1}}"></TD></TR>
