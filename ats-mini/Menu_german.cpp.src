@@ -1813,8 +1813,8 @@ void drawFullScreenMenu(uint16_t cmd)
 
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(white);
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.drawString(title, 12, 9);
+  spr.setFont(FONT_SMALL);
+  spr.drawString(title, 12, 8);
   spr.setTextDatum(TR_DATUM);
   spr.setTextColor(cyan);
   spr.setFont(FONT_SMALL);
@@ -1831,8 +1831,8 @@ void drawFullScreenMenu(uint16_t cmd)
 
   spr.setTextColor(red);
   spr.setTextDatum(TL_DATUM);
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  drawFullMenuIcon(idx, 22, 74, red, settingsPage);
+  spr.setFont(FONT_LARGE);
+  drawFullMenuIcon(idx, 22, 70, red, settingsPage);
 
   // Keep long names readable: split at a natural space or hyphen if needed.
   char firstLine[40];
@@ -1853,12 +1853,12 @@ void drawFullScreenMenu(uint16_t cmd)
       while(*rest == ' ' || *rest == '-') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
       spr.setTextColor(white);
-      spr.drawString(firstLine, textX, 64);
+      spr.drawString(firstLine, textX, 57);
       spr.setTextColor(red);
-      spr.drawString(secondLine, textX, 91);
+      spr.drawString(secondLine, textX, 88);
     } else {
       spr.setTextColor(white);
-      spr.drawString(selected, textX, 76);
+      spr.drawString(selected, textX, 70);
     }
   } else {
     spr.setTextColor(white);
