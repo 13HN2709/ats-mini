@@ -1791,10 +1791,8 @@ static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool setting
 }
 
 
-// Orbitron XXL menu renderer. The extra 1px pass strengthens the Light face toward Bold.
-// UTF-8 umlauts are drawn explicitly so they remain visible with ASCII font tables.
-// XXL menu text renderer: ASCII glyphs plus explicit UTF-8 umlaut marks.
-// Keep the menu font independent from all normal radio/layout rendering.
+// XXL menu text renderer: explicit UTF-8 umlauts and stronger strokes.
+// Kept local to the full-screen menu so radio layouts remain unchanged.
 static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgfx::IFont *font)
 {
   spr.setFont(font);
@@ -1846,13 +1844,10 @@ static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgf
 
 void drawFullScreenMenu(uint16_t cmd)
 {
-  // High-contrast keypad palette: black, electric blue and luminous cyan.
   const uint16_t bg = 0x0000;
-  const uint16_t panel = 0x0000;
   const uint16_t blue = 0x001F;
   const uint16_t red = 0xF800;
   const uint16_t cyan = 0x07FF;
-  const uint16_t white = 0xFFFF;
   const bool settingsPage = cmd == CMD_SETTINGS;
   const int rawIdx = settingsPage ? settingsIdx : menuIdx;
   const int idx = (settingsPage && rawIdx > MENU_ZOOM) ? rawIdx - 1 : rawIdx;
@@ -1861,13 +1856,11 @@ void drawFullScreenMenu(uint16_t cmd)
   const char *selected = settingsPage ? settingLabel(rawIdx) : menu[idx];
 
   spr.fillSprite(bg);
-  spr.fillRoundRect(3, 3, 314, 164, 5, panel);
+  spr.fillRoundRect(3, 3, 314, 164, 5, bg);
   spr.drawRoundRect(3, 3, 314, 164, 5, blue);
   spr.drawRoundRect(5, 5, 310, 160, 4, blue);
 
-  spr.setTextDatum(TL_DATUM);
-  spr.setTextColor(white);
-  drawXXLText(title, 12, 7, white, &lgfx::fonts::Orbitron_Light_24);
+  drawXXLText(title, 12, 7, cyan, &lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(TR_DATUM);
   spr.setTextColor(cyan);
   spr.setFont(FONT_SMALL);
@@ -1875,24 +1868,18 @@ void drawFullScreenMenu(uint16_t cmd)
   snprintf(counter, sizeof(counter), "%02d / %02d", idx + 1, count);
   spr.drawString(counter, 307, 9);
 
-  // Use nearly the whole display for the selected entry; no descriptions or
-  // neighbouring abbreviations, which were reducing readability.
-  spr.fillRoundRect(9, 32, 302, 109, 5, bg);
-  spr.drawRoundRect(9, 32, 302, 109, 5, red);
-  spr.fillRoundRect(9, 32, 4, 109, 2, red);
-  spr.drawRoundRect(14, 37, 292, 99, 4, red);
+  // One solid, thicker red frame: no nested boxes.
+  spr.fillRoundRect(9, 32, 302, 109, 5, red);
+  spr.fillRoundRect(12, 35, 296, 103, 3, bg);
 
-  spr.setTextColor(cyan);
-  spr.setTextDatum(TL_DATUM);
-  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
-  drawFullMenuIcon(idx, 18, 57, red, settingsPage);
-
-  // Keep long names readable: split at a natural space or hyphen if needed.
+  // Leave a clear gap between the icon and the text.
+  drawFullMenuIcon(idx, 16, 57, red, settingsPage);
+  const int textX = 72;
+  const int textMaxWidth = 226;
   char firstLine[40];
   char secondLine[40];
   const size_t nameLen = strlen(selected);
-  const int textX = 64;
-  if(nameLen > 13) {
+  if(nameLen > 10) {
     size_t split = nameLen / 2;
     while(split < nameLen && selected[split] != ' ' && selected[split] != '-') split++;
     if(split >= nameLen) {
@@ -1905,24 +1892,23 @@ void drawFullScreenMenu(uint16_t cmd)
       const char *rest = selected + split + 1;
       while(*rest == ' ' || *rest == '-') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
-      drawXXLText(firstLine, textX, 52, white, &lgfx::fonts::Orbitron_Light_24);
-      drawXXLText(secondLine, textX, 82, cyan, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(firstLine, textX, 50, cyan, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(secondLine, textX, 80, cyan, &lgfx::fonts::Orbitron_Light_24);
     } else {
-      drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
+      int width = drawXXLText(selected, textX, 65, cyan, &lgfx::fonts::Orbitron_Light_24);
+      if(width > textMaxWidth) drawXXLText(selected, textX, 65, cyan, FONT_LARGE);
     }
   } else {
-    drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
+    int width = drawXXLText(selected, textX, 65, cyan, &lgfx::fonts::Orbitron_Light_24);
+    if(width > textMaxWidth) drawXXLText(selected, textX, 65, cyan, FONT_LARGE);
   }
 
-  spr.drawFastHLine(12, 149, 296, red);
+  spr.drawFastHLine(12, 147, 296, red);
   spr.setTextColor(cyan);
-  spr.setFont(FONT_SMALL);
   spr.setTextDatum(TL_DATUM);
-  spr.drawString("DREHEN: AUSWÄHLEN", 12, 153);
+  drawXXLText("DREHEN: AUSWÄHLEN", 12, 151, cyan, FONT_SMALL);
   spr.setTextDatum(TR_DATUM);
-  spr.setFont(FONT_DEFAULT);
-  spr.setTextColor(cyan);
-  spr.drawString("KLICK: ÖFFNEN", 307, 153);
+  drawXXLText("KLICK: ÖFFNEN", 307, 151, cyan, FONT_DEFAULT);
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
