@@ -1509,9 +1509,10 @@ void webSpectrumTick()
       }
       webDiagLog("TUNE receiver configuration returned");
       webTunePhase = 5;
-      webDiagLog("TUNE before getFrequency after mode configuration");
-      currentFrequency = rx.getFrequency();
-      webDiagLog("TUNE after getFrequency after mode configuration");
+      // Use the requested frequency as the initial software value instead of
+      // querying the SI4735 immediately after a mode switch. The subsequent
+      // final read below remains instrumented for diagnosis.
+      currentFrequency = freqFromHz((uint32_t)requestedHz, currentMode);
       Band *activeBand = getCurrentBand();
       if(activeBand) activeBand->currentFreq = currentFrequency;
     }
