@@ -577,6 +577,14 @@ void drawScreen()
 {
   if(sleepOn()) return;
 
+  // Full-screen TEF6686-style menu replaces the compact sidebar menu.
+  if(currentCmd == CMD_MENU || currentCmd == CMD_SETTINGS)
+  {
+    drawFullScreenMenu(currentCmd);
+    spr.pushSprite(0, 0);
+    return;
+  }
+
   // Keypad-Overlay sofort zeichnen und anzeigen, wenn aktiv
   if(currentCmd == CMD_FREQ_KEYPAD)
   {
