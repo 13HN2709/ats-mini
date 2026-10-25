@@ -20,6 +20,21 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <SPAN STYLE="opacity:.75">PTY</SPAN><SPAN ID="rdsPty"></SPAN>
   </DIV>
 </SECTION>
+<SECTION CLASS="STAT" ID="frequencyKeypadPanel" STYLE="margin-top:14px;padding:14px">
+  <DIV CLASS="EYEBROW" STYLE="margin-bottom:12px">FREQUENCY KEYPAD</DIV>
+  <FORM ID="manualTuneForm" STYLE="display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,.55fr);gap:8px;margin:0">
+    <LABEL STYLE="grid-column:1/-1">Frequency / Band</LABEL>
+    <INPUT ID="manualTuneFrequency" TYPE="text" INPUTMODE="decimal" AUTOCOMPLETE="off" PLACEHOLDER="e.g. 14100 or 88.50" REQUIRED STYLE="width:100%;min-width:0">
+    <SELECT ID="manualTuneMode" aria-label="Band and modulation" STYLE="width:100%;min-width:0">
+      <OPTION VALUE="FM" SELECTED>FM · MHz</OPTION>
+      <OPTION VALUE="AM">AM · kHz</OPTION>
+      <OPTION VALUE="USB">USB · kHz</OPTION>
+      <OPTION VALUE="LSB">LSB · kHz</OPTION>
+    </SELECT>
+    <BUTTON ID="manualTuneButton" TYPE="submit" STYLE="grid-column:1/-1">TUNE FREQUENCY</BUTTON>
+    <DIV ID="manualTuneStatus" CLASS="LABEL" ROLE="status" STYLE="grid-column:1/-1">Enter a frequency and select its band / modulation.</DIV>
+  </FORM>
+</SECTION>
 <SECTION CLASS="STAT" ID="memoryQuickPanel" STYLE="margin-top:14px;padding:0;overflow:hidden">
   <BUTTON ID="memoryQuickToggle" TYPE="button" aria-expanded="false" aria-controls="memoryQuickList" STYLE="display:flex;align-items:center;justify-content:space-between;width:100%;padding:14px 16px;background:transparent;border:0;color:inherit;text-align:left;cursor:pointer">
     <SPAN STYLE="display:flex;align-items:center;gap:10px"><SPAN STYLE="color:#80a0ff;font-size:1.15em">&#9835;</SPAN><SPAN CLASS="EYEBROW" STYLE="margin:0">MEMORIES</SPAN><SMALL ID="memoryQuickCount" CLASS="LABEL">Loading…</SMALL></SPAN>
@@ -71,19 +86,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <DIV><DIV CLASS="EYEBROW">01 / RF ANALYSIS</DIV><H2>SPECTRUM SCAN</H2><DIV CLASS="SUB">FM spectrum scan · 64–108 MHz</DIV></DIV>
     <DIV CLASS="LIVE-MARK"><SPAN></SPAN> RECEIVER</DIV>
   </DIV>
-  <FORM ID="manualTuneForm" STYLE="display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,.55fr);gap:8px;margin:0 0 14px;padding:12px;border:1px solid #223b68;border-radius:8px;background:#071124">
-    <LABEL STYLE="grid-column:1/-1">MANUAL FREQUENCY / BAND</LABEL>
-    <INPUT ID="manualTuneFrequency" TYPE="text" INPUTMODE="decimal" AUTOCOMPLETE="off" PLACEHOLDER="e.g. 14100 or 88.50" REQUIRED STYLE="width:100%;min-width:0">
-    <SELECT ID="manualTuneMode" aria-label="Band and modulation" STYLE="width:100%;min-width:0">
-      <OPTION VALUE="FM" SELECTED>FM · MHz</OPTION>
-      <OPTION VALUE="AM">AM · kHz</OPTION>
-      <OPTION VALUE="USB">USB · kHz</OPTION>
-      <OPTION VALUE="LSB">LSB · kHz</OPTION>
-    </SELECT>
-    <BUTTON ID="manualTuneButton" TYPE="submit" STYLE="grid-column:1/-1">TUNE FREQUENCY</BUTTON>
-    <DIV ID="manualTuneStatus" CLASS="LABEL" ROLE="status" STYLE="grid-column:1/-1">Enter a frequency and select its band / modulation.</DIV>
-  </FORM>
-  <FORM ID="spectrumRange" CLASS="RANGE-FORM">
+    <FORM ID="spectrumRange" CLASS="RANGE-FORM">
     <LABEL>START <SPAN ID="spectrumUnitStart">MHz</SPAN><INPUT ID="spectrumStartMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="88.00" REQUIRED></LABEL>
     <LABEL>STOP <SPAN ID="spectrumUnitEnd">MHz</SPAN><INPUT ID="spectrumEndMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="108.00" REQUIRED></LABEL>
     <LABEL>MODULATION<DIV STYLE="margin-top:6px;padding:10px 12px;border:1px solid #167bff;background:#102a55;color:#eaf0ff;font-weight:800;text-align:center">FM ONLY</DIV></LABEL>
