@@ -1655,11 +1655,12 @@ void webSpectrumTick()
       if(savedMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
       else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
     }
-    webDiagLog("SPECTRUM restore getFrequency start");
-    currentFrequency = rx.getFrequency();
-    webDiagLog("SPECTRUM restore getFrequency returned");
+    // The restore calls above already commanded savedFrequency. Avoid a
+    // blocking SI4735 getFrequency() read here as well, especially after SSB.
+    currentFrequency = savedFrequency;
     Band *band = getCurrentBand();
     if(band) band->currentFreq = currentFrequency;
+    webDiagLog("SPECTRUM restore frequency recorded; skipped getFrequency");
     clearStationInfo();
     webDiagLog("SPECTRUM restore identify start");
     identifyFrequency(currentFrequency + currentBFO / 1000);
