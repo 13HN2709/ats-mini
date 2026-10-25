@@ -1811,14 +1811,16 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(muted);
   spr.setFont(FONT_SMALL);
-  drawFullMenuIcon((idx + count - 1) % count, 14, 33, muted, settingsPage);\n  spr.drawString(previous, 31, 34);
+  drawFullMenuIcon((idx + count - 1) % count, 14, 33, muted, settingsPage);
+  spr.drawString(previous, 31, 34);
 
   spr.fillRoundRect(8, 51, 304, 70, 5, 0x082A);
   spr.drawRoundRect(8, 51, 304, 70, 5, blue);
   spr.fillRect(8, 51, 3, 70, cyan);
   spr.setTextColor(cyan);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  drawFullMenuIcon(idx, 18, 60, cyan, settingsPage);\n  spr.drawString(selected, 36, 59);
+  drawFullMenuIcon(idx, 18, 60, cyan, settingsPage);
+  spr.drawString(selected, 36, 59);
 
   spr.setTextColor(white);
   spr.setFont(FONT_SMALL);
@@ -1842,7 +1844,8 @@ void drawFullScreenMenu(uint16_t cmd)
   }
 
   spr.setTextColor(muted);
-  drawFullMenuIcon((idx + 1) % count, 14, 129, muted, settingsPage);\n  spr.drawString(next, 31, 130);
+  drawFullMenuIcon((idx + 1) % count, 14, 129, muted, settingsPage);
+  spr.drawString(next, 31, 130);
   spr.drawLine(10, 151, 310, 151, blue);
   spr.setTextColor(cyan);
   spr.drawString("ROTATE: SELECT", 12, 154);
