@@ -68,9 +68,21 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
 </SECTION>
 <SECTION CLASS="SPECTRUM-PANEL">
   <DIV CLASS="PANEL-HEAD">
-    <DIV><DIV CLASS="EYEBROW">01 / RF ANALYSIS</DIV><H2>SPECTRUM SCAN</H2><DIV CLASS="SUB">All-band receiver scan · selectable modulation</DIV></DIV>
+    <DIV><DIV CLASS="EYEBROW">01 / RF ANALYSIS</DIV><H2>SPECTRUM SCAN</H2><DIV CLASS="SUB">FM spectrum scan · 64–108 MHz</DIV></DIV>
     <DIV CLASS="LIVE-MARK"><SPAN></SPAN> RECEIVER</DIV>
   </DIV>
+  <FORM ID="manualTuneForm" STYLE="display:grid;grid-template-columns:minmax(0,1fr) minmax(92px,.55fr);gap:8px;margin:0 0 14px;padding:12px;border:1px solid #223b68;border-radius:8px;background:#071124">
+    <LABEL STYLE="grid-column:1/-1">MANUAL FREQUENCY / BAND</LABEL>
+    <INPUT ID="manualTuneFrequency" TYPE="text" INPUTMODE="decimal" AUTOCOMPLETE="off" PLACEHOLDER="e.g. 14100 or 88.50" REQUIRED STYLE="width:100%;min-width:0">
+    <SELECT ID="manualTuneMode" aria-label="Band and modulation" STYLE="width:100%;min-width:0">
+      <OPTION VALUE="FM" SELECTED>FM · MHz</OPTION>
+      <OPTION VALUE="AM">AM · kHz</OPTION>
+      <OPTION VALUE="USB">USB · kHz</OPTION>
+      <OPTION VALUE="LSB">LSB · kHz</OPTION>
+    </SELECT>
+    <BUTTON ID="manualTuneButton" TYPE="submit" STYLE="grid-column:1/-1">TUNE FREQUENCY</BUTTON>
+    <DIV ID="manualTuneStatus" CLASS="LABEL" ROLE="status" STYLE="grid-column:1/-1">Enter a frequency and select its band / modulation.</DIV>
+  </FORM>
   <FORM ID="spectrumRange" CLASS="RANGE-FORM">
     <LABEL>START <SPAN ID="spectrumUnitStart">MHz</SPAN><INPUT ID="spectrumStartMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="88.00" REQUIRED></LABEL>
     <LABEL>STOP <SPAN ID="spectrumUnitEnd">MHz</SPAN><INPUT ID="spectrumEndMHz" TYPE="number" INPUTMODE="decimal" MIN="64" MAX="108" STEP="0.1" VALUE="108.00" REQUIRED></LABEL>
@@ -399,7 +411,42 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      volumeInput.disabled=false;
    },180);
  });
- const canvas=document.getElementById('spectrumCanvas');
+ const manualTuneForm=document.getElementById('manualTuneForm');
+  const manualTuneFrequency=document.getElementById('manualTuneFrequency');
+  const manualTuneMode=document.getElementById('manualTuneMode');
+  const manualTuneButton=document.getElementById('manualTuneButton');
+  const manualTuneStatus=document.getElementById('manualTuneStatus');
+  manualTuneMode.addEventListener('change',()=>{
+    manualTuneFrequency.placeholder=manualTuneMode.value==='FM'?'e.g. 88.50 (MHz)':'e.g. 14100 (kHz)';
+  });
+  manualTuneForm.addEventListener('submit',async event=>{
+    event.preventDefault();
+    const mode=manualTuneMode.value;
+    const raw=String(manualTuneFrequency.value).trim().replace(',','.');
+    const value=Number(raw);
+    if(!raw||!Number.isFinite(value)||value<=0){
+      manualTuneStatus.textContent='Enter a valid frequency.';
+      return;
+    }
+    const hz=Math.round(value*(mode==='FM'?1000000:1000));
+    const minHz=mode==='FM'?64000000:150000;
+    const maxHz=mode==='FM'?108000000:30000000;
+    if(hz<minHz||hz>maxHz){
+      manualTuneStatus.textContent=mode==='FM'
+        ?'FM frequency must be between 64 and 108 MHz.'
+        :'Frequency must be between 150 kHz and 30000 kHz for AM/USB/LSB.';
+      return;
+    }
+    manualTuneButton.disabled=true;
+    manualTuneStatus.textContent='Tuning to '+(mode==='FM'?(hz/1000000).toFixed(2)+' MHz':(hz/1000).toFixed(1)+' kHz')+' '+mode+'…';
+    const ok=await postRadioCommand('/radio/tune',{freq:String(hz),mode},manualTuneStatus);
+    manualTuneButton.disabled=false;
+    if(ok){
+      manualTuneStatus.textContent='Tuned to '+(mode==='FM'?(hz/1000000).toFixed(2)+' MHz':(hz/1000).toFixed(1)+' kHz')+' '+mode+'.';
+      setTimeout(()=>location.reload(),700);
+    }
+  });
+  const canvas=document.getElementById('spectrumCanvas');
  const ctx=canvas.getContext('2d');
  const spectrumForm=document.getElementById('spectrumRange');
  const startInput=document.getElementById('spectrumStartMHz');
