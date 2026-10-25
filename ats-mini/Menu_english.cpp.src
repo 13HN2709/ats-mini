@@ -1722,60 +1722,84 @@ static const char *fullMenuDescription(int idx)
 
 static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
 {
-  // Small vector icons, drawn directly on the 320x170 display.
-  // Main-menu icons are matched to radio functions; settings use matching groups.
-  if(settingsPage)
-  {
-    switch(idx)
-    {
+  // Large, high-contrast vector icons sized for the XXL menu.
+  if(settingsPage) {
+    switch(idx) {
       case 0: // Brightness
-        spr.drawCircle(x+6, y+6, 3, color); spr.drawLine(x+6,y,x+6,y+2,color); spr.drawLine(x+6,y+10,x+6,y+12,color); spr.drawLine(x,y+6,x+2,y+6,color); spr.drawLine(x+10,y+6,x+12,y+6,color); break;
+        spr.drawCircle(x+10,y+10,7,color); spr.drawCircle(x+10,y+10,3,color);
+        spr.drawLine(x+10,y,x+10,y+3,color); spr.drawLine(x+10,y+17,x+10,y+20,color);
+        spr.drawLine(x,y+10,x+3,y+10,color); spr.drawLine(x+17,y+10,x+20,y+10,color); break;
       case 1: case 2: // Date / UTC
-        spr.drawRect(x+1,y+2,11,10,color); spr.drawLine(x+1,y+5,x+11,y+5,color); spr.drawLine(x+4,y,x+4,y+3,color); spr.drawLine(x+9,y,x+9,y+3,color); break;
+        spr.drawRoundRect(x+2,y+3,17,16,2,color); spr.drawLine(x+2,y+7,x+18,y+7,color);
+        spr.drawLine(x+6,y,x+6,y+5,color); spr.drawLine(x+15,y,x+15,y+5,color); break;
       case 3: case 4: // Sleep
-        spr.drawCircle(x+6,y+6,5,color); spr.fillCircle(x+8,y+4,4,0x0000); spr.drawLine(x+1,y+11,x+5,y+11,color); break;
-      case 5: case 6: case 7: case 8: // UI appearance
-        spr.drawRect(x+1,y+1,11,10,color); spr.drawLine(x+1,y+4,x+11,y+4,color); spr.drawLine(x+4,y+5,x+4,y+10,color); break;
+        spr.drawCircle(x+10,y+10,8,color); spr.drawLine(x+10,y+4,x+10,y+10,color);
+        spr.drawLine(x+10,y+10,x+15,y+13,color); break;
+      case 5: case 6: case 7: case 8: // UI appearance / scroll
+        spr.drawRoundRect(x+1,y+2,19,16,2,color); spr.drawLine(x+1,y+7,x+19,y+7,color);
+        spr.drawLine(x+7,y+9,x+7,y+16,color); spr.drawLine(x+13,y+9,x+13,y+16,color); break;
       case 9: case 10: case 11: // FM/RDS
-        spr.drawCircle(x+6,y+6,2,color); spr.drawCircle(x+6,y+6,5,color); spr.drawLine(x+6,y+6,x+11,y+1,color); break;
+        spr.drawCircle(x+10,y+10,3,color); spr.drawCircle(x+10,y+10,7,color);
+        spr.drawLine(x+10,y+10,x+19,y+1,color); break;
       case 12: case 13: // Calibration / DSP
-        spr.drawLine(x+1,y+2,x+11,y+2,color); spr.drawLine(x+1,y+6,x+11,y+6,color); spr.drawLine(x+1,y+10,x+11,y+10,color); spr.fillCircle(x+4,y+2,1,color); spr.fillCircle(x+8,y+6,1,color); spr.fillCircle(x+5,y+10,1,color); break;
+        spr.drawLine(x+1,y+4,x+19,y+4,color); spr.drawLine(x+1,y+10,x+19,y+10,color);
+        spr.drawLine(x+1,y+16,x+19,y+16,color); spr.fillCircle(x+6,y+4,2,color);
+        spr.fillCircle(x+14,y+10,2,color); spr.fillCircle(x+9,y+16,2,color); break;
       case 14: case 15: // EiBi / update
-        spr.drawRect(x+2,y+1,8,11,color); spr.drawLine(x+4,y+4,x+8,y+4,color); spr.drawLine(x+4,y+7,x+8,y+7,color); spr.drawLine(x+4,y+10,x+7,y+10,color); break;
+        spr.drawRoundRect(x+3,y+1,14,19,2,color); spr.drawLine(x+6,y+6,x+14,y+6,color);
+        spr.drawLine(x+6,y+10,x+14,y+10,color); spr.drawLine(x+6,y+14,x+12,y+14,color); break;
       case 16: case 17: // USB/TCP
-        spr.drawLine(x+6,y+11,x+6,y+2,color); spr.drawLine(x+6,y+2,x+2,y+5,color); spr.drawLine(x+6,y+2,x+10,y+5,color); spr.drawLine(x+2,y+5,x+2,y+8,color); spr.drawLine(x+10,y+5,x+10,y+8,color); break;
+        spr.drawLine(x+10,y+19,x+10,y+2,color); spr.drawLine(x+10,y+2,x+4,y+8,color);
+        spr.drawLine(x+10,y+2,x+16,y+8,color); spr.drawLine(x+4,y+8,x+4,y+13,color);
+        spr.drawLine(x+16,y+8,x+16,y+13,color); break;
       case 18: case 19: // Bluetooth / Wi-Fi
-        spr.drawLine(x+6,y,x+6,y+12,color); spr.drawLine(x+6,y+1,x+11,y+5,color); spr.drawLine(x+11,y+5,x+6,y+7,color); spr.drawLine(x+6,y+7,x+11,y+10,color); spr.drawLine(x+11,y+10,x+6,y+12,color); break;
-      default: // About / diagnostic
-        spr.drawCircle(x+6,y+6,5,color); spr.drawLine(x+6,y+5,x+6,y+9,color); spr.fillCircle(x+6,y+3,1,color); break;
+        spr.drawLine(x+10,y,x+10,y+20,color); spr.drawLine(x+10,y+2,x+18,y+7,color);
+        spr.drawLine(x+18,y+7,x+10,y+10,color); spr.drawLine(x+10,y+10,x+18,y+14,color);
+        spr.drawLine(x+18,y+14,x+10,y+20,color); break;
+      default:
+        spr.drawCircle(x+10,y+10,8,color); spr.drawLine(x+10,y+8,x+10,y+14,color);
+        spr.fillCircle(x+10,y+5,1,color); break;
     }
     return;
   }
-
-  switch(idx)
-  {
+  switch(idx) {
     case 0: // Mode
-      spr.drawCircle(x+6,y+6,2,color); spr.drawCircle(x+6,y+6,5,color); spr.drawLine(x+6,y+6,x+11,y+1,color); break;
+      spr.drawCircle(x+10,y+10,4,color); spr.drawCircle(x+10,y+10,8,color);
+      spr.drawLine(x+10,y+10,x+19,y+1,color); break;
     case 1: // Band
-      spr.drawLine(x+1,y+11,x+1,y+7,color); spr.drawLine(x+5,y+11,x+5,y+4,color); spr.drawLine(x+9,y+11,x+9,y+1,color); break;
+      spr.drawLine(x+3,y+19,x+3,y+12,color); spr.drawLine(x+10,y+19,x+10,y+7,color);
+      spr.drawLine(x+17,y+19,x+17,y+2,color); break;
     case 2: // Volume
-      spr.drawRect(x+1,y+4,3,5,color); spr.drawLine(x+4,y+4,x+8,y+1,color); spr.drawLine(x+4,y+9,x+8,y+12,color); spr.drawLine(x+9,y+3,x+11,y+9,color); break;
+      spr.fillRect(x+2,y+7,5,8,color); spr.drawLine(x+7,y+7,x+15,y+2,color);
+      spr.drawLine(x+7,y+15,x+15,y+20,color); spr.drawLine(x+17,y+5,x+20,y+17,color); break;
     case 3: // Keypad
-      spr.drawRect(x+1,y+1,11,11,color); spr.fillCircle(x+4,y+4,1,color); spr.fillCircle(x+9,y+4,1,color); spr.fillCircle(x+4,y+9,1,color); spr.fillCircle(x+9,y+9,1,color); break;
+      spr.drawRoundRect(x+1,y+1,19,19,2,color); spr.fillCircle(x+6,y+6,2,color);
+      spr.fillCircle(x+15,y+6,2,color); spr.fillCircle(x+6,y+15,2,color);
+      spr.fillCircle(x+15,y+15,2,color); break;
     case 4: case 5: // Dual RX / VFO
-      spr.drawCircle(x+3,y+6,2,color); spr.drawCircle(x+9,y+6,2,color); spr.drawLine(x+5,y+6,x+7,y+6,color); break;
+      spr.drawCircle(x+5,y+10,4,color); spr.drawCircle(x+16,y+10,4,color);
+      spr.drawLine(x+9,y+10,x+12,y+10,color); break;
     case 6: case 7: // Frequency / BFO
-      spr.drawLine(x+1,y+10,x+3,y+7,color); spr.drawLine(x+3,y+7,x+5,y+9,color); spr.drawLine(x+5,y+9,x+8,y+3,color); spr.drawLine(x+8,y+3,x+11,y+5,color); break;
+      spr.drawLine(x+1,y+17,x+5,y+11,color); spr.drawLine(x+5,y+11,x+9,y+14,color);
+      spr.drawLine(x+9,y+14,x+14,y+4,color); spr.drawLine(x+14,y+4,x+20,y+8,color); break;
     case 8: case 9: case 10: // Step / seek / scan
-      spr.drawLine(x+1,y+2,x+11,y+2,color); spr.drawLine(x+1,y+6,x+8,y+6,color); spr.drawLine(x+1,y+10,x+11,y+10,color); break;
+      spr.drawLine(x+1,y+4,x+20,y+4,color); spr.drawLine(x+1,y+10,x+15,y+10,color);
+      spr.drawLine(x+1,y+16,x+20,y+16,color); break;
     case 11: // Memory
-      spr.drawRect(x+2,y+1,8,11,color); spr.drawLine(x+4,y+4,x+8,y+4,color); spr.drawLine(x+4,y+7,x+8,y+7,color); break;
+      spr.drawRoundRect(x+3,y+1,15,19,2,color); spr.drawLine(x+6,y+6,x+15,y+6,color);
+      spr.drawLine(x+6,y+10,x+15,y+10,color); spr.drawLine(x+6,y+14,x+13,y+14,color); break;
     case 12: // Squelch
-      spr.drawLine(x+1,y+2,x+11,y+2,color); spr.drawLine(x+2,y+2,x+5,y+7,color); spr.drawLine(x+10,y+2,x+7,y+7,color); spr.drawLine(x+5,y+7,x+5,y+11,color); spr.drawLine(x+7,y+7,x+7,y+11,color); break;
-    case 13: case 14: case 15: case 16: // Bandwidth, AGC, AVC, Softmute
-      spr.drawLine(x+1,y+3,x+11,y+3,color); spr.drawLine(x+1,y+6,x+11,y+6,color); spr.drawLine(x+1,y+9,x+11,y+9,color); spr.fillCircle(x+4,y+3,1,color); spr.fillCircle(x+8,y+6,1,color); spr.fillCircle(x+5,y+9,1,color); break;
-    default: // Settings
-      spr.drawCircle(x+6,y+6,4,color); spr.drawCircle(x+6,y+6,1,color); spr.drawLine(x+6,y,x+6,y+2,color); spr.drawLine(x+6,y+10,x+6,y+12,color); spr.drawLine(x,y+6,x+2,y+6,color); spr.drawLine(x+10,y+6,x+12,y+6,color); break;
+      spr.drawLine(x+1,y+4,x+20,y+4,color); spr.drawLine(x+3,y+4,x+8,y+12,color);
+      spr.drawLine(x+18,y+4,x+13,y+12,color); spr.drawLine(x+8,y+12,x+8,y+19,color);
+      spr.drawLine(x+13,y+12,x+13,y+19,color); break;
+    case 13: case 14: case 15: case 16: // Bandwidth / AGC / AVC / Softmute
+      spr.drawLine(x+1,y+4,x+20,y+4,color); spr.drawLine(x+1,y+10,x+20,y+10,color);
+      spr.drawLine(x+1,y+16,x+20,y+16,color); spr.fillCircle(x+7,y+4,2,color);
+      spr.fillCircle(x+15,y+10,2,color); spr.fillCircle(x+10,y+16,2,color); break;
+    default:
+      spr.drawCircle(x+10,y+10,7,color); spr.drawCircle(x+10,y+10,3,color);
+      spr.drawLine(x+10,y,x+10,y+3,color); spr.drawLine(x+10,y+17,x+10,y+20,color);
+      spr.drawLine(x,y+10,x+3,y+10,color); spr.drawLine(x+17,y+10,x+20,y+10,color); break;
   }
 }
 
@@ -1821,7 +1845,7 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setTextColor(red);
   spr.setTextDatum(TL_DATUM);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  drawFullMenuIcon(idx, 22, 76, red, settingsPage);
+  drawFullMenuIcon(idx, 22, 74, red, settingsPage);
 
   // Keep long names readable: split at a natural space or hyphen if needed.
   char firstLine[40];
