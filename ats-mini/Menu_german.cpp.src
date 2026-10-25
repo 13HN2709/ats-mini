@@ -1896,7 +1896,7 @@ void drawFullScreenMenu(uint16_t cmd)
       drawXXLText(secondLine, textX, 80, cyan, &lgfx::fonts::Orbitron_Light_24);
     } else {
       int width = drawXXLText(selected, textX, 65, cyan, &lgfx::fonts::Orbitron_Light_24);
-      if(width > textMaxWidth) drawXXLText(selected, textX, 65, cyan, FONT_LARGE);
+      if(width > textMaxWidth) { spr.fillRect(68, 38, 237, 95, bg); drawXXLText(selected, textX, 65, cyan, FONT_LARGE); }
     }
   } else {
     int width = drawXXLText(selected, textX, 65, cyan, &lgfx::fonts::Orbitron_Light_24);
