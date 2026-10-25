@@ -1558,6 +1558,7 @@ void webSpectrumTick()
     webDiagLog("TUNE COMPLETE");
   }
   if(!webSpectrumRequested) return;
+  webDiagLog("SPECTRUM request received");
   webSpectrumRequested = false;
   bool customRange = webSpectrumCustomRange;
   uint16_t rangeStart = webSpectrumStartFreq;
@@ -1575,8 +1576,10 @@ void webSpectrumTick()
   uint16_t center = currentFrequency;
   uint16_t step = currentMode == FM ? 10 : 1;
 
+  webDiagLog("SPECTRUM preparation start");
   if(customRange && requestedMode >= 0)
   {
+    webDiagLog("SPECTRUM before mode/band setup");
     // Enter ALL band before a non-FM sweep when the receiver was on VHF.
     // Changing currentMode alone leaves the band's limits and calibration on
     // VHF, which can break subsequent scans and tuning commands.
@@ -1601,26 +1604,40 @@ void webSpectrumTick()
       if(currentMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
       else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
     }
+    webDiagLog("SPECTRUM before setup getFrequency");
     currentFrequency = rx.getFrequency();
+    webDiagLog("SPECTRUM after setup getFrequency");
   }
 
+  webDiagLog("SPECTRUM scan call start");
   if(customRange)
   {
     step = customStep;
+    webDiagLog("SPECTRUM scanRunRange start");
     scanRunRange(rangeStart, rangeEnd, step);
+    webDiagLog("SPECTRUM scanRunRange returned");
   }
-  else scanRun(center, currentMode == FM ? 10 : 5);
+  else {
+    scanRun(center, currentMode == FM ? 10 : 5);
+    webDiagLog("SPECTRUM scan returned");
+  }
 
+  webDiagLog("SPECTRUM scan result processing");
   webSpectrumResultMode = scanMode;
   webSpectrumReady = scanGetCount() > 0;
 
   if(customRange)
   {
+    webDiagLog("SPECTRUM restore start");
     // Restore the original receiver state while retaining the scan modulation
     // separately, so selecting a peak can intentionally switch to that mode.
     // Restore the actual band as well as mode/frequency after every sweep.
     if(bandIdx != savedBandIdx)
+    {
+      webDiagLog("SPECTRUM restore selectBand start");
       selectBand(savedBandIdx, false);
+      webDiagLog("SPECTRUM restore selectBand returned");
+    }
     currentMode = savedMode;
     currentBFO = savedBFO;
     if(savedMode == FM)
@@ -1634,11 +1651,16 @@ void webSpectrumTick()
       if(savedMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
       else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
     }
+    webDiagLog("SPECTRUM restore getFrequency start");
     currentFrequency = rx.getFrequency();
+    webDiagLog("SPECTRUM restore getFrequency returned");
     Band *band = getCurrentBand();
     if(band) band->currentFreq = currentFrequency;
     clearStationInfo();
+    webDiagLog("SPECTRUM restore identify start");
     identifyFrequency(currentFrequency + currentBFO / 1000);
+    webDiagLog("SPECTRUM restore identify returned");
   }
   webSpectrumBusy = false;
+  webDiagLog("SPECTRUM COMPLETE");
 }
