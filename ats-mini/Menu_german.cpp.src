@@ -58,6 +58,46 @@ Band bands[] =
 int getTotalBands() { return(ITEM_COUNT(bands)); }
 Band *getCurrentBand() { return(&bands[bandIdx]); }
 
+// Keep the original bands[] order and indices stable for memories and other
+// firmware features. Hide only the broad, overlapping AM presets from the
+// rotary band menu; the narrower broadcast-band presets remain selectable.
+static bool isBandVisibleInMenu(int idx)
+{
+  switch(idx)
+  {
+    case 6:  // 90M 3000-3500 kHz; narrower 90M preset follows
+    case 8:  // 75M 3500-4000 kHz; 80M LSB and narrower 75M remain
+    case 11: // 60M 4000-5100 kHz; narrower 60M preset follows
+    case 13: // 49M 5000-7000 kHz; narrower 49M preset follows
+    case 15: // 41M 7000-9000 kHz; 40M LSB and narrower 41M remain
+    case 18: // 31M 9000-11000 kHz; narrower 31M preset follows
+    case 21: // 25M 11000-13000 kHz; narrower 25M preset follows
+      return false;
+    default:
+      return true;
+  }
+}
+
+static int nextVisibleBandIndex(int idx, int direction)
+{
+  const int count = getTotalBands();
+  for(int checked = 0; checked < count; checked++)
+  {
+    idx = (idx + direction + count) % count;
+    if(isBandVisibleInMenu(idx)) return idx;
+  }
+  return idx;
+}
+
+static int visibleBandIndexAtOffset(int offset)
+{
+  int idx = bandIdx;
+  const int direction = offset < 0 ? -1 : 1;
+  for(int step = 0; step < abs(offset); step++)
+    idx = nextVisibleBandIndex(idx, direction);
+  return idx;
+}
+
 #define MENU_MODE         0
 #define MENU_BAND         1
 #define MENU_VOLUME       2
@@ -690,7 +730,14 @@ void doBand(int16_t enc)
 {
   bands[bandIdx].currentFreq = currentFrequency + currentBFO / 1000;
   bands[bandIdx].bandMode = currentMode;
-  bandIdx = wrap_range(bandIdx, enc, 0, LAST_ITEM(bands));
+
+  // Navigate only through visible menu presets without changing the bands[]
+  // array itself, so all original indices remain valid for internal callers.
+  const int direction = enc < 0 ? -1 : 1;
+  int remaining = abs(enc);
+  while(remaining-- > 0)
+    bandIdx = nextVisibleBandIndex(bandIdx, direction);
+
   selectBand(bandIdx);
 }
 
@@ -1174,15 +1221,15 @@ static void drawScan(int x, int y, int sx)
 static void drawBand(int x, int y, int sx)
 {
   drawCommon(menu[MENU_BAND], x, y, sx, true);
-  int count = ITEM_COUNT(bands);
   for(int i=-2 ; i<3 ; i++)
   {
+    const int idx = visibleBandIndexAtOffset(i);
     if(i==0) {
-      drawZoomedMenu(bands[abs((bandIdx+count+i)%count)].bandName);
+      drawZoomedMenu(bands[idx].bandName);
       spr.setTextColor(TH.menu_hl_text, TH.menu_hl_bg);
     } else { spr.setTextColor(TH.menu_item); }
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(bands[abs((bandIdx+count+i)%count)].bandName, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
+    spr.drawString(bands[idx].bandName, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
