@@ -53,7 +53,6 @@ Diese Liste beschreibt Erweiterungen dieses Forks und bedeutet nicht, dass jede 
 - `development` wird für laufende Entwicklung und Tests verwendet.
 - Temporäre Feature-Branches werden nach erfolgreicher Übernahme der getesteten Änderungen wieder entfernt.
 
-Den aktuellen Stand, die Branch-Strategie und die nächsten Schritte findest du in [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Dokumentation
 
