@@ -101,21 +101,20 @@ static bool scanTickTime()
   // This is our current frequency to scan
   uint16_t freq = scanStartFreq + scanStep * scanCount;
 
-  // Always issue the first tune command for this sample before waiting
-  // for a completion flag. After switching bands/modes, some receiver states
-  // do not expose a fresh tune-complete flag until a frequency is commanded.
+  // Clear the previous tune-complete flag BEFORE issuing a new tune.
+  // Polling with INTACK=0 below can then detect this frequency's own event.
   if(rx.getCurrentFrequency() != freq)
   {
+    rx.getStatus(1, 0);
     rx.setFrequency(freq); // Implies tuning delay
     scanTuneWaitStart = millis();
     scanTime = millis() - SCAN_POLL_TIME;
     return(true);
   }
 
-  // Acknowledge STCINT while polling. Leaving INTACK=0 keeps the previous
-  // tune-complete flag latched, so later scan points can be sampled before
-  // their new frequency has finished tuning (especially visible in AM).
-  rx.getStatus(1, 0);
+  // Read status without acknowledging it, so the completion flag remains
+  // visible for this check. The stale flag was cleared before setFrequency().
+  rx.getStatus(0, 0);
   if(!rx.getTuneCompleteTriggered() &&
      millis() - scanTuneWaitStart < 350)
   {
@@ -154,6 +153,8 @@ static bool scanTickTime()
     scanStatus = SCAN_DONE;
   else
   {
+    // Clear this point's completion event before starting the next tune.
+    rx.getStatus(1, 0);
     rx.setFrequency(freq); // Implies tuning delay
     scanTuneWaitStart = millis();
   }
