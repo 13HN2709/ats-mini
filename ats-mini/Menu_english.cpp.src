@@ -1768,16 +1768,16 @@ void drawFullScreenMenu(uint16_t cmd)
   const size_t nameLen = strlen(selected);
   if(nameLen > 10) {
     size_t split = nameLen / 2;
-    while(split < nameLen && selected[split] != ' ' && selected[split] != '-') split++;
+    while(split < nameLen && selected[split] != ' ' && selected[split] != '-' && selected[split] != '/') split++;
     if(split >= nameLen) {
       split = nameLen / 2;
-      while(split > 0 && selected[split] != ' ' && selected[split] != '-') split--;
+      while(split > 0 && selected[split] != ' ' && selected[split] != '-' && selected[split] != '/') split--;
     }
     if(split > 0 && split < sizeof(firstLine)) {
       memcpy(firstLine, selected, split);
       firstLine[split] = '\0';
       const char *rest = selected + split + 1;
-      while(*rest == ' ' || *rest == '-') rest++;
+      while(*rest == ' ' || *rest == '-' || *rest == '/') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
       int w1 = spr.textWidth(firstLine, &lgfx::fonts::Orbitron_Light_24);
       int w2 = spr.textWidth(secondLine, &lgfx::fonts::Orbitron_Light_24);
@@ -1801,7 +1801,8 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setTextDatum(TL_DATUM);
   drawXXLText("ROTATE: SELECT", 12, 151, cyan, FONT_SMALL);
   spr.setTextDatum(TR_DATUM);
-  drawXXLText("CLICK: OK", 307, 151, cyan, FONT_SMALL);
+  const int rightHintWidth = spr.textWidth("CLICK: OK", FONT_SMALL);
+  drawXXLText("CLICK: OK", 307 - rightHintWidth, 151, cyan, FONT_SMALL);
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
