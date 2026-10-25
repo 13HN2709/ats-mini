@@ -1797,10 +1797,11 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.fillRoundRect(9, 32, 302, 109, 5, red);
   spr.fillRoundRect(12, 35, 296, 103, 3, bg);
 
-  // Leave a clear gap between the icon and the text.
-  drawFullMenuIcon(idx, 16, 57, red, settingsPage);
-  const int textX = 72;
-  const int textMaxWidth = 226;
+  // Center the label in the available area to the right of the icon.
+  drawFullMenuIcon(idx, 18, 57, red, settingsPage);
+  const int textLeft = 72;
+  const int textRight = 300;
+  const int textCenter = (textLeft + textRight) / 2;
   char firstLine[40];
   char secondLine[40];
   const size_t nameLen = strlen(selected);
@@ -1817,15 +1818,21 @@ void drawFullScreenMenu(uint16_t cmd)
       const char *rest = selected + split + 1;
       while(*rest == ' ' || *rest == '-') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
-      drawXXLText(firstLine, textX, 50, cyan, &lgfx::fonts::Orbitron_Light_24);
-      drawXXLText(secondLine, textX, 80, cyan, &lgfx::fonts::Orbitron_Light_24);
+      int w1 = spr.textWidth(firstLine, &lgfx::fonts::Orbitron_Light_24);
+      int w2 = spr.textWidth(secondLine, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(firstLine, textCenter - w1 / 2, 50, cyan, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(secondLine, textCenter - w2 / 2, 80, cyan, &lgfx::fonts::Orbitron_Light_24);
     } else {
-      int width = drawXXLText(selected, textX, 65, cyan, &lgfx::fonts::Orbitron_Light_24);
-      if(width > textMaxWidth) { spr.fillRect(68, 38, 237, 95, bg); drawXXLText(selected, textX, 65, cyan, FONT_LARGE); }
+      int width = spr.textWidth(selected, &lgfx::fonts::Orbitron_Light_24);
+      const lgfx::IFont *font = width > (textRight - textLeft) ? FONT_LARGE : &lgfx::fonts::Orbitron_Light_24;
+      width = spr.textWidth(selected, font);
+      drawXXLText(selected, textCenter - width / 2, 65, cyan, font);
     }
   } else {
-    int width = drawXXLText(selected, textX, 65, cyan, &lgfx::fonts::Orbitron_Light_24);
-    if(width > textMaxWidth) drawXXLText(selected, textX, 65, cyan, FONT_LARGE);
+    int width = spr.textWidth(selected, &lgfx::fonts::Orbitron_Light_24);
+    const lgfx::IFont *font = width > (textRight - textLeft) ? FONT_LARGE : &lgfx::fonts::Orbitron_Light_24;
+    width = spr.textWidth(selected, font);
+    drawXXLText(selected, textCenter - width / 2, 65, cyan, font);
   }
 
   spr.drawFastHLine(12, 147, 296, red);
@@ -1833,7 +1840,7 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setTextDatum(TL_DATUM);
   drawXXLText("DREHEN: AUSWÄHLEN", 12, 151, cyan, FONT_SMALL);
   spr.setTextDatum(TR_DATUM);
-  drawXXLText("KLICK: ÖFFNEN", 307, 151, cyan, FONT_DEFAULT);
+  drawXXLText("KLICK: OK", 307, 151, cyan, FONT_SMALL);
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
