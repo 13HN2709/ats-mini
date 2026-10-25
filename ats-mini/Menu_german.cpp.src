@@ -1473,7 +1473,7 @@ static void drawAgc(int x, int y, int sx)
   spr.setTextColor(TH.menu_param);
   if(!agcNdx && !agcIdx)
   {
-    spr.setFont(&lgfx::fonts::Orbitron_Light_24);
+    spr.setFont(FONT_LARGE);
     spr.drawString("AGC", 40+x+(sx/2), 48+y);
     spr.drawString("On", 40+x+(sx/2), 72+y);
     spr.setFont(FONT_DEFAULT);
@@ -1791,8 +1791,8 @@ static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool setting
 }
 
 
-// Orbitron menu renderer. LovyanGFX ships Orbitron_Light_24; a 1px second pass
-// gives it a bolder appearance. Umlauts are rendered explicitly for ASCII font tables.
+// XXL menu text renderer uses the project's guaranteed large LovyanGFX font.
+// A 1px second pass strengthens strokes; UTF-8 umlauts are drawn explicitly.
 static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgfx::IFont *font)
 {
   spr.setFont(font);
@@ -1861,7 +1861,7 @@ void drawFullScreenMenu(uint16_t cmd)
 
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(white);
-  drawXXLText(title, 12, 7, white, &lgfx::fonts::Orbitron_Light_24);
+  drawXXLText(title, 12, 7, white, FONT_LARGE);
   spr.setTextDatum(TR_DATUM);
   spr.setTextColor(cyan);
   spr.setFont(FONT_SMALL);
@@ -1899,13 +1899,13 @@ void drawFullScreenMenu(uint16_t cmd)
       const char *rest = selected + split + 1;
       while(*rest == ' ' || *rest == '-') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
-      drawXXLText(firstLine, textX, 52, white, &lgfx::fonts::Orbitron_Light_24);
-      drawXXLText(secondLine, textX, 82, cyan, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(firstLine, textX, 52, white, FONT_LARGE);
+      drawXXLText(secondLine, textX, 82, cyan, FONT_LARGE);
     } else {
-      drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(selected, textX, 65, white, FONT_LARGE);
     }
   } else {
-    drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
+    drawXXLText(selected, textX, 65, white, FONT_LARGE);
   }
 
   spr.drawFastHLine(12, 149, 296, red);
