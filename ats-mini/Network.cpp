@@ -1604,9 +1604,13 @@ void webSpectrumTick()
       if(currentMode == USB) rx.setSSBBfo(-(currentBFO + getCurrentBand()->usbCal));
       else rx.setSSBBfo(-(currentBFO + getCurrentBand()->lsbCal));
     }
-    webDiagLog("SPECTRUM before setup getFrequency");
-    currentFrequency = rx.getFrequency();
-    webDiagLog("SPECTRUM after setup getFrequency");
+    // The receiver's blocking getFrequency() read can hang after an SSB
+    // mode setup. setFM/setAM/setSSB already received this exact center
+    // frequency, so use the configured target instead of querying the chip.
+    currentFrequency = center;
+    Band *setupBand = getCurrentBand();
+    if(setupBand) setupBand->currentFreq = currentFrequency;
+    webDiagLog("SPECTRUM setup frequency recorded; skipped getFrequency");
   }
 
   webDiagLog("SPECTRUM scan call start");
