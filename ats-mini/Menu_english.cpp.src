@@ -1801,8 +1801,10 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setTextDatum(TL_DATUM);
   drawXXLText("ROTATE: SELECT", 12, 151, cyan, FONT_SMALL);
   spr.setTextDatum(TR_DATUM);
-  const int rightHintWidth = spr.textWidth("CLICK: OK", FONT_SMALL);
-  drawXXLText("CLICK: OK", 307 - rightHintWidth, 151, cyan, FONT_SMALL);
+  spr.setTextDatum(TR_DATUM);
+  spr.setFont(FONT_SMALL);
+  spr.setTextColor(cyan);
+  spr.drawString("CLICK: OK", 307, 151, FONT_SMALL);
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
