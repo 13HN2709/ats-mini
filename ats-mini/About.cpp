@@ -9,7 +9,7 @@ static constexpr uint16_t ABOUT_BG      = 0x0008;
 static constexpr uint16_t ABOUT_PANEL   = 0x000F;
 static constexpr uint16_t ABOUT_BLUE    = 0x041F;
 static constexpr uint16_t ABOUT_CYAN    = 0x07FF;
-static constexpr uint16_t ABOUT_GREEN   = 0xF800;
+static constexpr uint16_t ABOUT_GREEN   = 0x07FF;
 static constexpr uint16_t ABOUT_RED     = 0xF800;
 static constexpr uint16_t ABOUT_WHITE   = 0xFFFF;
 static constexpr uint16_t ABOUT_MUTED   = 0xBDF7;
@@ -98,7 +98,7 @@ static void drawAboutProject()
 
   spr.drawRoundRect(12, 121, 235, 28, 4, ABOUT_BLUE);
   spr.fillRoundRect(14, 123, 231, 24, 3, ABOUT_BG);
-  spr.setTextColor(ABOUT_RED);
+  spr.setTextColor(ABOUT_CYAN);
   spr.drawString("github.com/13HN2709/ats-mini", 20, 129, FONT_SMALL);
 
   spr.setTextColor(ABOUT_MUTED);
@@ -115,13 +115,10 @@ static void drawAboutCredits()
   spr.drawString("Developer: Max Arnold + team", 13, 75);
   spr.drawString("Library: PU2CLR SI4735", 13, 95);
 
-  spr.setTextColor(0xFFE0);
-
   spr.drawFastHLine(12, 119, 235, ABOUT_BLUE);
-  spr.setTextColor(ABOUT_RED);
+  spr.setTextColor(ABOUT_CYAN);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.drawString("Custom Firmware & UI", 13, 125);
-  spr.drawString("13HN2709", 13, 145);
+  spr.drawString("Custom FW by 13HN2709", 13, 128);
 
   spr.setTextColor(ABOUT_MUTED);
   spr.setFont(FONT_SMALL);
