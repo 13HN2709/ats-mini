@@ -1861,7 +1861,7 @@ void drawFullScreenMenu(uint16_t cmd)
     }
     if(split > 0 && split < sizeof(firstLine)) {
       memcpy(firstLine, selected, split);
-      firstLine[split] = '\\0';
+      firstLine[split] = '\0';
       const char *rest = selected + split + 1;
       while(*rest == ' ' || *rest == '-') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
