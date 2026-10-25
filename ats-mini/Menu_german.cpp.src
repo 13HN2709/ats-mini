@@ -1791,35 +1791,44 @@ static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool setting
 }
 
 
-// Draw German umlauts independently of the font's character table.
-// This guarantees Ä/Ö/Ü and ä/ö/ü even with ASCII-only GFX fonts.
+// Orbitron menu renderer. LovyanGFX ships Orbitron_Light_24; a 1px second pass
+// gives it a bolder appearance. Umlauts are rendered explicitly for ASCII font tables.
 static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgfx::IFont *font)
 {
   spr.setFont(font);
   spr.setTextColor(color);
   spr.setTextDatum(TL_DATUM);
   int cursor = x;
-  while(*text) {
+  while (*text) {
     char glyph[2] = {0, 0};
     bool umlaut = false;
+    bool sharpS = false;
     char base = *text++;
-    if((uint8_t)base == 0xC3 && *text) {
+    if ((uint8_t)base == 0xC3 && *text) {
       uint8_t next = (uint8_t)*text++;
-      switch(next) {
-        case 0x84: base='A'; umlaut=true; break; // Ä
-        case 0x96: base='O'; umlaut=true; break; // Ö
-        case 0x9C: base='U'; umlaut=true; break; // Ü
-        case 0xA4: base='a'; umlaut=true; break; // ä
-        case 0xB6: base='o'; umlaut=true; break; // ö
-        case 0xBC: base='u'; umlaut=true; break; // ü
-        case 0x9F: base='s'; break;              // ß
+      switch (next) {
+        case 0x84: base='A'; umlaut=true; break;
+        case 0x96: base='O'; umlaut=true; break;
+        case 0x9C: base='U'; umlaut=true; break;
+        case 0xA4: base='a'; umlaut=true; break;
+        case 0xB6: base='o'; umlaut=true; break;
+        case 0xBC: base='u'; umlaut=true; break;
+        case 0x9F: base='s'; sharpS=true; break;
         default: base='?'; break;
       }
     }
     glyph[0] = base;
     int width = spr.textWidth(glyph);
     spr.drawString(glyph, cursor, y);
-    if(umlaut) {
+    spr.drawString(glyph, cursor + 1, y); // subtle bold pass
+    if (sharpS) {
+      // Keep ß legible on fonts without a dedicated Latin-1 glyph.
+      spr.drawString("s", cursor + width, y);
+      spr.drawString("s", cursor + width + 1, y);
+      cursor += width * 2;
+      continue;
+    }
+    if (umlaut) {
       int center = cursor + width / 2;
       spr.fillCircle(center - 3, y - 2, 1, color);
       spr.fillCircle(center + 3, y - 2, 1, color);
@@ -1852,7 +1861,7 @@ void drawFullScreenMenu(uint16_t cmd)
 
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(white);
-  drawXXLText(title, 12, 7, white, &lgfx::fonts::FreeSansBold9pt7b);
+  drawXXLText(title, 12, 7, white, &lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(TR_DATUM);
   spr.setTextColor(cyan);
   spr.setFont(FONT_SMALL);
@@ -1890,10 +1899,10 @@ void drawFullScreenMenu(uint16_t cmd)
       const char *rest = selected + split + 1;
       while(*rest == ' ' || *rest == '-') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
-      drawXXLText(firstLine, textX, 52, white, FONT_LARGE);
-      drawXXLText(secondLine, textX, 82, cyan, FONT_LARGE);
+      drawXXLText(firstLine, textX, 52, white, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(secondLine, textX, 82, cyan, &lgfx::fonts::Orbitron_Light_24);
     } else {
-      drawXXLText(selected, textX, 65, white, FONT_LARGE);
+      drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
     }
   } else {
     drawXXLText(selected, textX, 65, white, FONT_LARGE);
@@ -1905,7 +1914,7 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setTextDatum(TL_DATUM);
   spr.drawString("DREHEN: AUSWÄHLEN", 12, 153);
   spr.setTextDatum(TR_DATUM);
-  drawXXLText("KLICK: ÖFFNEN", 308 - spr.textWidth("KLICK: OFFNEN"), 151, cyan, FONT_DEFAULT);
+  drawXXLText("KLICK: ÖFFNEN", 212, 151, cyan, FONT_DEFAULT);
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
