@@ -31,6 +31,24 @@ The Releases page contains the published firmware packages. Choose the package t
 
 Features can vary between releases. Refer to the release notes for the exact changes included in each build.
 
+## Custom features by 13HN2709
+
+The following additions and interface changes are part of my own development work on this fork, beyond the original upstream project. Exact availability can depend on the firmware release:
+
+- **Frequency Keypad** — enter a target frequency directly instead of tuning only with the encoder.
+- **VFO A/B transfer and handling** — transfer or switch frequencies between VFO A and VFO B where supported by the build.
+- **Web Frequency Step control** — change the tuning step directly in the local Web Control Center.
+- **German / English interface** — bilingual menu and control labels, with localized descriptions for important settings.
+- **Integrated BFO control** — fine frequency adjustment for reception modes that use a beat-frequency oscillator, particularly SSB.
+- **Expanded Spectrum Scanner** — scan a selected frequency range with mode/step options, select a detected peak to tune the receiver, and use memory-related actions where available.
+- **Web-based memory controls** — view and select saved memories and use memory-saving workflows in supported builds.
+- **Standalone local Web Control Center** — receiver controls designed to run on the device's local network without needing an internet connection.
+- **Custom display layouts** — including a separate Clean Layout for development/testing and a TEF6686-inspired visual design.
+- **Bandplan Assistant** — frequency-based operating hints in supported layouts, using concise English on-screen labels.
+- **Dual RX and receiver UI refinements** — additional scan/control behavior and display adjustments included in applicable builds.
+
+These are fork-specific additions, not a claim that every feature is present in every published release. Check the selected release's notes and assets for the exact feature set.
+
 ## Development status
 
 - `main` is the stable release branch.
