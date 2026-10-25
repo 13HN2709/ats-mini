@@ -1068,8 +1068,8 @@ static void drawBfo(int x, int y, int sx)
   drawZoomedMenu("BFO");
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(currentBFO, 40+x+(sx/2), 60+y, FONT_LARGE);
-  spr.drawString("Hz", 40+x+(sx/2), 90+y, FONT_LARGE);
+  spr.drawNumber(currentBFO, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
+  spr.drawString("Hz", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
 }
 
 static void drawMenu(int x, int y, int sx)
@@ -1434,7 +1434,7 @@ static void drawAgc(int x, int y, int sx)
   spr.setTextColor(TH.menu_param);
   if(!agcNdx && !agcIdx)
   {
-    spr.setFont(FONT_LARGE);
+    spr.setFont(&lgfx::fonts::Orbitron_Light_24);
     spr.drawString("AGC", 40+x+(sx/2), 48+y);
     spr.drawString("On", 40+x+(sx/2), 72+y);
     spr.setFont(FONT_DEFAULT);
@@ -1455,13 +1455,13 @@ static void drawSquelch(int x, int y, int sx)
   bool squelchParam = currentSquelch[currentMode] & 0x80;
   if(squelchValue)
   {
-    spr.drawNumber(squelchValue, 40+x+(sx/2), 60+y, FONT_LARGE);
-    spr.drawString(squelchParam? "dB":"dBuV", 40+x+(sx/2), 90+y, FONT_LARGE);
+    spr.drawNumber(squelchValue, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
+    spr.drawString(squelchParam? "dB":"dBuV", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
   }
   else
   {
-    spr.drawString("Off", 40+x+(sx/2), 60+y, FONT_LARGE);
-    spr.drawString(squelchParam? "(snr)":"(rssi)", 40+x+(sx/2), 90+y, FONT_LARGE);
+    spr.drawString("Off", 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
+    spr.drawString(squelchParam? "(snr)":"(rssi)", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
   }
 }
 
@@ -1472,8 +1472,8 @@ static void drawSoftMuteMaxAtt(int x, int y, int sx)
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
   spr.drawString("Max Attn", 40+x+(sx/2), 32+y, FONT_SMALL);
-  spr.drawNumber(softMuteMaxAttIdx, 40+x+(sx/2), 60+y, FONT_LARGE);
-  spr.drawString("dB", 40+x+(sx/2), 90+y, FONT_LARGE);
+  spr.drawNumber(softMuteMaxAttIdx, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
+  spr.drawString("dB", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
 }
 
 static void drawCal(int x, int y, int sx)
@@ -1485,15 +1485,15 @@ static void drawCal(int x, int y, int sx)
   if (currentMode == USB)
   {
     spr.drawString("USB", 40+x+(sx/2), 35+y, FONT_SMALL);
-    spr.drawNumber(getCurrentBand()->usbCal, 40+x+(sx/2), 65+y, FONT_LARGE);
+    spr.drawNumber(getCurrentBand()->usbCal, 40+x+(sx/2), 65+y, &lgfx::fonts::Orbitron_Light_24);
   }
   else if (currentMode == LSB)
   {
     spr.drawString("LSB", 40+x+(sx/2), 35+y, FONT_SMALL);
-    spr.drawNumber(getCurrentBand()->lsbCal, 40+x+(sx/2), 65+y, FONT_LARGE);
+    spr.drawNumber(getCurrentBand()->lsbCal, 40+x+(sx/2), 65+y, &lgfx::fonts::Orbitron_Light_24);
   }
-  else spr.drawNumber(0, 40+x+(sx/2), 65+y, FONT_LARGE);
-  spr.drawString("Hz", 40+x+(sx/2), 95+y, FONT_LARGE);
+  else spr.drawNumber(0, 40+x+(sx/2), 65+y, &lgfx::fonts::Orbitron_Light_24);
+  spr.drawString("Hz", 40+x+(sx/2), 95+y, &lgfx::fonts::Orbitron_Light_24);
 }
 
 static void drawAvc(int x, int y, int sx)
@@ -1502,13 +1502,13 @@ static void drawAvc(int x, int y, int sx)
   drawZoomedMenu(menu[MENU_AVC]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  if(isSSB() && ssbAvcHold) { spr.drawString("Hold", 40+x+(sx/2), 60+y, FONT_LARGE); return; }
+  if(isSSB() && ssbAvcHold) { spr.drawString("Hold", 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24); return; }
   spr.drawString("Max Gain", 40+x+(sx/2), 32+y, FONT_SMALL);
   if(currentMode!=FM)
   {
     int currentAvc = isSSB()? SsbAvcIdx : AmAvcIdx;
-    spr.drawNumber(currentAvc, 40+x+(sx/2), 60+y, FONT_LARGE);
-    spr.drawString("dB", 40+x+(sx/2), 90+y, FONT_LARGE);
+    spr.drawNumber(currentAvc, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
+    spr.drawString("dB", 40+x+(sx/2), 90+y, &lgfx::fonts::Orbitron_Light_24);
   }
 }
 
@@ -1563,7 +1563,7 @@ static void drawBrt(int x, int y, int sx)
   drawZoomedMenu(settings[MENU_BRIGHTNESS]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(currentBrt, 40+x+(sx/2), 60+y, FONT_LARGE);
+  spr.drawNumber(currentBrt, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
 }
 
 static void drawSleep(int x, int y, int sx)
@@ -1572,7 +1572,7 @@ static void drawSleep(int x, int y, int sx)
   drawZoomedMenu(settings[MENU_SLEEP]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(currentSleep, 40+x+(sx/2), 60+y, FONT_LARGE);
+  spr.drawNumber(currentSleep, 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
 }
 
 static void drawZoom(int x, int y, int sx)
@@ -1581,7 +1581,7 @@ static void drawZoom(int x, int y, int sx)
   drawZoomedMenu(settings[MENU_ZOOM]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawString(zoomMenu ? "On" : "Off", 40+x+(sx/2), 60+y, FONT_LARGE);
+  spr.drawString(zoomMenu ? "On" : "Off", 40+x+(sx/2), 60+y, &lgfx::fonts::Orbitron_Light_24);
 }
 
 static void drawScrollDir(int x, int y, int sx)
@@ -1752,8 +1752,8 @@ static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool setting
 }
 
 
-// XXL menu text renderer uses the project's guaranteed large LovyanGFX font.
-// A 1px second pass strengthens strokes; UTF-8 umlauts are drawn explicitly.
+// Orbitron XXL menu renderer. The extra 1px pass strengthens the Light face toward Bold.
+// UTF-8 umlauts are drawn explicitly so they remain visible with ASCII font tables.
 static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgfx::IFont *font)
 {
   spr.setFont(font);
@@ -1822,7 +1822,7 @@ void drawFullScreenMenu(uint16_t cmd)
 
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(white);
-  drawXXLText(title, 12, 7, white, FONT_LARGE);
+  drawXXLText(title, 12, 7, white, &lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(TR_DATUM);
   spr.setTextColor(cyan);
   spr.setFont(FONT_SMALL);
@@ -1839,7 +1839,7 @@ void drawFullScreenMenu(uint16_t cmd)
 
   spr.setTextColor(cyan);
   spr.setTextDatum(TL_DATUM);
-  spr.setFont(FONT_LARGE);
+  spr.setFont(&lgfx::fonts::Orbitron_Light_24);
   drawFullMenuIcon(idx, 18, 57, red, settingsPage);
 
   // Keep long names readable: split at a natural space or hyphen if needed.
@@ -1860,13 +1860,13 @@ void drawFullScreenMenu(uint16_t cmd)
       const char *rest = selected + split + 1;
       while(*rest == ' ' || *rest == '-') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
-      drawXXLText(firstLine, textX, 52, white, FONT_LARGE);
-      drawXXLText(secondLine, textX, 82, cyan, FONT_LARGE);
+      drawXXLText(firstLine, textX, 52, white, &lgfx::fonts::Orbitron_Light_24);
+      drawXXLText(secondLine, textX, 82, cyan, &lgfx::fonts::Orbitron_Light_24);
     } else {
-      drawXXLText(selected, textX, 65, white, FONT_LARGE);
+      drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
     }
   } else {
-    drawXXLText(selected, textX, 65, white, FONT_LARGE);
+    drawXXLText(selected, textX, 65, white, &lgfx::fonts::Orbitron_Light_24);
   }
 
   spr.drawFastHLine(12, 149, 296, red);
