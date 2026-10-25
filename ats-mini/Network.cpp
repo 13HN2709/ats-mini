@@ -588,11 +588,10 @@ static void webInit()
 
     bool hasStart = request->hasParam("start_hz", true);
     bool hasEnd = request->hasParam("end_hz", true);
+    if(!hasStart || !hasEnd)
+      return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Provide both start and end frequencies for the FM spectrum scan.\"}");
     uint16_t requestedStart = 0, requestedEnd = 0;
-    if(hasStart || hasEnd)
     {
-      if(!hasStart || !hasEnd)
-        return request->send(400, "application/json", "{\"ready\":false,\"error\":\"Provide both start and end frequencies.\"}");
       String modeValue = request->hasParam("mode", true) ? request->getParam("mode", true)->value() : String("FM");
       if(modeValue != "FM")
         return request->send(422, "application/json", "{\"ready\":false,\"error\":\"Spectrum scanning is FM-only. Select a 64–108 MHz range.\"}");
@@ -626,7 +625,8 @@ static void webInit()
 
     webSpectrumStartFreq = requestedStart;
     webSpectrumEndFreq = requestedEnd;
-    webSpectrumCustomRange = hasStart && hasEnd;
+    webSpectrumCustomRange = true;
+    webSpectrumRequestedMode = FM;
     webSpectrumReady = false;
     webSpectrumBusy = true;
     webSpectrumRequested = true;
