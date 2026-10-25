@@ -112,10 +112,10 @@ static bool scanTickTime()
     return(true);
   }
 
-  // Poll for the tuning status. Do not wait forever if the receiver does not
-  // raise the flag after a mode change; the signal-quality read below is still
-  // valid after the normal tuning delay has elapsed.
-  rx.getStatus(0, 0);
+  // Acknowledge STCINT while polling. Leaving INTACK=0 keeps the previous
+  // tune-complete flag latched, so later scan points can be sampled before
+  // their new frequency has finished tuning (especially visible in AM).
+  rx.getStatus(1, 0);
   if(!rx.getTuneCompleteTriggered() &&
      millis() - scanTuneWaitStart < 350)
   {
