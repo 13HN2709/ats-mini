@@ -124,7 +124,9 @@ static bool scanTickTime()
   }
 
   // Measure RSSI/SNR values
-  rx.getCurrentReceivedSignalQuality();
+  // Use the explicit INTACK overload for AM/SSB as well as FM.
+  // INTACK=0 preserves RSQ interrupt flags while requesting fresh signal-quality data.
+  rx.getCurrentReceivedSignalQuality(0);
   scanData[scanCount].rssi = rx.getCurrentRSSI();
   scanData[scanCount].snr  = rx.getCurrentSNR();
 
