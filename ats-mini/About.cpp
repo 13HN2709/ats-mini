@@ -9,7 +9,7 @@ static constexpr uint16_t ABOUT_BG      = 0x0008;
 static constexpr uint16_t ABOUT_PANEL   = 0x000F;
 static constexpr uint16_t ABOUT_BLUE    = 0x041F;
 static constexpr uint16_t ABOUT_CYAN    = 0x07FF;
-static constexpr uint16_t ABOUT_GREEN   = 0x07E0;
+static constexpr uint16_t ABOUT_GREEN   = 0xF800;
 static constexpr uint16_t ABOUT_RED     = 0xF800;
 static constexpr uint16_t ABOUT_WHITE   = 0xFFFF;
 static constexpr uint16_t ABOUT_MUTED   = 0xBDF7;
@@ -57,7 +57,7 @@ static void drawAboutFrame(uint8_t page)
   spr.fillSprite(ABOUT_BG);
   spr.fillRoundRect(3, 3, 314, 164, 6, ABOUT_PANEL);
   spr.drawRoundRect(3, 3, 314, 164, 6, ABOUT_BLUE);
-  spr.drawRoundRect(5, 5, 310, 160, 5, ABOUT_CYAN);
+  spr.drawRoundRect(5, 5, 310, 160, 5, ABOUT_RED);
 
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(ABOUT_WHITE);
@@ -89,7 +89,7 @@ static void drawAboutProject()
   spr.drawString("Build:", 13, 76);
   spr.drawString("Device:", 13, 96);
 
-  spr.setTextColor(0xFFE0);
+  spr.setTextColor(ABOUT_CYAN);
   char version[12];
   snprintf(version, sizeof(version), "v%1.1d.%2.2d", VER_APP / 100, VER_APP % 100);
   spr.drawString(version, 87, 56);
@@ -98,7 +98,7 @@ static void drawAboutProject()
 
   spr.drawRoundRect(12, 121, 235, 28, 4, ABOUT_BLUE);
   spr.fillRoundRect(14, 123, 231, 24, 3, ABOUT_BG);
-  spr.setTextColor(ABOUT_GREEN);
+  spr.setTextColor(ABOUT_RED);
   spr.drawString("github.com/13HN2709/ats-mini", 20, 129, FONT_SMALL);
 
   spr.setTextColor(ABOUT_MUTED);
@@ -118,7 +118,7 @@ static void drawAboutCredits()
   spr.setTextColor(0xFFE0);
 
   spr.drawFastHLine(12, 119, 235, ABOUT_BLUE);
-  spr.setTextColor(ABOUT_GREEN);
+  spr.setTextColor(ABOUT_RED);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.drawString("Custom Firmware & UI", 13, 125);
   spr.drawString("13HN2709", 13, 145);
