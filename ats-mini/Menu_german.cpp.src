@@ -122,6 +122,9 @@ static const char *menu[] =
 #define MENU_BLEMODE      18
 #define MENU_WIFIMODE     19
 #define MENU_ABOUT        20
+#define MENU_WEBLOG       21
+
+bool webDiagEnabled = true;
 
 static uint8_t updateFwIdx = 0;
 static const char *const updateFwActions[] = {"Check", "Update"};
@@ -150,6 +153,7 @@ static const char *settings[] =
   "Bluetooth",
   "WLAN",
   "UEBER",
+  "DIAGNOSE-LOG",
 };
 
 const FMRegion fmRegions[] = {
@@ -897,6 +901,12 @@ static void clickMenu(int cmd, bool shortPress)
   }
 }
 
+static const char *settingLabel(int idx)
+{
+  if(idx == MENU_WEBLOG) return webDiagEnabled ? "DIAG-LOG: EIN" : "DIAG-LOG: AUS";
+  return settings[idx];
+}
+
 static void doSettings(int16_t enc) { settingsIdx = wrap_range(settingsIdx, enc, 0, LAST_ITEM(settings)); }
 
 static void clickSettings(int cmd, bool shortPress)
@@ -923,6 +933,12 @@ static void clickSettings(int cmd, bool shortPress)
     case MENU_FM_STEREO:  currentCmd = CMD_FM_STEREO;  break;
     case MENU_DSP_PATCHES: currentCmd = CMD_DSP_PATCHES; break;
     case MENU_ABOUT:      currentCmd = CMD_ABOUT;      break;
+    case MENU_WEBLOG:
+      if(webDiagEnabled) webDiagLog("DIAGNOSTIC LOG DISABLED");
+      webDiagEnabled = !webDiagEnabled;
+      if(webDiagEnabled) webDiagLog("DIAGNOSTIC LOG ENABLED");
+      prefsRequestSave(SAVE_SETTINGS, true);
+      break;
     case MENU_UPDATEFW:   updateFwIdx = 0; currentCmd = CMD_UPDATEFW; break;
     case MENU_LOADEIBI:   eibiLoadSchedule(); break;
   }
@@ -1088,11 +1104,11 @@ static void drawSettings(int x, int y, int sx)
   for(int i=-2 ; i<3 ; i++)
   {
     if(i==0) {
-      drawZoomedMenu(settings[abs((settingsIdx+count+i)%count)]);
+      drawZoomedMenu(settingLabel(abs((settingsIdx+count+i)%count)));
       spr.setTextColor(TH.menu_hl_text, TH.menu_hl_bg);
     } else { spr.setTextColor(TH.menu_item); }
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(settings[abs((settingsIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
+    spr.drawString(settingLabel(abs((settingsIdx+count+i)%count)), 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
