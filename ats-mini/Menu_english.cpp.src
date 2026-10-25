@@ -1670,7 +1670,7 @@ static void drawInfo(int x, int y, int sx)
 
 static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
 {
-  // Large, high-contrast vector icons sized for the XXL menu.
+  // High-contrast vector icons, framed larger for the XXL menu.
   if(settingsPage) {
     switch(idx) {
       case 0: // Brightness
@@ -1753,11 +1753,11 @@ static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool setting
 
 void drawFullScreenMenu(uint16_t cmd)
 {
-  // ATS Control palette: deep navy, vivid red and bright cyan.
-  const uint16_t bg = 0x0008;
-  const uint16_t panel = 0x000F;
-  const uint16_t blue = 0x041F;
-  const uint16_t red = 0xF800;
+  // High-contrast keypad palette: black, electric blue and luminous cyan.
+  const uint16_t bg = 0x0000;
+  const uint16_t panel = 0x0000;
+  const uint16_t blue = 0x001F;
+  const uint16_t red = 0x07FF;
   const uint16_t cyan = 0x07FF;
   const uint16_t white = 0xFFFF;
   const bool settingsPage = cmd == CMD_SETTINGS;
@@ -1770,7 +1770,7 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.fillSprite(bg);
   spr.fillRoundRect(3, 3, 314, 164, 5, panel);
   spr.drawRoundRect(3, 3, 314, 164, 5, blue);
-  spr.drawRoundRect(5, 5, 310, 160, 4, red);
+  spr.drawRoundRect(5, 5, 310, 160, 4, blue);
 
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(white);
@@ -1787,19 +1787,19 @@ void drawFullScreenMenu(uint16_t cmd)
   // neighbouring abbreviations, which were reducing readability.
   spr.fillRoundRect(9, 32, 302, 109, 5, bg);
   spr.drawRoundRect(9, 32, 302, 109, 5, blue);
-  spr.fillRoundRect(9, 32, 4, 109, 2, red);
-  spr.drawRoundRect(14, 37, 292, 99, 4, red);
+  spr.fillRoundRect(9, 32, 4, 109, 2, blue);
+  spr.drawRoundRect(14, 37, 292, 99, 4, blue);
 
-  spr.setTextColor(red);
+  spr.setTextColor(cyan);
   spr.setTextDatum(TL_DATUM);
-  spr.setFont(FONT_LARGE);
-  drawFullMenuIcon(idx, 22, 70, red, settingsPage);
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  drawFullMenuIcon(idx, 20, 62, red, settingsPage);
 
   // Keep long names readable: split at a natural space or hyphen if needed.
   char firstLine[40];
   char secondLine[40];
   const size_t nameLen = strlen(selected);
-  const int textX = 49;
+  const int textX = 55;
   if(nameLen > 13) {
     size_t split = nameLen / 2;
     while(split < nameLen && selected[split] != ' ' && selected[split] != '-') split++;
@@ -1814,16 +1814,16 @@ void drawFullScreenMenu(uint16_t cmd)
       while(*rest == ' ' || *rest == '-') rest++;
       snprintf(secondLine, sizeof(secondLine), "%s", rest);
       spr.setTextColor(white);
-      spr.drawString(firstLine, textX, 57);
-      spr.setTextColor(red);
-      spr.drawString(secondLine, textX, 88);
+      spr.drawString(firstLine, textX, 55);
+      spr.setTextColor(cyan);
+      spr.drawString(secondLine, textX, 83);
     } else {
       spr.setTextColor(white);
-      spr.drawString(selected, textX, 70);
+      spr.drawString(selected, textX, 68);
     }
   } else {
     spr.setTextColor(white);
-    spr.drawString(selected, textX, 76);
+    spr.drawString(selected, textX, 74);
   }
 
   spr.drawFastHLine(12, 149, 296, blue);
