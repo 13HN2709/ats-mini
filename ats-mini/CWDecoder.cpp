@@ -3,6 +3,7 @@
 
 CWDecoder::CWDecoder()
   : patternLength_(0),
+    initialized_(false),
     tonePresent_(false),
     stateSinceMs_(0),
     lastToneEndMs_(0),
@@ -17,6 +18,7 @@ void CWDecoder::reset()
 {
   patternLength_ = 0;
   pattern_[0] = '\0';
+  initialized_ = false;
   tonePresent_ = false;
   stateSinceMs_ = 0;
   lastToneEndMs_ = 0;
@@ -38,9 +40,10 @@ uint16_t CWDecoder::ditDurationMs() const
 
 void CWDecoder::feedToneState(bool tonePresent, uint32_t nowMs)
 {
-  if (stateSinceMs_ == 0) {
+  if (!initialized_) {
     stateSinceMs_ = nowMs;
     tonePresent_ = tonePresent;
+    initialized_ = true;
     return;
   }
 
