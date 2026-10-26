@@ -10,6 +10,7 @@
 #include "Memories.h"
 #include "Patches.h"
 #include "FreqKeypad.h"
+#include "CWMode.h"
 #include "Storage.h"
 
 #include <time.h>
@@ -116,6 +117,7 @@ static int visibleBandIndexAtOffset(int offset)
 #define MENU_AVC         15
 #define MENU_SOFTMUTE    16
 #define MENU_SETTINGS    17
+#define MENU_CW_DECODER  18
 
 int8_t menuIdx = MENU_KEYPAD;
 
@@ -123,7 +125,7 @@ static const char *menu[] =
 {
   "Mode", "Bands", "Volume", "Keypad", "DUAL RX", "VFO A/B",
   "Frequency", "BFO", "Steps", "Seek", "Scan", "Memory", "Squelch",
-  "Bandwidth", "AGC/ATTN", "AVC", "SoftMute", "Settings",
+  "Bandwidth", "AGC/ATTN", "AVC", "SoftMute", "Settings", "CW Decoder",
 };
 
 #define MENU_BRIGHTNESS   0
@@ -908,6 +910,7 @@ static void clickMenu(int cmd, bool shortPress)
       clickScan(true);
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
+    case MENU_CW_DECODER: cwDecoderEnter(); break;
   }
 }
 
