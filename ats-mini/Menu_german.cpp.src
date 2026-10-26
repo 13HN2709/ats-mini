@@ -1771,7 +1771,6 @@ void drawFullScreenMenu(uint16_t cmd)
 {
   const uint16_t bg = 0x0000;
   const uint16_t blue = 0x001F;
-  const uint16_t red = 0xF800;
   const uint16_t cyan = 0x07FF;
   const bool settingsPage = cmd == CMD_SETTINGS;
   const int rawIdx = settingsPage ? settingsIdx : menuIdx;
@@ -1796,9 +1795,6 @@ void drawFullScreenMenu(uint16_t cmd)
   snprintf(counter, sizeof(counter), "%02d / %02d", idx + 1, count);
   spr.drawString(counter, 307, 9);
 
-  // One solid, thicker red frame: no nested boxes.
-  spr.fillRoundRect(9, 32, 302, 109, 5, red);
-  spr.fillRoundRect(12, 35, 296, 103, 3, bg);
 
   // Consistent icon/text group: fixed icon inset, fixed gap, centered as one unit.
   // Icon artwork is 40x40; text starts 12 px after the icon.
