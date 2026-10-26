@@ -612,7 +612,7 @@ void drawScreen()
     return;
   }
 
-  if(currentCmd == CMD_RTTY_DECODER)
+  if(currentCmd == CMD_RTTY_DECODER || currentCmd == CMD_RTTY50_DECODER)
   {
     drawRTTYDecoderScreen();
     spr.pushSprite(0, 0);
