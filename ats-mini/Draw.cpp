@@ -6,6 +6,7 @@
 #include "BleMode.h"
 #include "Draw.h"
 #include "FreqKeypad.h" // <--- Eingebundenes Keypad-Modul
+#include "CWMode.h"
 
 // Layout-Prototypen
 void drawLayoutSmeter();
@@ -599,6 +600,13 @@ void drawScreen()
   if(currentCmd == CMD_DUAL_RX)
   {
     drawDualRxScreen();
+    spr.pushSprite(0, 0);
+    return;
+  }
+
+  if(currentCmd == CMD_CW_DECODER)
+  {
+    drawCWDecoderScreen();
     spr.pushSprite(0, 0);
     return;
   }
