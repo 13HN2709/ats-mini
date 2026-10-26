@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "FreqKeypad.h"
+#include "CWMode.h"
 
 
 // SI473/5 and UI
@@ -652,7 +653,7 @@ bool processRssiSnr()
   }
   
   // Eco-Waterfall beibehalten
-  drawEcoWaterfallStep(spr, rssi);
+  if(currentCmd != CMD_CW_DECODER) drawEcoWaterfallStep(spr, rssi);
 
   return needRedraw;
 }
@@ -672,6 +673,7 @@ void loop()
   ButtonTracker::State pb1st = pb1.update(digitalRead(ENCODER_PUSH_BUTTON) == LOW);
 
   if(currentCmd == CMD_DUAL_RX && dualRxTick(currentTime)) needRedraw = true;
+  if(currentCmd == CMD_CW_DECODER) cwDecoderTick();
 
   int ser_event = serialLoop(usbModeIdx);
   needRedraw |= !!(ser_event & REMOTE_CHANGED);
@@ -751,7 +753,27 @@ void loop()
     encCount = encCountAccel = 0;
   }
 
-  if(currentCmd != CMD_DUAL_RX && pushAndRotate)
+  if(currentCmd == CMD_CW_DECODER)
+  {
+    if(encCount) {
+      if(isSSB()) doBfo(encCountAccel);
+      else needRedraw |= doTune(encCountAccel);
+      needRedraw = true;
+    }
+    if(pb1st.wasClicked || pb1st.wasShortPressed) {
+      cwDecoderExit();
+      needRedraw = true;
+      pb1st.wasClicked = pb1st.wasShortPressed = false;
+    }
+    else if(pb1st.isLongPressed) {
+      sleepOn(!sleepOn());
+      elapsedSleep = elapsedCommand = currentTime = millis();
+      needRedraw = true;
+    }
+    encCount = encCountAccel = 0;
+    elapsedSleep = elapsedCommand = currentTime;
+  }
+  else if(currentCmd != CMD_DUAL_RX && pushAndRotate)
   {
     if(encCount)
     {
