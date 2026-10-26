@@ -1763,8 +1763,12 @@ void drawFullScreenMenu(uint16_t cmd)
     menuFont = FONT_LARGE;
     textWidth = spr.textWidth(displaySelected, menuFont);
   }
-  const int textX = (320 - textWidth) / 2;
-  const int textY = 73;
+  int textX = (320 - textWidth) / 2;
+  // The custom UTF-8 renderer draws Ä as a single glyph; compensate for
+  // native textWidth counting its UTF-8 bytes differently on this label.
+  const int textY = (settingsPage && rawIdx == MENU_WIFIMODE) ? 76 : 73;
+  if (!settingsPage && idx == MENU_AVC) textX -= 7;
+  if (!settingsPage && idx == MENU_SETTINGS) textX = (320 - textWidth) / 2;
   drawXXLText(displaySelected, textX, textY, cyan, menuFont);
 
   // Keep the existing footer, without any divider line or inner frame.
