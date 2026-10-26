@@ -5,6 +5,7 @@
 #include "CWDecoder.h"
 #include "CWAudioDetector.h"
 #include <stdio.h>
+#include <string.h>
 
 static CWDecoder cwDecoder;
 static bool cwActive = false;
@@ -27,8 +28,7 @@ void cwDecoderEnter()
   cwWifiBlocked = (wifiModeIdx != NET_OFF);
   if (cwWifiBlocked) {
     cwActive = false;
-    currentCmd = CMD_NONE;
-    drawMessage("PLEASE TURN WIFI OFF");
+    currentCmd = CMD_CW_DECODER;
     return;
   }
   cwDecoder.reset();
@@ -65,6 +65,18 @@ void drawCWDecoderScreen()
   const uint16_t green = 0x07E0;
   const uint16_t red = 0xF800;
   spr.fillSprite(navy);
+
+  if (cwWifiBlocked) {
+    spr.drawRect(8, 8, 304, 154, 0xF800);
+    spr.setTextDatum(MC_DATUM);
+    spr.setTextColor(0xF800);
+    spr.drawString("PLEASE TURN WIFI/AP OFF", 160, 62, FONT_LARGE);
+    spr.setTextColor(0xFFFF);
+    spr.drawString("CW decoder needs Wi-Fi disabled", 160, 91, FONT_SMALL);
+    spr.setTextColor(0x07E0);
+    spr.drawString("CLICK ENCODER TO RETURN", 160, 125, FONT_SMALL);
+    return;
+  }
 
   // Header/frequency box: intentionally retained as the first panel.
   spr.fillRect(8, 5, 304, 31, blueA);
