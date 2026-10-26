@@ -1785,7 +1785,6 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.fillSprite(bg);
   spr.fillRoundRect(3, 3, 314, 164, 5, bg);
   spr.drawRoundRect(3, 3, 314, 164, 5, blue);
-  spr.drawRoundRect(5, 5, 310, 160, 4, blue);
 
   drawXXLText(title, 12, 7, cyan, &lgfx::fonts::Orbitron_Light_24);
   spr.setTextDatum(TR_DATUM);
@@ -1796,38 +1795,32 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.drawString(counter, 307, 9);
 
 
-  // Consistent icon/text group: fixed icon inset, fixed gap, centered as one unit.
-  // Icon artwork is 40x40; text starts 12 px after the icon.
-  const int iconX = 25;
+  // Clean menu: no inner selection frame or divider.
+  // Every icon has the same left inset; labels use one fixed area and baseline.
+  const int iconX = 24;
   const int iconY = 66;
   const int iconW = 40;
-  const int iconTextGap = 12;
-  const int groupLeft = 18;
-  const int groupRight = 302;
-  const int groupCenter = (groupLeft + groupRight) / 2;
-  const int maxTextWidth = groupRight - groupLeft - iconW - iconTextGap;
-  int textWidth = spr.textWidth(displaySelected, &lgfx::fonts::Orbitron_Light_24);
+  const int iconTextGap = 18;
+  const int textLeft = iconX + iconW + iconTextGap;
+  const int textRight = 306;
+  const int maxTextWidth = textRight - textLeft;
   const lgfx::IFont *menuFont = &lgfx::fonts::Orbitron_Light_24;
+  int textWidth = spr.textWidth(displaySelected, menuFont);
   if (textWidth > maxTextWidth) {
-    // Preserve the chosen font size; use the English short label where supplied.
     menuFont = FONT_LARGE;
     textWidth = spr.textWidth(displaySelected, menuFont);
   }
-  const int groupWidth = iconW + iconTextGap + textWidth;
-  const int groupX = groupCenter - groupWidth / 2;
-  // Keep the icon inset consistent across entries, but center the complete pair.
-  const int finalIconX = groupX;
-  const int finalTextX = finalIconX + iconW + iconTextGap;
-  drawFullMenuIcon(settingsPage ? rawIdx : idx, finalIconX, iconY, cyan, settingsPage);
+  drawFullMenuIcon(settingsPage ? rawIdx : idx, iconX, iconY, cyan, settingsPage);
   spr.setFont(menuFont);
+  const int textCenter = (textLeft + textRight) / 2;
+  const int textX = textCenter - textWidth / 2;
   const int textY = 75;
-  drawXXLText(displaySelected, finalTextX, textY, cyan, menuFont);
+  drawXXLText(displaySelected, textX, textY, cyan, menuFont);
 
-  spr.drawFastHLine(12, 147, 296, red);
+  // Keep the existing footer, without any divider line or inner frame.
   spr.setTextColor(cyan);
   spr.setTextDatum(TL_DATUM);
   drawXXLText("DREHEN: AUSWÄHLEN", 12, 151, cyan, FONT_SMALL);
-  spr.setTextDatum(TR_DATUM);
   spr.setTextDatum(TR_DATUM);
   spr.setFont(FONT_SMALL);
   spr.setTextColor(cyan);
