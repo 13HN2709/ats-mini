@@ -673,7 +673,7 @@ void loop()
   ButtonTracker::State pb1st = pb1.update(digitalRead(ENCODER_PUSH_BUTTON) == LOW);
 
   if(currentCmd == CMD_DUAL_RX && dualRxTick(currentTime)) needRedraw = true;
-  if(currentCmd == CMD_CW_DECODER) cwDecoderTick();
+  if(currentCmd == CMD_CW_DECODER) needRedraw |= cwDecoderTick();
 
   int ser_event = serialLoop(usbModeIdx);
   needRedraw |= !!(ser_event & REMOTE_CHANGED);
