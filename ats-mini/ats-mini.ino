@@ -894,7 +894,7 @@ void loop()
 
   if((currentTime - elapsedCommand) > ELAPSED_COMMAND)
   {
-    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX)
+    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX && currentCmd != CMD_CW_DECODER)
     {
       currentCmd = CMD_NONE;
       needRedraw = true;
@@ -962,8 +962,8 @@ void loop()
 
   if(needRedraw) {
     drawScreen();
-    // Statischer Rahmen und blaue Seiten des Eco-Wasserfalls beim Redraw
-    drawEcoWaterfallStatic(spr);
+    // Keep the CW decoder fully fullscreen; preserve the Eco-Wasserfall for all other modes.
+    if(currentCmd != CMD_CW_DECODER) drawEcoWaterfallStatic(spr);
   }
 
   delay(5);
