@@ -27,6 +27,7 @@ private:
 
   char pattern_[8];
   uint8_t patternLength_;
+  bool initialized_;
   bool tonePresent_;
   uint32_t stateSinceMs_;
   uint32_t lastToneEndMs_;
