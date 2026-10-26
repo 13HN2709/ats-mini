@@ -9,7 +9,7 @@
 static RTTYDecoder rtty;
 static bool active=false;
 static uint32_t lastUi=0;
-static bool signal=false;
+static bool hasSignal=false;
 static uint32_t lastSignal=0;
 static constexpr uint8_t AUDIO_PIN=11;
 static constexpr uint32_t SAMPLE_RATE=4000;
@@ -26,7 +26,7 @@ extern uint8_t wifiModeIdx;
 #define NET_OFF 0
 #endif
 bool rttyDecoderActive(){return active;}
-void rttyDecoderEnter(uint16_t command){rtty.reset(); decoderCommand=command; active=(wifiModeIdx==NET_OFF); currentCmd=command; pinMode(AUDIO_PIN,INPUT); lastUi=lastBlock=millis(); bitStart=millis(); bitSamples=0; markScore=spaceScore=0; signal=false; lastSignal=0;}
+void rttyDecoderEnter(uint16_t command){rtty.reset(); decoderCommand=command; active=(wifiModeIdx==NET_OFF); currentCmd=command; pinMode(AUDIO_PIN,INPUT); lastUi=lastBlock=millis(); bitStart=millis(); bitSamples=0; markScore=spaceScore=0; hasSignal=false; lastSignal=0;}
 void rttyDecoderExit(){active=false; currentCmd=CMD_NONE;}
 bool rttyDecoderTick(){
  if(!active) return false;
@@ -41,7 +41,7 @@ bool rttyDecoderTick(){
   const double cm=2.0*cos(2.0*PI*markHz/SAMPLE_RATE), cs=2.0*cos(2.0*PI*spaceHz/SAMPLE_RATE);
   for(uint16_t i=0;i<BLOCK;i++){double v=samples[i]-mean; double q=v+cm*m1-m2; m2=m1;m1=q; q=v+cs*s1-s2;s2=s1;s1=q;}
   eMark=m1*m1+m2*m2-cm*m1*m2; eSpace=s1*s1+s2*s2-cs*s1*s2;
-  bool mark=eMark>=eSpace; signal=(eMark+eSpace)>100000.0; if(signal)lastSignal=now;
+  bool mark=eMark>=eSpace; hasSignal=(eMark+eSpace)>100000.0; if(hasSignal)lastSignal=now;
   // Nominal 45.45 baud. Sample at each bit centre; timing recovery is deliberately simple for first hardware test.
   if(bitSamples==0){bitStart=now;markBit=mark;}
   ++bitSamples;
