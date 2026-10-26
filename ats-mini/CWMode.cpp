@@ -6,12 +6,25 @@
 #include "CWAudioDetector.h"
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 static CWDecoder cwDecoder;
 static bool cwActive = false;
 static bool cwWifiBlocked = false;
 static uint32_t cwLastUiTick = 0;
 static bool cwSignalGreen = false;
+static CWAudioDetector cwAudio;
+static int16_t cwSamples[80];
+static uint32_t cwLastAudioBlock = 0;
+static uint32_t cwLastToneSeen = 0;
+static uint32_t cwLastToneStateChange = 0;
+static bool cwToneState = false;
+#ifndef CW_AUDIO_PIN
+#define CW_AUDIO_PIN 11
+#endif
+static constexpr uint32_t CW_SAMPLE_RATE = 4000;
+static constexpr uint16_t CW_TONE_HZ = 700;
+static constexpr uint16_t CW_BLOCK_SIZE = 80;
 
 // Wi-Fi is not started/stopped by CW mode. The user can switch it off in
 // Settings before entering the decoder; the mode only checks the configured state.
@@ -32,7 +45,13 @@ void cwDecoderEnter()
     return;
   }
   cwDecoder.reset();
+  cwAudio.configure(CW_SAMPLE_RATE, CW_TONE_HZ, CW_BLOCK_SIZE, 0.20f);
+  pinMode(CW_AUDIO_PIN, INPUT);
   cwSignalGreen = false;
+  cwToneState = false;
+  cwLastAudioBlock = millis();
+  cwLastToneSeen = 0;
+  cwLastToneStateChange = millis();
   cwLastUiTick = millis();
   cwActive = true;
   currentCmd = CMD_CW_DECODER;
@@ -49,10 +68,26 @@ void cwDecoderTick()
 {
   if (!cwActive) return;
   uint32_t now = millis();
+  if (now - cwLastAudioBlock >= 20) {
+    const uint32_t blockStartUs = micros();
+    for (uint16_t i = 0; i < CW_BLOCK_SIZE; ++i) {
+      cwSamples[i] = (int16_t)analogRead(CW_AUDIO_PIN);
+      const uint32_t targetUs = blockStartUs + ((uint32_t)(i + 1) * 1000000UL / CW_SAMPLE_RATE);
+      while ((int32_t)(micros() - targetUs) < 0) { }
+    }
+    const bool toneNow = cwAudio.processBlock(cwSamples, CW_BLOCK_SIZE);
+    now = millis();
+    cwLastAudioBlock = now;
+    if (toneNow) cwLastToneSeen = now;
+    if (toneNow != cwToneState) {
+      cwToneState = toneNow;
+      cwLastToneStateChange = now;
+    }
+    cwDecoder.feedToneState(toneNow, now);
+  }
   cwDecoder.tick(now);
-  // Until the board audio input is wired into the detector, keep the indicator
-  // red rather than claiming a signal has been acquired.
-  cwSignalGreen = false;
+  cwSignalGreen = (cwLastToneSeen != 0 && now - cwLastToneSeen < 350 &&
+                   now - cwLastToneStateChange < 1200);
   if (now - cwLastUiTick >= 100) cwLastUiTick = now;
 }
 
