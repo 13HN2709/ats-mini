@@ -64,9 +64,9 @@ void cwDecoderExit()
   currentCmd = CMD_NONE;
 }
 
-void cwDecoderTick()
+bool cwDecoderTick()
 {
-  if (!cwActive) return;
+  if (!cwActive) return false;
   uint32_t now = millis();
   if (now - cwLastAudioBlock >= 20) {
     const uint32_t blockStartUs = micros();
@@ -88,7 +88,8 @@ void cwDecoderTick()
   cwDecoder.tick(now);
   cwSignalGreen = (cwLastToneSeen != 0 && now - cwLastToneSeen < 350 &&
                    now - cwLastToneStateChange < 1200);
-  if (now - cwLastUiTick >= 100) cwLastUiTick = now;
+  if (now - cwLastUiTick >= 100) { cwLastUiTick = now; return true; }
+  return false;
 }
 
 void drawCWDecoderScreen()
