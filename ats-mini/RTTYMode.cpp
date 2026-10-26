@@ -5,6 +5,7 @@
 #include "RTTYDecoder.h"
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 static RTTYDecoder rtty;
 static bool active=false;
 static uint32_t lastUi=0;
@@ -12,6 +13,7 @@ static bool signal=false;
 static uint32_t lastSignal=0;
 static constexpr uint8_t AUDIO_PIN=11;
 static constexpr uint32_t SAMPLE_RATE=4000;
+static uint16_t decoderCommand=CMD_RTTY_DECODER;
 static constexpr uint16_t BLOCK=80;
 static int16_t samples[BLOCK];
 static uint32_t lastBlock=0;
@@ -24,7 +26,7 @@ extern uint8_t wifiModeIdx;
 #define NET_OFF 0
 #endif
 bool rttyDecoderActive(){return active;}
-void rttyDecoderEnter(){rtty.reset(); active=(wifiModeIdx==NET_OFF); currentCmd=CMD_RTTY_DECODER; pinMode(AUDIO_PIN,INPUT); lastUi=lastBlock=millis(); bitStart=millis(); bitSamples=0; markScore=spaceScore=0; signal=false; lastSignal=0;}
+void rttyDecoderEnter(uint16_t command){rtty.reset(); decoderCommand=command; active=(wifiModeIdx==NET_OFF); currentCmd=command; pinMode(AUDIO_PIN,INPUT); lastUi=lastBlock=millis(); bitStart=millis(); bitSamples=0; markScore=spaceScore=0; signal=false; lastSignal=0;}
 void rttyDecoderExit(){active=false; currentCmd=CMD_NONE;}
 bool rttyDecoderTick(){
  if(!active) return false;
@@ -34,14 +36,17 @@ bool rttyDecoderTick(){
   for(uint16_t i=0;i<BLOCK;i++){samples[i]=(int16_t)analogRead(AUDIO_PIN); mean+=samples[i]; uint32_t target=us+((uint32_t)(i+1)*1000000UL/SAMPLE_RATE); while((int32_t)(micros()-target)<0){}}
   mean/=BLOCK; double eMark=0,eSpace=0;
   // Goertzel-like single-frequency correlations, tuned for common 170 Hz-shift RTTY audio.
-  double m1=0,m2=0,s1=0,s2=0; const double cm=2.0*cos(2.0*PI*1275.0/SAMPLE_RATE), cs=2.0*cos(2.0*PI*1445.0/SAMPLE_RATE);
+  double m1=0,m2=0,s1=0,s2=0; const double markHz=decoderCommand==CMD_RTTY50_DECODER?1275.0:1275.0;
+  const double spaceHz=decoderCommand==CMD_RTTY50_DECODER?1725.0:1445.0;
+  const double cm=2.0*cos(2.0*PI*markHz/SAMPLE_RATE), cs=2.0*cos(2.0*PI*spaceHz/SAMPLE_RATE);
   for(uint16_t i=0;i<BLOCK;i++){double v=samples[i]-mean; double q=v+cm*m1-m2; m2=m1;m1=q; q=v+cs*s1-s2;s2=s1;s1=q;}
   eMark=m1*m1+m2*m2-cm*m1*m2; eSpace=s1*s1+s2*s2-cs*s1*s2;
   bool mark=eMark>=eSpace; signal=(eMark+eSpace)>100000.0; if(signal)lastSignal=now;
   // Nominal 45.45 baud. Sample at each bit centre; timing recovery is deliberately simple for first hardware test.
   if(bitSamples==0){bitStart=now;markBit=mark;}
   ++bitSamples;
-  if(now-bitStart>=22){rtty.feedBit(markBit,now);bitStart=now;bitSamples=0;}
+  const uint32_t bitPeriod=decoderCommand==CMD_RTTY50_DECODER?20:22;
+  if(now-bitStart>=bitPeriod){rtty.feedBit(markBit,now);bitStart=now;bitSamples=0;}
   lastBlock=now;
  }
  if(now-lastUi>=100){lastUi=now;return true;} return false;
@@ -49,8 +54,8 @@ bool rttyDecoderTick(){
 void drawRTTYDecoderScreen(){
  const uint16_t navy=0x0008, blueA=0x0359, blueB=0x047D, green=0x07E0, red=0xF800;
  spr.fillSprite(navy); spr.fillRect(8,5,304,31,blueA); spr.drawRect(8,5,304,31,red); spr.setTextDatum(ML_DATUM); spr.setTextColor(0xFFFF);
- char freq[40]; if(currentMode==FM)snprintf(freq,sizeof(freq),"%.2f MHz  FM",currentFrequency/100.0f); else snprintf(freq,sizeof(freq),"%u kHz  %s",currentFrequency,currentMode<4?bandModeDesc[currentMode]:"?"); spr.drawString(freq,16,13,FONT_SMALL);
+ char freq[40]; if(currentMode==FM)snprintf(freq,sizeof(freq),"%.2f MHz  FM",currentFrequency/100.0f); else snprintf(freq,sizeof(freq),"%u kHz  %s",currentFrequency,currentMode<4?bandModeDesc[currentMode]:"?"); spr.drawString(freq,16,13,FONT_SMALL); spr.setTextDatum(TR_DATUM); spr.setTextColor(green); spr.drawString(decoderCommand==CMD_RTTY50_DECODER?"RTTY50 / 50 BAUD":"RTTY / 45.45 BAUD",306,13,FONT_SMALL);
  const int py[]={40,69,98,127}; const int chars=34; const char *txt=rtty.text(); size_t len=strlen(txt);
- for(int row=0;row<4;row++){spr.fillRect(8,py[row],304,25,(row&1)?blueB:blueA);spr.drawRect(8,py[row],304,25,0x04BF);size_t start=len>(size_t)((row+1)*chars)?len-(size_t)((row+1)*chars):0;size_t n=len>start?len-start:0;if(n>(size_t)chars)n=chars;if(n){char line[chars+1];memcpy(line,txt+start,n);line[n]=0;spr.setTextDatum(ML_DATUM);spr.setTextColor(0xFFFF);spr.drawString(line,14,py[row]+5,FONT_SMALL);}}
+ for(int row=0;row<4;row++){spr.fillRect(8,py[row],304,25,(row&1)?blueB:blueA);spr.drawRect(8,py[row],304,25,0x04BF);size_t visible=len<(size_t)(4*chars)?len:(size_t)(4*chars); size_t start=len-visible+(size_t)(row*chars); size_t n=visible>(size_t)(row*chars)?visible-(size_t)(row*chars):0;if(n>(size_t)chars)n=chars;if(n){char line[chars+1];memcpy(line,txt+start,n);line[n]=0;spr.setTextDatum(ML_DATUM);spr.setTextColor(0xFFFF);spr.drawString(line,14,py[row]+5,FONT_SMALL);}}
  uint16_t led=(lastSignal&&millis()-lastSignal<500)?green:red; if((millis()/350)&1)spr.fillCircle(296,20,5,led);else spr.drawCircle(296,20,5,led); spr.setTextDatum(MR_DATUM);spr.setTextColor(led);spr.drawString((lastSignal&&millis()-lastSignal<500)?"SIGNAL OK":"NO SIGNAL",284,20,FONT_SMALL);spr.setTextDatum(MC_DATUM);spr.setTextColor(0xBDF7);spr.drawString("CLICK: EXIT  |  ROTATE: TUNE/BFO",160,163,FONT_SMALL);
 }
