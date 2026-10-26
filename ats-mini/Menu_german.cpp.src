@@ -11,6 +11,7 @@
 #include "Patches.h"
 #include "FreqKeypad.h"
 #include "CWMode.h"
+#include "RTTYMode.h"
 #include "Storage.h"
 
 #include <time.h>
@@ -118,6 +119,7 @@ static int visibleBandIndexAtOffset(int offset)
 #define MENU_SOFTMUTE    16
 #define MENU_SETTINGS    17
 #define MENU_CW_DECODER  18
+#define MENU_RTTY_DECODER 19
 
 int8_t menuIdx = MENU_KEYPAD;
 
@@ -142,6 +144,7 @@ static const char *menu[] =
   "SOFT-MUTE",
   "EINSTELLUNGEN",
   "CW-DECODER",
+  "RTTY",
 };
 
 #define MENU_BRIGHTNESS   0
@@ -949,6 +952,7 @@ static void clickMenu(int cmd, bool shortPress)
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
     case MENU_CW_DECODER: cwDecoderEnter(); break;
+    case MENU_RTTY_DECODER: rttyDecoderEnter(); break;
   }
 }
 
