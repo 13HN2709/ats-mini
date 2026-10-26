@@ -14,6 +14,9 @@ public:
   void reset();
   void setDitDurationMs(uint16_t durationMs);
   void feedToneState(bool tonePresent, uint32_t nowMs);
+  // Call periodically even when the tone state has not changed. This lets the
+  // final character/word appear without waiting for another tone edge.
+  void tick(uint32_t nowMs);
   const char *text() const;
   void clearText();
   uint16_t ditDurationMs() const;
