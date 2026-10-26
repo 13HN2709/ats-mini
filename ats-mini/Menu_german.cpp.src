@@ -1779,6 +1779,15 @@ void drawFullScreenMenu(uint16_t cmd)
   const char *title = settingsPage ? "SETTINGS" : "HAUPTMENÜ";
   const char *selected = settingsPage ? settingLabel(rawIdx) : menu[idx];
   const char *displaySelected = selected;
+  // Render menu labels in uppercase without corrupting UTF-8 umlauts.
+  char uppercaseLabel[96];
+  snprintf(uppercaseLabel, sizeof(uppercaseLabel), "%s", displaySelected ? displaySelected : "");
+  for (size_t i = 0; uppercaseLabel[i] != '\0'; ++i) {
+    if (uppercaseLabel[i] >= 'a' && uppercaseLabel[i] <= 'z') {
+      uppercaseLabel[i] = static_cast<char>(uppercaseLabel[i] - ('a' - 'A'));
+    }
+  }
+  displaySelected = uppercaseLabel;
   if (!settingsPage && idx == MENU_SQUELCH) displaySelected = "SQUELCH";
   if (!settingsPage && idx == MENU_SETTINGS) displaySelected = "SETTINGS";
 
