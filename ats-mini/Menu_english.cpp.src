@@ -1,6 +1,5 @@
 #include "math.h"
 #include "Common.h"
-#include "XXLMenuIcons.h"
 #include "Themes.h"
 #include "Utils.h"
 #include "Draw.h"
@@ -1669,14 +1668,6 @@ static void drawInfo(int x, int y, int sx)
 }
 
 
-static void drawFullMenuIcon(int idx, int x, int y, uint16_t color, bool settingsPage)
-{
-  const int icon = settingsPage
-    ? (idx >= 0 && idx < (int)sizeof(XXL_ICON_SETTINGS_MAP) ? XXL_ICON_SETTINGS_MAP[idx] : 0)
-    : (idx >= 0 && idx < (int)sizeof(XXL_ICON_MENU_MAP) ? XXL_ICON_MENU_MAP[idx] : 0);
-  drawXXLBitmapIcon(icon, x, y, color);
-}
-
 // XXL menu text renderer: explicit UTF-8 umlauts and stronger strokes.
 // Kept local to the full-screen menu so radio layouts remain unchanged.
 static int drawXXLText(const char *text, int x, int y, uint16_t color, const lgfx::IFont *font)
@@ -1763,26 +1754,17 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.drawString(counter, 307, 9);
 
 
-  // Clean menu: no inner selection frame or divider.
-  // Every icon has the same left inset; labels use one fixed area and baseline.
-  const int iconX = 24;
-  const int iconY = 66;
-  const int iconW = 40;
-  const int iconTextGap = 18;
-  const int textLeft = iconX + iconW + iconTextGap;
-  const int textRight = 306;
-  const int maxTextWidth = textRight - textLeft;
+  // Text-only menu: center the selected label in the screen area.
+  // A fixed anchor avoids item-specific vertical shifts caused by icon alignment.
+  const int maxTextWidth = 286;
   const lgfx::IFont *menuFont = &lgfx::fonts::Orbitron_Light_24;
   int textWidth = spr.textWidth(displaySelected, menuFont);
   if (textWidth > maxTextWidth) {
     menuFont = FONT_LARGE;
     textWidth = spr.textWidth(displaySelected, menuFont);
   }
-  drawFullMenuIcon(settingsPage ? rawIdx : idx, iconX, iconY, cyan, settingsPage);
-  spr.setFont(menuFont);
-  const int textCenter = (textLeft + textRight) / 2;
-  const int textX = textCenter - textWidth / 2;
-  const int textY = 75;
+  const int textX = (320 - textWidth) / 2;
+  const int textY = 73;
   drawXXLText(displaySelected, textX, textY, cyan, menuFont);
 
   // Keep the existing footer, without any divider line or inner frame.
