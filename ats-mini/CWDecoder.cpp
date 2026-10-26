@@ -47,14 +47,18 @@ void CWDecoder::feedToneState(bool tonePresent, uint32_t nowMs)
     return;
   }
 
-  if (tonePresent == tonePresent_) return;
+  if (tonePresent == tonePresent_) {
+    tick(nowMs);
+    return;
+  }
 
   const uint32_t duration = nowMs - stateSinceMs_;
   if (tonePresent_) {
     closeMark(duration);
     lastToneEndMs_ = nowMs;
   } else {
-    // Silence after a mark: character gap ~= 3 dits, word gap ~= 7 dits.
+    // The next tone edge may arrive before tick() was called often enough.
+    // Account for the full preceding silence here as a fallback.
     if (duration >= (uint32_t)ditMs_ * 6U) {
       finishCharacter();
       finishWord();
@@ -65,6 +69,19 @@ void CWDecoder::feedToneState(bool tonePresent, uint32_t nowMs)
 
   tonePresent_ = tonePresent;
   stateSinceMs_ = nowMs;
+}
+
+void CWDecoder::tick(uint32_t nowMs)
+{
+  if (!initialized_ || tonePresent_) return;
+
+  const uint32_t silenceMs = nowMs - stateSinceMs_;
+  if (silenceMs >= (uint32_t)ditMs_ * 6U) {
+    finishCharacter();
+    finishWord();
+  } else if (silenceMs >= (uint32_t)ditMs_ * 2U) {
+    finishCharacter();
+  }
 }
 
 void CWDecoder::closeMark(uint32_t durationMs)
@@ -118,7 +135,7 @@ char CWDecoder::decodePattern() const
     {"..-.", 'F'}, {"--.", 'G'}, {"....", 'H'}, {"..", 'I'}, {".---", 'J'},
     {"-.-", 'K'}, {".-..", 'L'}, {"--", 'M'}, {"-.", 'N'}, {"---", 'O'},
     {".--.", 'P'}, {"--.-", 'Q'}, {".-.", 'R'}, {"...", 'S'}, {"-", 'T'},
-    {"..-", 'U'}, {"...-", 'V'}, {".--", 'W'}, {"-..-", 'X'}, {"-.--", 'Y'},
+    {"..-", 'U'}, {"...-", 'V'}, {".--", 'W'}, {"-..-", 'X"}, {"-.--", 'Y'},
     {"--..", 'Z'},
     {"-----", '0'}, {".----", '1'}, {"..---", '2'}, {"...--", '3'},
     {"....-", '4'}, {".....", '5'}, {"-....", '6'}, {"--...", '7'},
