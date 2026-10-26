@@ -74,6 +74,6 @@ void drawRTTYDecoderScreen(){
  spr.setTextColor(led);
  spr.drawString((lastSignal&&millis()-lastSignal<500)?"SIGNAL":"NO SIG",302,13,FONT_SMALL);
  const int py[]={40,69,98,127}; const int chars=34; const char *txt=rtty.text(); size_t len=strlen(txt);
- for(int row=0;row<4;row++){spr.fillRect(8,py[row],304,25,(row&1)?blueB:blueA);spr.drawRect(8,py[row],304,25,0x04BF);size_t visible=len<(size_t)(4*chars)?len:(size_t)(4*chars); size_t start=len-visible+(size_t)(row*chars); size_t n=visible>(size_t)(row*chars)?visible-(size_t)(row*chars):0;if(n>(size_t)chars)n=chars;if(n){char line[chars+1];memcpy(line,txt+start,n);line[n]=0;spr.setTextDatum(ML_DATUM);spr.setTextColor(0xFFFF);spr.drawString(line,14,py[row]+5,FONT_SMALL);}}
+ for(int row=0;row<4;row++){spr.fillRect(8,py[row],304,25,(row&1)?blueB:blueA);spr.drawRect(8,py[row],304,25,0x04BF);size_t visible=len<(size_t)(4*chars)?len:(size_t)(4*chars); size_t start=len-visible+(size_t)(row*chars); size_t n=visible>(size_t)(row*chars)?visible-(size_t)(row*chars):0;if(n>(size_t)chars)n=chars;if(n){char line[chars+1];memcpy(line,txt+start,n);line[n]=0;spr.setTextDatum(ML_DATUM);spr.setTextColor(0xFFFF);spr.setFont(&fonts::Font2); spr.drawString(line,14,py[row]+4);}}
  if((millis()/350)&1) spr.fillCircle(296,27,3,led); else spr.drawCircle(296,27,3,led);spr.setTextDatum(MC_DATUM);spr.setTextColor(0xBDF7);spr.drawString("CLICK: EXIT  |  ROTATE: TUNE/BFO",160,163,FONT_SMALL);
 }
