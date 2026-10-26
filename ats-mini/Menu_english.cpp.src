@@ -1740,6 +1740,7 @@ void drawFullScreenMenu(uint16_t cmd)
   const int count = settingsPage ? ITEM_COUNT(settings) - 1 : ITEM_COUNT(menu);
   const char *title = settingsPage ? "SETTINGS" : "MAIN MENU";
   const char *selected = settingsPage ? settingLabel(rawIdx) : menu[idx];
+  const char *displaySelected = selected;
 
   spr.fillSprite(bg);
   spr.fillRoundRect(3, 3, 314, 164, 5, bg);
@@ -1758,45 +1759,32 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.fillRoundRect(9, 32, 302, 109, 5, red);
   spr.fillRoundRect(12, 35, 296, 103, 3, bg);
 
-  // Center the label in the available area to the right of the icon.
-  // Keep the icon and label vertically centered in the red frame.
-  // Use rawIdx for settings icons: idx is adjusted only for the menu counter.
-  drawFullMenuIcon(settingsPage ? rawIdx : idx, 25, 66, cyan, settingsPage);
-  const int textLeft = 18;
-  const int textRight = 302;
-  const int textCenter = (textLeft + textRight) / 2;
-  char firstLine[40];
-  char secondLine[40];
-  const size_t nameLen = strlen(selected);
-  if(nameLen > 10) {
-    size_t split = nameLen / 2;
-    while(split < nameLen && selected[split] != ' ' && selected[split] != '-' && selected[split] != '/') split++;
-    if(split >= nameLen) {
-      split = nameLen / 2;
-      while(split > 0 && selected[split] != ' ' && selected[split] != '-' && selected[split] != '/') split--;
-    }
-    if(split > 0 && split < sizeof(firstLine)) {
-      memcpy(firstLine, selected, split);
-      firstLine[split] = '\0';
-      const char *rest = selected + split + 1;
-      while(*rest == ' ' || *rest == '-' || *rest == '/') rest++;
-      snprintf(secondLine, sizeof(secondLine), "%s", rest);
-      int w1 = spr.textWidth(firstLine, &lgfx::fonts::Orbitron_Light_24);
-      int w2 = spr.textWidth(secondLine, &lgfx::fonts::Orbitron_Light_24);
-      drawXXLText(firstLine, textCenter - w1 / 2, 58, cyan, &lgfx::fonts::Orbitron_Light_24);
-      drawXXLText(secondLine, textCenter - w2 / 2, 84, cyan, &lgfx::fonts::Orbitron_Light_24);
-    } else {
-      int width = spr.textWidth(selected, &lgfx::fonts::Orbitron_Light_24);
-      const lgfx::IFont *font = width > (textRight - textLeft) ? FONT_LARGE : &lgfx::fonts::Orbitron_Light_24;
-      width = spr.textWidth(selected, font);
-      drawXXLText(selected, textCenter - width / 2, 75, cyan, font);
-    }
-  } else {
-    int width = spr.textWidth(selected, &lgfx::fonts::Orbitron_Light_24);
-    const lgfx::IFont *font = width > (textRight - textLeft) ? FONT_LARGE : &lgfx::fonts::Orbitron_Light_24;
-    width = spr.textWidth(selected, font);
-    drawXXLText(selected, textCenter - width / 2, 65, cyan, font);
+  // Consistent icon/text group: fixed icon inset, fixed gap, centered as one unit.
+  // Icon artwork is 40x40; text starts 12 px after the icon.
+  const int iconX = 25;
+  const int iconY = 66;
+  const int iconW = 40;
+  const int iconTextGap = 12;
+  const int groupLeft = 18;
+  const int groupRight = 302;
+  const int groupCenter = (groupLeft + groupRight) / 2;
+  const int maxTextWidth = groupRight - groupLeft - iconW - iconTextGap;
+  int textWidth = spr.textWidth(displaySelected, &lgfx::fonts::Orbitron_Light_24);
+  const lgfx::IFont *menuFont = &lgfx::fonts::Orbitron_Light_24;
+  if (textWidth > maxTextWidth) {
+    // Preserve the chosen font size; use the English short label where supplied.
+    menuFont = FONT_LARGE;
+    textWidth = spr.textWidth(displaySelected, menuFont);
   }
+  const int groupWidth = iconW + iconTextGap + textWidth;
+  const int groupX = groupCenter - groupWidth / 2;
+  // Keep the icon inset consistent across entries, but center the complete pair.
+  const int finalIconX = groupX;
+  const int finalTextX = finalIconX + iconW + iconTextGap;
+  drawFullMenuIcon(settingsPage ? rawIdx : idx, finalIconX, iconY, cyan, settingsPage);
+  spr.setFont(menuFont);
+  const int textY = 75;
+  drawXXLText(displaySelected, finalTextX, textY, cyan, menuFont);
 
   spr.drawFastHLine(12, 147, 296, red);
   spr.setTextColor(cyan);
