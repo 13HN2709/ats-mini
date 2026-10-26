@@ -56,6 +56,7 @@ void drawLayoutSmeter();
 void drawLayoutNewUI();
 void drawLayoutClean();
 void drawLayoutTEF6686();
+void drawCWDecoderScreen();
 
 void drawAbout();
 void drawAboutHelp(uint8_t arrow);
