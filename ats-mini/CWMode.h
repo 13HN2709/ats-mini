@@ -6,7 +6,7 @@
 void cwDecoderEnter();
 void cwDecoderExit();
 void drawCWDecoderScreen();
-void cwDecoderTick();
+bool cwDecoderTick();
 bool cwDecoderActive();
 bool cwDecoderWifiBlocked();
 
