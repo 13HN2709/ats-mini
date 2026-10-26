@@ -120,6 +120,7 @@ static int visibleBandIndexAtOffset(int offset)
 #define MENU_SETTINGS    17
 #define MENU_CW_DECODER  18
 #define MENU_RTTY_DECODER 19
+#define MENU_RTTY50_DECODER 20
 
 int8_t menuIdx = MENU_KEYPAD;
 
@@ -145,6 +146,7 @@ static const char *menu[] =
   "EINSTELLUNGEN",
   "CW-DECODER",
   "RTTY",
+  "RTTY50",
 };
 
 #define MENU_BRIGHTNESS   0
@@ -952,7 +954,8 @@ static void clickMenu(int cmd, bool shortPress)
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
     case MENU_CW_DECODER: cwDecoderEnter(); break;
-    case MENU_RTTY_DECODER: rttyDecoderEnter(); break;
+    case MENU_RTTY_DECODER: rttyDecoderEnter(CMD_RTTY_DECODER); break;
+    case MENU_RTTY50_DECODER: rttyDecoderEnter(CMD_RTTY50_DECODER); break;
   }
 }
 
