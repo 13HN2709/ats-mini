@@ -7,6 +7,7 @@
 #include "Draw.h"
 #include "FreqKeypad.h" // <--- Eingebundenes Keypad-Modul
 #include "CWMode.h"
+#include "RTTYMode.h"
 
 // Layout-Prototypen
 void drawLayoutSmeter();
@@ -607,6 +608,13 @@ void drawScreen()
   if(currentCmd == CMD_CW_DECODER)
   {
     drawCWDecoderScreen();
+    spr.pushSprite(0, 0);
+    return;
+  }
+
+  if(currentCmd == CMD_RTTY_DECODER)
+  {
+    drawRTTYDecoderScreen();
     spr.pushSprite(0, 0);
     return;
   }
