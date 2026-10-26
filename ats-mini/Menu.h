@@ -52,6 +52,7 @@
 #define CMD_DUAL_RX     0x3800 // DUAL RX screen
 #define CMD_CW_DECODER  0x3900 // CW decoder fullscreen
 #define CMD_RTTY_DECODER 0x3A00 // RTTY decoder fullscreen
+#define CMD_RTTY50_DECODER 0x3B00 // RTTY 50 baud decoder fullscreen
 
 
 
