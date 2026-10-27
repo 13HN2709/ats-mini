@@ -6,8 +6,8 @@
 #include "BleMode.h"
 #include "Draw.h"
 #include "FreqKeypad.h" // <--- Eingebundenes Keypad-Modul
-#include "CWMode.h"
-#include "RTTYMode.h"
+// #include "CWMode.h"  // Temporarily disabled; retained for future work.
+// #include "RTTYMode.h"  // Temporarily disabled; retained for future work.
 
 // Layout-Prototypen
 void drawLayoutSmeter();
@@ -605,19 +605,7 @@ void drawScreen()
     return;
   }
 
-  if(currentCmd == CMD_CW_DECODER)
-  {
-    drawCWDecoderScreen();
-    spr.pushSprite(0, 0);
-    return;
-  }
-
-  if(currentCmd == CMD_RTTY_DECODER || currentCmd == CMD_RTTY50_DECODER)
-  {
-    drawRTTYDecoderScreen();
-    spr.pushSprite(0, 0);
-    return;
-  }
+  // CW and RTTY fullscreen decoder rendering temporarily disabled.
 
   if(currentCmd==CMD_ABOUT)
   {
