@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     name: build ${{ matrix.board.artifact-suffix }}-${{ matrix.lang }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions: {}
     strategy:
       fail-fast: true
@@ -123,7 +123,7 @@ jobs:
   release:
     if: ${{ (github.event_name == 'workflow_dispatch' && inputs.revision != '') || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) }}
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     strategy:
