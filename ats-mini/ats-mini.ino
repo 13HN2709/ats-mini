@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "FreqKeypad.h"
+#include "SpectrumScanner.h"
 
 
 // SI473/5 and UI
@@ -751,7 +752,14 @@ void loop()
     encCount = encCountAccel = 0;
   }
 
-  if(currentCmd != CMD_DUAL_RX && pushAndRotate)
+  if(currentCmd == CMD_SPECTRUM && encCount)
+  {
+    spectrumScannerRotate(encCount);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime;
+  }
+
+  if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && pushAndRotate)
   {
     if(encCount)
     {
@@ -774,7 +782,7 @@ void loop()
     }
     elapsedSleep = elapsedCommand = currentTime;
   }
-  else if(currentCmd != CMD_DUAL_RX)
+  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM)
   {
     if(encCount)
     {
@@ -870,9 +878,17 @@ void loop()
     }
   }
 
+  if(currentCmd == CMD_SPECTRUM && (pb1st.wasClicked || pb1st.wasShortPressed))
+  {
+    spectrumScannerSelect();
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime = millis();
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+
   if((currentTime - elapsedCommand) > ELAPSED_COMMAND)
   {
-    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX)
+    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM)
     {
       currentCmd = CMD_NONE;
       needRedraw = true;
