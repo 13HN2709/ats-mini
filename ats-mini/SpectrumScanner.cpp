@@ -108,10 +108,8 @@ void drawSpectrumScanner()
   spr.drawString("VHF SPECTRUM", 160, 7);
 
   uint16_t selectedFreq = VHF_START;
-  uint8_t selectedRssi = 0;
-  uint8_t selectedSnr = 0;
   if(spectrumHasData)
-    scanGetPoint(selectedPoint, &selectedFreq, &selectedRssi, &selectedSnr);
+    scanGetPoint(selectedPoint, &selectedFreq, nullptr, nullptr);
 
   char freqLabel[24];
   snprintf(freqLabel, sizeof(freqLabel), "%u.%02u MHz",
