@@ -1,59 +1,62 @@
-# ATS Mini
+# ATS Mini V4 by 13HN2709
 
-<img src="docs/source/_static/20261023_043409.jpg" alt="ATS Mini V4" width="320">
+<img src="docs/source/_static/20261023_043409.jpg" alt="ATS Mini V4 by 13HN2709" width="320">
 
-This firmware is for use on the SI4732 (ESP32-S3) Mini/Pocket Receiver
+Custom firmware for the ATS Mini V4 / SI4732 (ESP32-S3) Mini/Pocket Receiver.
 
-Based on the following sources:
+This project builds on the original ATS Mini firmware and adds features, controls and display improvements developed by **13HN2709**.
 
-* Volos Projects:    https://github.com/VolosR/TEmbedFMRadio
-* PU2CLR, Ricardo:   https://github.com/pu2clr/SI4735
-* Ralph Xavier:      https://github.com/ralphxavier/SI4735
-* Goshante:          https://github.com/goshante/ats20_ats_ex
-* G8PTN, Dave:       https://github.com/G8PTN/ATS_MINI
+## Features and own extensions
 
-## Changelog – ATS Mini V4 by 13HN2709
+### Added by 13HN2709
 
-### Eigene Erweiterungen von 13HN2709
-
-- **Web Control Center:** Radio per WLAN steuern – direkt vom Smartphone oder PC, auch ohne Internetverbindung.
-- **Spectrum Scanner:** Spektrum direkt am Gerät und über die Web-Oberfläche scannen; erkannte Signale auswählen und die Frequenz übernehmen.
-- **Speicherverwaltung:** Gespeicherte Frequenzen komfortabel auswählen und neue Speicherplätze belegen.
-- **Keypad:** Frequenzen direkt über die Zifferntastatur eingeben.
-- **VFO A/B:** VFO-Funktionen zur flexibleren Frequenzwahl.
-- **Frequenzschritt im Web Control Center:** Schrittweite bequem einstellen.
-- **BFO integriert:** BFO-Steuerung für den Empfang.
-- **Mehrsprachige Oberfläche:** Deutsch und Englisch auswählbar.
-- **Eigene Display-Layouts:** Unter anderem TEF6686-Style und Clean Layout.
-- **Dual RX:** Frequenzen abwechselnd überwachen.
-
-### English
-
-- **Web Control Center:** Control the radio over Wi-Fi from a phone or PC, without an internet connection.
-- **Spectrum Scanner:** Scan the spectrum on the device or through the web interface, select a signal and tune to it.
-- **Memory management:** Select saved frequencies and store new ones.
-- **Keypad:** Enter frequencies directly using the numeric keypad.
-- **VFO A/B:** VFO functions for more flexible frequency control.
-- **Frequency step in Web Control Center:** Adjust the tuning step from the web interface.
+- **Keypad:** Enter a frequency directly using the numeric keypad.
+- **VFO A/B:** VFO A/B functionality and frequency transfer.
+- **Frequency step control:** Change the tuning step conveniently, including through the control interface.
+- **Web Control Center:** Control the radio from a phone or PC over Wi-Fi; the interface can be used without an internet connection.
+- **Spectrum Scanner:** Scan frequency ranges in the Web Control Center, inspect peaks and tune the radio to a selected signal.
+- **Memory management:** Browse saved memories and store frequencies.
 - **Integrated BFO:** BFO control for reception.
-- **Bilingual interface:** Select German or English.
-- **Custom display layouts:** Including TEF6686-style and Clean Layout.
-- **Dual RX:** Monitor frequencies alternately.
+- **Two-language interface:** Choose between German and English.
+- **Custom display layouts:** Includes the TEF6686-style layout and Clean Layout.
+- **Dual RX:** Alternate monitoring of two frequencies.
+- **Radio display and usability improvements:** Custom frequency display, RDS presentation and other interface refinements.
 
-### Credits
+### Funktionen (Deutsch)
 
-This project is based on the original ATS Mini firmware and the libraries and projects listed above. Full credit to the original developers and contributors for their work.
+- **Keypad:** Frequenzen direkt über die Zifferntastatur eingeben.
+- **VFO A/B:** VFO-A/B-Funktion mit Übernahme bzw. Wechsel der Frequenzen.
+- **Frequenzunterschritt:** Die Frequenz-Schrittweite bequem ändern.
+- **Webseiten-Control-Center:** Das Radio per WLAN vom Smartphone oder PC steuern – auch ohne Internetverbindung.
+- **Spectrum Scanner:** Frequenzbereiche im Web Control Center scannen, Signalspitzen ansehen und die ausgewählte Frequenz übernehmen.
+- **Speicherverwaltung:** Gespeicherte Frequenzen auswählen und neue Frequenzen speichern.
+- **BFO integriert:** BFO für den Empfang einstellen.
+- **Zweisprachige Auswahl:** Deutsch und Englisch.
+- **Eigene Display-Layouts:** Unter anderem TEF6686-Style und Clean Layout.
+- **Dual RX:** Zwei Frequenzen abwechselnd überwachen.
+- **Verbesserungen der Radioanzeige:** Eigene Frequenzdarstellung, RDS-Anzeige und weitere Bedienungsverbesserungen.
 
-## Releases
+## Releases and firmware downloads
 
-Check out the [Releases](https://github.com/esp32-si4732/ats-mini/releases) page.
+Download firmware builds and releases for **ATS Mini V4 by 13HN2709** from this repository:
+
+- [Releases – ATS Mini V4 by 13HN2709](https://github.com/13HN2709/ats-mini/releases)
+- [Source code](https://github.com/13HN2709/ats-mini)
 
 ## Documentation
 
-The hardware, software and flashing documentation is available at <https://esp32-si4732.github.io/ats-mini/>
+This repository contains the custom firmware and its development. The project is based on the original ATS Mini firmware; the upstream documentation can be used as a reference for the original hardware and flashing process:
 
-## Discuss
+- [Original ATS Mini documentation](https://esp32-si4732.github.io/ats-mini/)
 
-* [GitHub Discussions](https://github.com/esp32-si4732/ats-mini/discussions) - the best place for feature requests, observations, sharing, etc.
-* [TalkRadio Telegram Chat](https://t.me/talkradio/174172) - informal space to chat in Russian and English.
+## Credits and acknowledgements
 
+This project is based on the work of the original ATS Mini firmware developers and the following projects and contributors. Their original work remains credited:
+
+- Volos Projects: [TEmbedFMRadio](https://github.com/VolosR/TEmbedFMRadio)
+- PU2CLR, Ricardo: [SI4735 library](https://github.com/pu2clr/SI4735)
+- Ralph Xavier: [SI4735](https://github.com/ralphxavier/SI4735)
+- Goshante: [ATS20 / ATS-EX](https://github.com/goshante/ats20_ats_ex)
+- G8PTN, Dave: [ATS Mini](https://github.com/G8PTN/ATS_MINI)
+
+The custom features and changes described above are maintained in **ATS Mini V4 by 13HN2709**. Original components and contributions remain the property of their respective authors.
