@@ -6,6 +6,7 @@
 #include "BleMode.h"
 #include "Draw.h"
 #include "FreqKeypad.h" // <--- Eingebundenes Keypad-Modul
+#include "SpectrumScanner.h"
 
 // Layout-Prototypen
 void drawLayoutSmeter();
@@ -595,6 +596,13 @@ void drawScreen()
   }
 
   spr.fillSprite(TH.bg);
+
+  if(currentCmd == CMD_SPECTRUM)
+  {
+    drawSpectrumScanner();
+    spr.pushSprite(0, 0);
+    return;
+  }
 
   if(currentCmd == CMD_DUAL_RX)
   {
