@@ -1424,9 +1424,8 @@ static void webPatchesPage(AsyncWebServerRequest *request)
 // Run receiver commands and sweeps only from the main loop, never inside the async web task.
 void webSpectrumTick()
 {
-  // Do not let commands accepted just before Dual RX starts execute later,
-  // after Dual RX has stopped. Dual RX owns the receiver while active.
-  if(currentCmd == CMD_DUAL_RX)
+  // Native scanning owns the receiver; discard queued web commands until it exits.
+  if(currentCmd == CMD_DUAL_RX || currentCmd == CMD_SPECTRUM)
   {
     webTuneStep = 0;
     webRequestedVolume = -1;
