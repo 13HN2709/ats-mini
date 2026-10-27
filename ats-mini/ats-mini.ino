@@ -21,8 +21,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include "FreqKeypad.h"
-#include "CWMode.h"
-#include "RTTYMode.h"
+// #include "CWMode.h"  // Temporarily disabled; keep for future decoder work.
+// #include "RTTYMode.h"  // Temporarily disabled; keep for future decoder work.
 
 
 // SI473/5 and UI
