@@ -44,3 +44,16 @@ Based on the following sources:
 
 This project is based on the original ATS Mini firmware and the libraries and projects listed above. Full credit to the original developers and contributors for their work.
 
+## Releases
+
+Check out the [Releases](https://github.com/esp32-si4732/ats-mini/releases) page.
+
+## Documentation
+
+The hardware, software and flashing documentation is available at <https://esp32-si4732.github.io/ats-mini/>
+
+## Discuss
+
+* [GitHub Discussions](https://github.com/esp32-si4732/ats-mini/discussions) - the best place for feature requests, observations, sharing, etc.
+* [TalkRadio Telegram Chat](https://t.me/talkradio/174172) - informal space to chat in Russian and English.
+
