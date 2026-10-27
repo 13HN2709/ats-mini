@@ -10,6 +10,7 @@
 #include "Memories.h"
 #include "Patches.h"
 #include "FreqKeypad.h"
+#include "SpectrumScanner.h"
 #include "Storage.h"
 
 #include <time.h>
@@ -116,6 +117,7 @@ static int visibleBandIndexAtOffset(int offset)
 #define MENU_AVC         15
 #define MENU_SOFTMUTE    16
 #define MENU_SETTINGS    17
+#define MENU_SPECTRUM    18
 
 int8_t menuIdx = MENU_KEYPAD;
 
@@ -139,6 +141,7 @@ static const char *menu[] =
   "AUTO-LAUTSTÄRKE",
   "SOFT-MUTE",
   "EINSTELLUNGEN",
+  "SPEKTRUM",
 };
 
 #define MENU_BRIGHTNESS   0
@@ -945,6 +948,7 @@ static void clickMenu(int cmd, bool shortPress)
       clickScan(true);
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
+    case MENU_SPECTRUM: spectrumScannerStart(); break;
   }
 }
 
