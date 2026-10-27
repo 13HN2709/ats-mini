@@ -50,6 +50,7 @@
 #define CMD_FREQ_KEYPAD 0x3600 // |
 #define CMD_BFO         0x3700 // |
 #define CMD_DUAL_RX     0x3800 // DUAL RX screen
+#define CMD_SPECTRUM    0x3900 // Native VHF spectrum scanner
 
 
 
