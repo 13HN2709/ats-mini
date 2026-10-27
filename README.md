@@ -10,28 +10,42 @@ This project builds on the original ATS Mini firmware and adds features, control
 
 ### Added by 13HN2709
 
-- **Keypad:** Enter a frequency directly using the numeric keypad.
+- **Keypad:** Enter frequencies directly using the numeric keypad.
 - **VFO A/B:** VFO A/B functionality and frequency transfer.
-- **Frequency step control:** Change the tuning step conveniently, including through the control interface.
-- **Web Control Center:** Control the radio from a phone or PC over Wi-Fi; the interface can be used without an internet connection.
-- **Spectrum Scanner:** Scan frequency ranges in the Web Control Center, inspect peaks and tune the radio to a selected signal.
-- **Memory management:** Browse saved memories and store frequencies.
+- **Frequency step control:** Easily change the tuning step, including through the control interface.
+- **Web Control Center:** Control the radio from a phone or PC over Wi-Fi, even without an internet connection.
+- **Spectrum Scanner:** Scan frequency ranges in the Web Control Center, inspect signal peaks and tune to a selected signal.
+- **Memory management:** Browse saved memories and store new frequencies.
 - **Integrated BFO:** BFO control for reception.
-- **Two-language interface:** Choose between German and English.
-- **Custom display layouts:** Includes the TEF6686-style layout and Clean Layout.
-- **Dual RX:** Alternate monitoring of two frequencies.
+- **Multilingual interface:** German and English are available.
+- **Custom display layouts:** Including the TEF6686-style layout and Clean Layout.
+- **Dual RX:** Monitor two frequencies alternately.
 - **Radio display and usability improvements:** Custom frequency display, RDS presentation and other interface refinements.
+
+### Funzioni aggiunte da 13HN2709 (Italiano)
+
+- **Tastierino numerico (Keypad):** Inserisci direttamente la frequenza desiderata.
+- **VFO A/B:** Funzioni VFO A/B e trasferimento della frequenza.
+- **Passo di sintonia:** Modifica facilmente il passo di sintonia, anche tramite l'interfaccia di controllo.
+- **Web Control Center:** Controlla la radio da smartphone o PC tramite Wi-Fi, anche senza connessione Internet.
+- **Spectrum Scanner:** Scansiona gli intervalli di frequenza nel Web Control Center, visualizza i picchi dei segnali e sintonizzati sul segnale selezionato.
+- **Gestione delle memorie:** Consulta le frequenze salvate e memorizza nuove frequenze.
+- **BFO integrato:** Controllo del BFO per la ricezione.
+- **Interfaccia multilingue:** Disponibili le lingue tedesca e inglese.
+- **Layout personalizzati del display:** Inclusi lo stile TEF6686 e il Clean Layout.
+- **Dual RX:** Monitoraggio alternato di due frequenze.
+- **Miglioramenti del display e dell'usabilità:** Visualizzazione personalizzata della frequenza, presentazione RDS e altre migliorie dell'interfaccia.
 
 ### Funktionen (Deutsch)
 
 - **Keypad:** Frequenzen direkt über die Zifferntastatur eingeben.
 - **VFO A/B:** VFO-A/B-Funktion mit Übernahme bzw. Wechsel der Frequenzen.
-- **Frequenzunterschritt:** Die Frequenz-Schrittweite bequem ändern.
+- **Frequenzschritt:** Die Frequenz-Schrittweite bequem ändern.
 - **Webseiten-Control-Center:** Das Radio per WLAN vom Smartphone oder PC steuern – auch ohne Internetverbindung.
 - **Spectrum Scanner:** Frequenzbereiche im Web Control Center scannen, Signalspitzen ansehen und die ausgewählte Frequenz übernehmen.
 - **Speicherverwaltung:** Gespeicherte Frequenzen auswählen und neue Frequenzen speichern.
 - **BFO integriert:** BFO für den Empfang einstellen.
-- **Zweisprachige Auswahl:** Deutsch und Englisch.
+- **Mehrsprachige Oberfläche:** Deutsch und Englisch.
 - **Eigene Display-Layouts:** Unter anderem TEF6686-Style und Clean Layout.
 - **Dual RX:** Zwei Frequenzen abwechselnd überwachen.
 - **Verbesserungen der Radioanzeige:** Eigene Frequenzdarstellung, RDS-Anzeige und weitere Bedienungsverbesserungen.
