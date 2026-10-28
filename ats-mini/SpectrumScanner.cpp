@@ -6,10 +6,64 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Low-level scan engine shared with web Spectrum; scanner UI/input state is isolated.
-void scanRunRange(uint16_t startFreq, uint16_t endFreq, uint16_t step);
-uint16_t scanGetCount();
-bool scanGetPoint(uint16_t index, uint16_t *freq, uint8_t *rssi, uint8_t *snr);
+// Independent native-scan sample storage and sweep loop. Do not share the Web
+// Spectrum buffer or state: the two scanner interfaces must not overwrite each other.
+static constexpr uint16_t SPECTRUM_MAX_POINTS = 201; // 88.00..108.00 MHz in 100 kHz steps
+static uint8_t spectrumRssi[SPECTRUM_MAX_POINTS] = {0};
+static uint8_t spectrumSnr[SPECTRUM_MAX_POINTS] = {0};
+static uint16_t spectrumPointCount = 0;
+
+static bool spectrumScanGetPoint(uint16_t index, uint16_t *freq, uint8_t *rssi, uint8_t *snr)
+{
+  if(index >= spectrumPointCount) return false;
+  if(freq) *freq = scanStart + VHF_STEP * index;
+  if(rssi) *rssi = spectrumRssi[index];
+  if(snr) *snr = spectrumSnr[index];
+  return true;
+}
+
+static bool spectrumScanRunRange(uint16_t startFreq, uint16_t endFreq, uint16_t step)
+{
+  if(!step || endFreq < startFreq) return false;
+  uint32_t points = ((uint32_t)endFreq - startFreq) / step + 1;
+  if(points > SPECTRUM_MAX_POINTS) return false;
+
+  spectrumPointCount = 0;
+  rx.setMaxDelaySetFrequency(60);
+  muteOn(MUTE_TEMP, true);
+  seekStop = false;
+  const uint16_t restoreFreq = currentFrequency;
+  bool aborted = false;
+
+  for(uint16_t i = 0; i < points; ++i)
+  {
+    const uint16_t freq = startFreq + step * i;
+    rx.getStatus(1, 0);
+    rx.setFrequency(freq);
+    const uint32_t tuneStart = millis();
+
+    while(true)
+    {
+      delay(10);
+      rx.getStatus(0, 0);
+      if(rx.getTuneCompleteTriggered() || millis() - tuneStart >= 350) break;
+      if(consumeAbortPending()) { aborted = true; break; }
+    }
+    if(aborted) break;
+
+    rx.getCurrentReceivedSignalQuality(0);
+    spectrumRssi[i] = rx.getCurrentRSSI();
+    spectrumSnr[i] = rx.getCurrentSNR();
+    spectrumPointCount = i + 1;
+
+    if(i + 1 < points && consumeAbortPending()) { aborted = true; break; }
+  }
+
+  rx.setFrequency(restoreFreq);
+  muteOn(MUTE_TEMP, false);
+  rx.setMaxDelaySetFrequency(30);
+  return spectrumPointCount > 0;
+}
 
 static constexpr uint16_t VHF_MIN = 8800;   // 88.00 MHz, 10 kHz units
 static constexpr uint16_t VHF_MAX = 10800;  // 108.00 MHz
@@ -157,11 +211,11 @@ bool spectrumScannerInputClick(bool shortPress)
     selectedPoint = 0;
     drawSpectrumScannerInput();
     spr.pushSprite(0, 0);
-    scanRunRange(scanStart, scanEnd, VHF_STEP);
+    spectrumScanRunRange(scanStart, scanEnd, VHF_STEP);
 
     uint16_t firstFreq = 0;
-    spectrumHasData = scanGetCount() > 0 &&
-                      scanGetPoint(0, &firstFreq, nullptr, nullptr) &&
+    spectrumHasData = spectrumPointCount > 0 &&
+                      spectrumScanGetPoint(0, &firstFreq, nullptr, nullptr) &&
                       firstFreq == scanStart;
     spectrumScanning = false;
     restoreSavedRadioState();
