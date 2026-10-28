@@ -644,7 +644,7 @@ void drawScreen()
       drawLayoutTEF6686();
       break;
     default:
-      drawLayoutDefault();
+      drawLayoutTEF6686();
       break;
   }
 
