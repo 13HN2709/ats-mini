@@ -120,6 +120,8 @@ static int visibleBandIndexAtOffset(int offset)
 #define MENU_SPECTRUM    18
 
 int8_t menuIdx = MENU_KEYPAD;
+int8_t spectrumMenuIdx = 0;
+static const char *spectrumMenu[] = { "VHF Spectrum", "ALL Band Spectrum" };
 
 static const char *menu[] =
 {
@@ -948,7 +950,7 @@ static void clickMenu(int cmd, bool shortPress)
       clickScan(true);
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
-    case MENU_SPECTRUM: spectrumScannerStart(); break;
+    case MENU_SPECTRUM: spectrumMenuIdx = 0; currentCmd = CMD_SPECTRUM_MENU; break;
   }
 }
 
@@ -1001,6 +1003,7 @@ bool doSideBar(uint16_t cmd, int16_t enc, int16_t enca)
   switch(cmd)
   {
     case CMD_MENU:       doMenu(scrollDirection * enc);break;
+    case CMD_SPECTRUM_MENU: spectrumMenuIdx = wrap_range(spectrumMenuIdx, scrollDirection * enc, 0, LAST_ITEM(spectrumMenu)); break;
     case CMD_MODE:       doMode(scrollDirection * enc);break;
     case CMD_STEP:       doStep(scrollDirection * enc);break;
     case CMD_AGC:        doAgc(enc);break;
@@ -1043,6 +1046,9 @@ bool clickHandler(uint16_t cmd, bool shortPress)
   switch(cmd)
   {
     case CMD_MENU:     clickMenu(menuIdx, shortPress);break;
+    case CMD_SPECTRUM_MENU:
+      if(spectrumMenuIdx == 0) spectrumScannerStart();
+      break;
     case CMD_SETTINGS: clickSettings(settingsIdx, shortPress);break;
     case CMD_UPDATEFW: otaRequestLatest(updateFwIdx == 1);break;
     case CMD_MEMORY:   clickMemory(memoryIdx, shortPress);break;
