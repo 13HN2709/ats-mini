@@ -1425,7 +1425,7 @@ static void webPatchesPage(AsyncWebServerRequest *request)
 void webSpectrumTick()
 {
   // Native scanning owns the receiver; discard queued web commands until it exits.
-  if(currentCmd == CMD_DUAL_RX || currentCmd == CMD_SPECTRUM)
+  if(currentCmd == CMD_DUAL_RX || currentCmd == CMD_SPECTRUM || currentCmd == CMD_SPECTRUM_INPUT)
   {
     webTuneStep = 0;
     webRequestedVolume = -1;
