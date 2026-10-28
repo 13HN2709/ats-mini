@@ -102,3 +102,10 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - The workflow matrix builds OSPI/QSPI firmware in both German and English (four builds).
 - This is a source-level review only. Do not describe the build as passing until GitHub Actions completes successfully.
 - Current relevant source commit: `07bac5f4b21d4ca70bdb6e62a74071758360e425`; latest handoff updates continue after it.
+
+
+## Future layout reference: GNBD miniradio (requested 2026-10-28)
+- User wants to recreate the screenshot's receiver layout as close to 1:1 as possible in the ATS Mini V4 firmware, using the reference source at https://github.com/GNBD/ats-mini-dualboot/tree/main/GNBD%20miniradio.
+- The supplied screenshot is the visual target: dark near-black background, compact top status bar with time/signal/battery, VHF FM heading, large frequency digits, RSSI/SNR horizontal meters, right-side compact receiver settings, large RDS panel at bottom-left, and small SIG graph panel at bottom-right.
+- Specific adjustment requested: raise the “MHz” unit slightly higher relative to the frequency digits.
+- This is a future layout task, not part of the current VHF Spectrum Scanner build fix. Before implementing, inspect the reference repository's actual source files and map the target drawing to the user's current layout architecture. Keep Layout-TEF6686.cpp and Clean Layout protected unless the user chooses the destination layout.
