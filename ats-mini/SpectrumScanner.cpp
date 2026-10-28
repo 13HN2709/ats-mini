@@ -133,11 +133,17 @@ void spectrumScannerStart()
 bool spectrumScannerInputRotate(int16_t delta)
 {
   if(!delta) return false;
-  int next = (int)spectrumKeyIndex + (scrollDirection * delta > 0 ? 1 : -1);
-  do {
+  const int direction = (scrollDirection * delta > 0) ? 1 : -1;
+  int next = (int)spectrumKeyIndex + direction;
+  if(next < 0) next = 15;
+  if(next > 15) next = 0;
+  // Index 14 is the intentionally empty keypad cell. Skip it by moving
+  // exactly one additional step; never loop on the unchanged index.
+  if(next == 14) {
+    next += direction;
     if(next < 0) next = 15;
     if(next > 15) next = 0;
-  } while(next == 14);
+  }
   spectrumKeyIndex = (uint8_t)next;
   return true;
 }
