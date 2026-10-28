@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-28
+Last updated: 2026-10-28 (scanner input implementation in progress)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -34,8 +34,12 @@ Active work branch: `development` (never modify `main` unless explicitly request
 
 ## Current repository state observed on 2026-10-28
 - Branch: `development`.
-- `ats-mini/SpectrumScanner.cpp/.h` already exist with a first-pass fixed-range VHF scan (88.00–108.00 MHz, 100 kHz steps) and graph rendering.
-- This first pass is incomplete: it starts scanning immediately with a hard-coded range; no independent start/end keypad yet; it also tunes the receiver while displaying/selecting scan data and has state-restoration risks that need review.
+- `ats-mini/SpectrumScanner.cpp/.h` now contain scanner-owned input state and a dedicated numeric keypad for start/end frequencies; the existing `FreqKeypad.cpp/.h` is not modified.
+- `CMD_SPECTRUM_INPUT` is a separate command. `Draw.cpp` renders its own input screen and `ats-mini.ino` dispatches its own encoder input, outside the Dual RX block.
+- The VHF input accepts 88.00–108.00 MHz and rejects an end frequency that is not greater than the start. The scan graph no longer tunes on encoder rotation; selection tunes only when accepted.
+- `Menu_german.cpp.src` localizes the Spectrum submenu. The all-band placeholder is guarded so it does not start VHF scan.
+- `Network.cpp` ignores pending web spectrum commands while native spectrum input is active.
+- This is still unbuilt/unverified. Review compile-sensitive changes and scanner/scan-engine side effects before telling the user to launch the build.
 - `Menu.h` defines `CMD_SPECTRUM` and `CMD_SPECTRUM_MENU`.
 - English/German menu templates include Spectrum and submenu entries; the click handler currently starts the VHF scanner only for submenu index 0, so index 1 must be handled safely.
 - `Draw.cpp` routes `CMD_SPECTRUM_MENU` to the full-screen menu and `CMD_SPECTRUM` to `drawSpectrumScanner()`.
@@ -67,3 +71,12 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - [ ] German and English menu labels are appropriate.
 - [ ] Build workflow remains manual.
 - [ ] Handoff updated with actual changes, commit, and remaining risks.
+
+## Changes made in this session
+- Added `DEVELOPMENT_HANDOFF.md` on `development` (initial handoff commit `bee78177301f4d2be6759f40f5de46ed0c55522f`).
+- Added `CMD_SPECTRUM_INPUT` and scanner-specific keypad API/state.
+- Added independent VHF start/end frequency entry and basic range validation in `SpectrumScanner.cpp`.
+- Added keypad drawing dispatch in `Draw.cpp`; added encoder input dispatch in `ats-mini.ino` without changing the Dual RX block itself.
+- Updated English/German menu click handling so only VHF item starts scanner; German submenu localized.
+- Updated `Network.cpp` to ignore web-spectrum command processing during native scanner input.
+- Commits from this session include `1cf8262dcdd64a8863c6716fd782beba950891fc`, `59e14722a6d44fc9b6187cd6eb1a7e95284f8a6f`, `e7226ed33fdba33b299049d05c90d81796246884`, `b9be50263441002b3d58e20ac6db0bfea46f42ed`, and `91a160695a310980511a0ef3a47356708eba9a6d`. More changes may follow; update this list after final review.
