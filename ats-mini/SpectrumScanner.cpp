@@ -221,7 +221,7 @@ bool spectrumScannerInputClick(bool shortPress)
                       firstFreq == scanStart;
     spectrumScanning = false;
     restoreSavedRadioState();
-    if(spectrumHasData) selectedPoint = scanGetCount() / 2;
+    if(spectrumHasData) selectedPoint = spectrumPointCount / 2;
     return true;
   }
   if(!strcmp(key, "MHz")) return true; // fixed unit for VHF input
@@ -359,7 +359,7 @@ void drawSpectrumScannerInput()
 
 void spectrumScannerRotate(int16_t delta)
 {
-  const uint16_t count = scanGetCount();
+  const uint16_t count = spectrumPointCount;
   if(!spectrumHasData || !count || !delta) return;
   int32_t next = (int32_t)selectedPoint + delta;
   while(next < 0) next += count;
@@ -370,7 +370,7 @@ void spectrumScannerSelect()
 {
   if(spectrumHasData) {
     uint16_t freq = 0;
-    if(scanGetPoint(selectedPoint, &freq, nullptr, nullptr)) {
+    if(spectrumScanGetPoint(selectedPoint, &freq, nullptr, nullptr)) {
       const int fmBand = findFmBandForRange(freq, freq);
       if(fmBand >= 0) {
         selectBand((uint8_t)fmBand, false);
@@ -406,7 +406,7 @@ void drawSpectrumScanner()
 
   uint16_t selectedFreq = scanStart;
   if(spectrumHasData)
-    scanGetPoint(selectedPoint, &selectedFreq, nullptr, nullptr);
+    spectrumScanGetPoint(selectedPoint, &selectedFreq, nullptr, nullptr);
 
   char freqLabel[24];
   snprintf(freqLabel, sizeof(freqLabel), "%u.%02u MHz",
@@ -428,14 +428,14 @@ void drawSpectrumScanner()
     for(int y = gy + 2; y < gy + gh; y += 5) spr.drawPixel(x, y, grid);
   }
 
-  const uint16_t count = scanGetCount();
+  const uint16_t count = spectrumPointCount;
   if(spectrumHasData && count > 1)
   {
     uint8_t minR = 255, maxR = 0;
     for(uint16_t i = 0; i < count; ++i)
     {
       uint8_t r = 0;
-      if(scanGetPoint(i, nullptr, &r, nullptr))
+      if(spectrumScanGetPoint(i, nullptr, &r, nullptr))
       {
         if(r < minR) minR = r;
         if(r > maxR) maxR = r;
@@ -446,7 +446,7 @@ void drawSpectrumScanner()
     for(uint16_t i = 0; i < count; ++i)
     {
       uint8_t r = 0;
-      if(!scanGetPoint(i, nullptr, &r, nullptr)) continue;
+      if(!spectrumScanGetPoint(i, nullptr, &r, nullptr)) continue;
       int x = gx + 1 + (int)((uint32_t)i * (gw - 3) / (count - 1));
       int y = gy + gh - 2 - (int)((uint32_t)(r - minR) * (gh - 5) / (maxR - minR));
       if(i) spr.drawLine(lastX, lastY, x, y, cyan);
