@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-28 (scanner input implementation in progress)
+Last updated: 2026-10-28 (VHF keypad pass committed; pre-build review still pending)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -79,4 +79,5 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Added keypad drawing dispatch in `Draw.cpp`; added encoder input dispatch in `ats-mini.ino` without changing the Dual RX block itself.
 - Updated English/German menu click handling so only VHF item starts scanner; German submenu localized.
 - Updated `Network.cpp` to ignore web-spectrum command processing during native scanner input.
-- Commits from this session include `1cf8262dcdd64a8863c6716fd782beba950891fc`, `59e14722a6d44fc9b6187cd6eb1a7e95284f8a6f`, `e7226ed33fdba33b299049d05c90d81796246884`, `b9be50263441002b3d58e20ac6db0bfea46f42ed`, and `91a160695a310980511a0ef3a47356708eba9a6d`. More changes may follow; update this list after final review.
+- Additional commits: `b1b657d3355526920328069a31735eeab1babfa3` (corrected label line breaks), `1c6861a7427736b7670afbe82a870d7892e174f1` (web-spectrum command isolation), `7d5d86e1a54f7db04ad28709a180c4ec0fac5c5d` (consume menu-opening click so it cannot enter a keypad digit). The handoff itself was updated in `90effb849c89d8b4c867808c5aaf6e13a572ebbd` before these final edits.
+- Still required before user build: review current `ats-mini.ino` input click flow, verify the scan screen status/range display, and inspect shared scan buffer interactions. No compile or hardware test has been run.
