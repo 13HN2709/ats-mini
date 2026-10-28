@@ -124,3 +124,10 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Root cause found in `spectrumScannerInputRotate()`: when the next key index was the intentionally blank slot 14, a `do/while(next == 14)` loop never changed `next`, causing an infinite loop and a hard UI freeze.
 - Fixed on `development` in commit `e35a2081c69861e71b284a4193f7ef7201ced944`: advance one additional step when landing on slot 14, with wrap-around handling. This directly addresses the freeze path without touching Web Spectrum, Dual RX, or existing layouts.
 - Not yet compiled or device-tested. Rerun the manual workflow on `development`; then test rotating in both directions across `.`, MHz, blank slot and CLOSE, plus OK/BS and cancel behavior.
+
+
+## Future layout reference: lsongdev/tinyradio (requested 2026-10-29)
+- User wants the additional display layout shown near the bottom of https://github.com/lsongdev/tinyradio added to the project's layout TODO list. User jokingly notes they are a layout fan.
+- The repository is an AM/FM/SSB SI4732 receiver firmware project for ATS Mini and GeekNest V5A. Inspect the specific screenshot/image near the bottom of the linked repository page and its corresponding implementation before planning a port.
+- Treat this as a separate future layout option, not a replacement for the TEF6686 default layout or the previously requested GNBD miniradio-inspired layout. Preserve existing layouts and isolate the implementation where possible.
+- Priority: after current VHF Spectrum scanner build and menu/input bugs are resolved. Confirm which exact bottom-of-page layout the user means if the repository page contains multiple candidates.
