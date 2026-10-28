@@ -22,7 +22,7 @@ static bool spectrumHasData = false;
 // Scanner-owned keypad state. FreqKeypad.cpp and Dual RX are not used or modified.
 static const char *const spectrumKeys[16] = {
   "1", "2", "3", "BS", "4", "5", "6", "0",
-  "7", "8", "9", ".", "OK", "MHz", "", "CANCEL"
+  "7", "8", "9", ".", "OK", "MHz", "", "CLOSE"
 };
 static char spectrumInput[2][12] = {"", ""};
 static uint8_t spectrumInputStage = 0;
@@ -85,7 +85,7 @@ bool spectrumScannerInputClick(bool shortPress)
   size_t len = strlen(value);
   spectrumInputError = false;
 
-  if(!strcmp(key, "CANCEL")) { spectrumScannerInputCancel(); return true; }
+  if(!strcmp(key, "CANCEL") || !strcmp(key, "CLOSE")) { spectrumScannerInputCancel(); return true; }
   if(!strcmp(key, "BS")) {
     if(len) value[len-1] = '\0';
     return true;
