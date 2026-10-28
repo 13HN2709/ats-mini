@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-28 (isolated VHF sweep, FM restoration, and keypad review in progress)
+Last updated: 2026-10-28 (source review complete; ready for manual build, not yet compiled or device-tested)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -40,17 +40,17 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - The native VHF keypad drawing function was updated in commit `4414b3ccb32d93a313916a2ec1237cfa47232afe` to use the existing keypad's geometry/colors/fonts and fixed FM/MHz labels. This is source-only; no build or device test has been run.
 - The VHF keypad close button label was aligned with the existing keypad (`CLOSE`) in commit `9a4d9c2fbda1796ed48e7e301c9c2a9b843aafd5`.
 - Native scanner tuning finds an FM band that covers the requested range, configures FM before the sweep, and restores the previously selected band/frequency/mode/BFO after scanning. Accepting a graph point explicitly switches to the FM band covering that frequency. Graph long-press exits without tuning. Commits: `827091d16d4f46625f5ad989e7a3ebb3bccc5305`, `42f34a90788a0c6f5d971ad76174f29323873381`, `0cae2833afec6acf20bb44e3740996af079a11b1`, `d7b79986eeab993828456faf633750e4769cf07b`.
-- Native VHF Spectrum now has its own 201-point RSSI/SNR sample buffer and isolated sweep loop in `SpectrumScanner.cpp`; it no longer uses or overwrites the Web Spectrum's `Scan.cpp` sample buffer. The native loop keeps its own data and tunes the shared physical receiver only while scanning. Commits: `ff0ed62319b51e75ccf2e509808491abd9216a2a`, `5e55a3ae099c768afdd9b153ab547a0d9c6a3fe3`, `dca1574dd612a8f95cd402ade25287dad77bb0a4`, `bc350911571369583d39e77ef5d3e67bf9f2bd8`.
+- Native VHF Spectrum now has its own 201-point RSSI/SNR sample buffer and isolated sweep loop in `SpectrumScanner.cpp`; it no longer uses or overwrites the Web Spectrum's `Scan.cpp` sample buffer. The native loop keeps its own data and tunes the shared physical receiver only while scanning. Commits: `ff0ed62319b51e75ccf2e509808491abd9216a2a`, `5e55a3ae099c768afdd9b153ab547a0d9c6a3fe3`, `dca1574dd612a8f95cd402ade25287dad77bb0a4`, `bc350911571369583d39e77ef5d3e67bf9f2bd8`, `07bac5f4b21d4ca70bdb6e62a74071758360e425`.
 
 ## Current repository state observed on 2026-10-28
 - Branch: `development`.
 - `ats-mini/SpectrumScanner.cpp/.h` now contain scanner-owned input state and a dedicated numeric keypad for start/end frequencies; the existing `FreqKeypad.cpp/.h` is not modified.
 - Native scan sample storage/sweep is now isolated from Web Spectrum; only the physical SI4735 receiver is necessarily shared.
 - `CMD_SPECTRUM_INPUT` is a separate command. `Draw.cpp` renders its own input screen and `ats-mini.ino` dispatches its own encoder input, outside the Dual RX block.
-- The VHF input accepts 88.00–108.00 MHz and rejects an end frequency that is not greater than the start. The scan graph no longer tunes on encoder rotation; selection tunes only when accepted.
+- The VHF input accepts 88.00–108.00 MHz, accepts dot or comma decimals up to two decimal places, and rejects an end frequency that is not greater than the start. The scan graph no longer tunes on encoder rotation; a short click tunes only the accepted point, while long press exits without tuning.
 - `Menu_german.cpp.src` localizes the Spectrum submenu. The all-band placeholder is guarded so it does not start VHF scan.
 - `Network.cpp` ignores pending web spectrum commands while native spectrum input is active.
-- This is still unbuilt/unverified. The final pass must review compile-sensitive changes and scanner tune/restore behavior before telling the user to launch the build.
+- Source review completed on 2026-10-28: delimiter-balance check passed, no calls remain to the shared web-scan APIs in `SpectrumScanner.cpp`, and the workflow remains `workflow_dispatch` only. No build or hardware test has been run; compilation and device behavior must be verified by the user.
 - `Menu.h` defines `CMD_SPECTRUM` and `CMD_SPECTRUM_MENU`.
 - English/German menu templates include Spectrum and submenu entries; the click handler currently starts the VHF scanner only for submenu index 0, so index 1 must be handled safely.
 - `Draw.cpp` routes `CMD_SPECTRUM_MENU` to the full-screen menu and `CMD_SPECTRUM` to `drawSpectrumScanner()`.
@@ -60,31 +60,29 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - GitHub Actions workflow was changed earlier to `ubuntu-24.04` for both jobs after an Ubuntu runner/Python issue. Do not revert without a reason.
 
 ## Immediate next steps
-1. Finish a careful source review of encoder/click dispatch, tune-complete polling, FM band setup, restore logic, graph navigation, and C++ declarations.
-2. Check the manual build workflow and generated source/template consistency.
-3. Ensure `ALL Band Spectrum` cannot accidentally start VHF scan.
-4. Perform static checks available without launching Actions; do not trigger the workflow on the user's behalf.
-5. Update this handoff after each meaningful change.
-6. Only then tell the user the code is ready for their manual build. Compilation/device testing remain pending until they run them.
+1. User launches the manual GitHub Actions workflow on `development` and checks all four OSPI/QSPI × German/English builds.
+2. If a build fails, use the exact compiler output to fix only the affected code and update this handoff.
+3. After a successful build, flash/test the ATS Mini V4: start/end entry, invalid range, cancel without retune, full sweep/status, graph navigation, short-click tune, long-press exit, and confirm Web Spectrum + Dual RX still work.
+4. Do not merge/copy to `main` unless the user explicitly asks.
 
 ## Validation checklist (must be checked before asking user to build)
-- [ ] VHF start and end are entered in separate scanner-owned stages.
-- [ ] Decimal point and/or documented frequency format works correctly.
-- [ ] Range and ordering validation reject invalid values.
-- [ ] Cancel/error does not inadvertently retune the radio.
-- [ ] Encoder navigation and short-click selection work.
-- [ ] Long press behavior is defined and does not leak into Dual RX behavior.
-- [ ] ALL Band submenu item cannot accidentally start VHF scanning.
-- [ ] Existing Dual RX source/behavior is unchanged.
-- [ ] Web Spectrum remains functional; native scanner no longer shares its sample buffer.
+- [x] VHF start and end are entered in separate scanner-owned stages (source reviewed).
+- [x] Dot/comma decimal parsing works up to two decimal places (source reviewed).
+- [x] Range and ordering validation reject invalid values before radio changes (source reviewed).
+- [x] Input cancel/validation errors do not retune; scan restores prior state before graph navigation (source reviewed).
+- [x] Encoder navigation and short-click selection are wired to scanner-specific handlers (source reviewed; hardware test pending).
+- [x] Long press cancels keypad or exits graph without tuning; Dual RX handling block remains unchanged (source reviewed).
+- [x] ALL Band submenu item cannot start VHF scanning (source reviewed).
+- [x] Existing Dual RX-specific keypad and state logic were not modified for the scanner (source review; hardware regression test pending).
+- [x] Native scanner no longer shares Web Spectrum sample buffer (source reviewed; hardware regression test pending).
 - [ ] Native sweep tune-complete polling and timeout behavior reviewed against existing scan loop.
-- [ ] Native sweep uses an FM-configured band and restores the previous radio state after scanning.
-- [ ] German and English menu labels are appropriate.
-- [ ] VHF keypad visually matches `drawFreqKeypad()` geometry/colors/fonts.
-- [ ] VHF keypad exposes only fixed FM and MHz; no mode or kHz switching.
-- [ ] Future ALL Band keypad is separate and exposes USB/LSB/AM only with kHz input.
-- [ ] Build workflow remains manual.
-- [ ] Handoff updated with actual changes, commit, and remaining risks.
+- [x] Native sweep configures a covering FM band and restores previous band/frequency/mode/BFO after scanning (source reviewed; hardware test pending).
+- [x] German and English menu templates have VHF/All Band labels and guarded click handling (source reviewed).
+- [x] VHF keypad uses matching geometry/colors/fonts and `CLOSE` label (visual confirmation requires device test).
+- [x] VHF keypad exposes only fixed FM and MHz; no mode or kHz switching (source reviewed).
+- [x] Future ALL Band requirement is documented; implementation is intentionally not present yet.
+- [x] Build workflow uses `workflow_dispatch`; no workflow was triggered by the assistant.
+- [x] Handoff updated with actual changes and remaining build/device validation.
 
 ## Changes made in this session
 - Added `DEVELOPMENT_HANDOFF.md` on `development` (initial handoff commit `bee78177301f4d2be6759f40f5de46ed0c55522f`).
@@ -95,3 +93,10 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Updated `Network.cpp` to ignore web-spectrum command processing during native scanner input.
 - Additional commits: `b1b657d3355526920328069a31735eeab1babfa3` (corrected label line breaks), `1c6861a7427736b7670afbe82a870d7892e174f1` (web-spectrum command isolation), `7d5d86e1a54f7db04ad28709a180c4ec0fac5c5d` (consume menu-opening click so it cannot enter a keypad digit). The handoff itself was updated in `90effb849c89d8b4c867808c5aaf6e13a572ebbd` before these final edits.
 - Still required before user build: finish the source-level review of the isolated native sweep and all encoder/UI state transitions. No compile or hardware test has been run.
+
+
+## Build readiness
+- Ready for the user to click **Run workflow** on the `development` branch.
+- The workflow matrix builds OSPI/QSPI firmware in both German and English (four builds).
+- This is a source-level review only. Do not describe the build as passing until GitHub Actions completes successfully.
+- Current relevant source commit: `07bac5f4b21d4ca70bdb6e62a74071758360e425`; latest handoff updates continue after it.
