@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-28 (VHF keypad styled to match native keypad; pre-build review still pending)
+Last updated: 2026-10-28 (native scan engine and sample buffer isolated; pre-build review still pending)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -28,7 +28,7 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Do not alter Dual RX's `dualRxSetupStage`, keypad functions, or click behavior to implement the scanner.
 - Do not reuse `CMD_FREQ_KEYPAD` for the scanner. Add a dedicated scanner-input command/state and separate keypad handling/drawing, ideally in scanner-specific module(s).
 - Existing `FreqKeypad.cpp/.h` is used by radio tuning and Dual RX. Treat it as protected.
-- Existing scan engine is in `Scan.cpp` and currently exposes `scanRunRange(uint16_t,uint16_t,uint16_t)`, `scanGetCount()`, and `scanGetPoint(uint16_t,uint16_t*,uint8_t*,uint8_t*)`. Inspect full implementation before relying on its memory/state/tuning side effects.
+- Existing web scan engine is in `Scan.cpp`; the native VHF scanner now uses a separate private sample buffer and sweep implementation in `SpectrumScanner.cpp` to avoid overwriting web scan results.
 - `Network.cpp` should not be changed unnecessarily; existing web-spectrum functionality must remain intact.
 - Scanner code must explicitly prevent the `ALL Band Spectrum` menu item from invoking the VHF scan until all-band support is implemented.
 
@@ -39,10 +39,13 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Future ALL Band Spectrum keypad must be a separate mode: offer only USB, LSB, AM (no FM) and allow kHz entry only (no MHz). Do not implement or expose these options on the VHF keypad.
 - The native VHF keypad drawing function was updated in commit `4414b3ccb32d93a313916a2ec1237cfa47232afe` to use the existing keypad's geometry/colors/fonts and fixed FM/MHz labels. This is source-only; no build or device test has been run.
 - The VHF keypad close button label was aligned with the existing keypad (`CLOSE`) in commit `9a4d9c2fbda1796ed48e7e301c9c2a9b843aafd5`.
+- Native scanner tuning now finds an FM band that covers the requested range, configures FM before the sweep, and restores the previously selected band/frequency/mode/BFO after the scan. Accepting a graph point explicitly switches to the FM band covering that frequency. Commits: `827091d16d4f46625f5ad989e7a3ebb3bccc5305`, `42f34a90788a0c6f5d971ad76174f29323873381`, `0cae2833afec6acf20bb44e3740996af079a11b1`, `d7b79986eeab993828456faf633750e4769cf07b`.
+- Native VHF Spectrum now has its own 201-point RSSI/SNR sample buffer and isolated sweep loop in `SpectrumScanner.cpp`; it no longer uses or overwrites the Web Spectrum's `Scan.cpp` sample buffer. This avoids native/web spectrum data interference. Commits: `ff0ed62319b51e75ccf2e509808491abd9216a2a`, `5e55a3ae099c768afdd9b153ab547a0d9c6a3fe3`, `dca1574dd612a8f95cd402ade25287dad77bb0a4`.
 
 ## Current repository state observed on 2026-10-28
 - Branch: `development`.
 - `ats-mini/SpectrumScanner.cpp/.h` now contain scanner-owned input state and a dedicated numeric keypad for start/end frequencies; the existing `FreqKeypad.cpp/.h` is not modified.
+- Native scan sample storage/sweep is now isolated from Web Spectrum; only the physical SI4735 receiver is necessarily shared.
 - `CMD_SPECTRUM_INPUT` is a separate command. `Draw.cpp` renders its own input screen and `ats-mini.ino` dispatches its own encoder input, outside the Dual RX block.
 - The VHF input accepts 88.00–108.00 MHz and rejects an end frequency that is not greater than the start. The scan graph no longer tunes on encoder rotation; selection tunes only when accepted.
 - `Menu_german.cpp.src` localizes the Spectrum submenu. The all-band placeholder is guarded so it does not start VHF scan.
@@ -57,14 +60,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - GitHub Actions workflow was changed earlier to `ubuntu-24.04` for both jobs after an Ubuntu runner/Python issue. Do not revert without a reason.
 
 ## Immediate next steps
-1. Inspect exact declarations and all `currentCmd` input/draw dispatch points.
-2. Add a scanner-specific frequency-entry UI/state, separate from `FreqKeypad` and Dual RX.
-3. Validate both frequencies before touching radio state or starting the sweep.
-4. Add an explicit visible scan-start/status stage.
-5. Ensure `ALL Band Spectrum` is clearly unavailable/placeholder or does not launch VHF scan.
-6. Review cancellation, tuning side effects, and web scanner interference.
-7. Update this handoff in the same change set as each meaningful implementation step.
-8. Only then tell the user the code is ready for the manual build. Report exact files/commit and explicitly state that compilation/device testing remain pending until performed.
+1. Finish reviewing encoder/click dispatch, native sweep timing, restoration, and graph navigation.
+2. Check the manual build workflow and generated source/template consistency.
+3. Ensure `ALL Band Spectrum` cannot accidentally start VHF scan.
+4. Update this handoff after each meaningful change.
+5. Only then tell the user the code is ready for the manual build. Report exact files/commit and explicitly state that compilation/device testing remain pending until performed.
 
 ## Validation checklist (must be checked before asking user to build)
 - [ ] VHF start and end are entered in separate scanner-owned stages.
@@ -75,7 +75,8 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - [ ] Long press behavior is defined and does not leak into Dual RX behavior.
 - [ ] ALL Band submenu item cannot accidentally start VHF scanning.
 - [ ] Existing Dual RX source/behavior is unchanged.
-- [ ] Web Spectrum remains functional; shared scan buffer behavior understood.
+- [ ] Web Spectrum remains functional; native scanner no longer shares its sample buffer.
+- [ ] Native sweep uses an FM-configured band and restores the previous radio state after scanning.
 - [ ] German and English menu labels are appropriate.
 - [ ] VHF keypad visually matches `drawFreqKeypad()` geometry/colors/fonts.
 - [ ] VHF keypad exposes only fixed FM and MHz; no mode or kHz switching.
