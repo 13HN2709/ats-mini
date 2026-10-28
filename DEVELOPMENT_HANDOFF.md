@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-28 (source review complete; ready for manual build, not yet compiled or device-tested)
+Last updated: 2026-10-28 (first manual build exposed missing Utils.h include; fixed on development, rebuild pending)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -50,7 +50,7 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - The VHF input accepts 88.00–108.00 MHz, accepts dot or comma decimals up to two decimal places, and rejects an end frequency that is not greater than the start. The scan graph no longer tunes on encoder rotation; a short click tunes only the accepted point, while long press exits without tuning.
 - `Menu_german.cpp.src` localizes the Spectrum submenu. The all-band placeholder is guarded so it does not start VHF scan.
 - `Network.cpp` ignores pending web spectrum commands while native spectrum input is active.
-- Source review completed on 2026-10-28: delimiter-balance check passed, no calls remain to the shared web-scan APIs in `SpectrumScanner.cpp`, and the workflow remains `workflow_dispatch` only. No build or hardware test has been run; compilation and device behavior must be verified by the user.
+- Source review completed on 2026-10-28: delimiter-balance check passed, no calls remain to the shared web-scan APIs in `SpectrumScanner.cpp`, and the workflow remains `workflow_dispatch` only. The first manual build (run 40781905177, job `build ospi-de`) failed because `SpectrumScanner.cpp` called `muteOn(MUTE_TEMP, ...)` without including `Utils.h`, where both are declared. Fixed by adding `#include "Utils.h"` and clarified the keypad input condition's operator parentheses in commit `db8c1f7fe7ab23911d7a65ea53b779ebb893f8c3`. A new build is still required; no successful compile or hardware test is confirmed.
 - `Menu.h` defines `CMD_SPECTRUM` and `CMD_SPECTRUM_MENU`.
 - English/German menu templates include Spectrum and submenu entries; the click handler currently starts the VHF scanner only for submenu index 0, so index 1 must be handled safely.
 - `Draw.cpp` routes `CMD_SPECTRUM_MENU` to the full-screen menu and `CMD_SPECTRUM` to `drawSpectrumScanner()`.
@@ -61,7 +61,7 @@ Active work branch: `development` (never modify `main` unless explicitly request
 
 ## Immediate next steps
 1. User launches the manual GitHub Actions workflow on `development` and checks all four OSPI/QSPI × German/English builds.
-2. If a build fails, use the exact compiler output to fix only the affected code and update this handoff.
+2. After the fix commit `db8c1f7fe7ab23911d7a65ea53b779ebb893f8c3`, rerun the manual workflow on `development`. If another build fails, use the exact compiler output to fix only the affected code and update this handoff.
 3. After a successful build, flash/test the ATS Mini V4: start/end entry, invalid range, cancel without retune, full sweep/status, graph navigation, short-click tune, long-press exit, and confirm Web Spectrum + Dual RX still work.
 4. Do not merge/copy to `main` unless the user explicitly asks.
 
@@ -76,6 +76,7 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - [x] Existing Dual RX-specific keypad and state logic were not modified for the scanner (source review; hardware regression test pending).
 - [x] Native scanner no longer shares Web Spectrum sample buffer (source reviewed; hardware regression test pending).
 - [ ] Native sweep tune-complete polling and timeout behavior reviewed against existing scan loop.
+- [x] First build failure fixed at source level: `Utils.h` is now included for `muteOn` and `MUTE_TEMP`; rebuild pending.
 - [x] Native sweep configures a covering FM band and restores previous band/frequency/mode/BFO after scanning (source reviewed; hardware test pending).
 - [x] German and English menu templates have VHF/All Band labels and guarded click handling (source reviewed).
 - [x] VHF keypad uses matching geometry/colors/fonts and `CLOSE` label (visual confirmation requires device test).
@@ -96,6 +97,7 @@ Active work branch: `development` (never modify `main` unless explicitly request
 
 
 ## Build readiness
+- First manual build attempt failed in `build ospi-de` on undeclared `muteOn`/`MUTE_TEMP`; the fix is committed as `db8c1f7fe7ab23911d7a65ea53b779ebb893f8c3` (added `Utils.h`, clarified a warning-prone condition). Rerun the manual workflow on `development` before flashing.
 - Ready for the user to click **Run workflow** on the `development` branch.
 - The workflow matrix builds OSPI/QSPI firmware in both German and English (four builds).
 - This is a source-level review only. Do not describe the build as passing until GitHub Actions completes successfully.
