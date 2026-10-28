@@ -587,6 +587,14 @@ void drawScreen()
     return;
   }
 
+  // Dedicated scanner keypad; independent from radio/Dual RX keypad.
+  if(currentCmd == CMD_SPECTRUM_INPUT)
+  {
+    drawSpectrumScannerInput();
+    spr.pushSprite(0, 0);
+    return;
+  }
+
   // Keypad-Overlay sofort zeichnen und anzeigen, wenn aktiv
   if(currentCmd == CMD_FREQ_KEYPAD)
   {
