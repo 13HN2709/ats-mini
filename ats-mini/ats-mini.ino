@@ -752,6 +752,14 @@ void loop()
     encCount = encCountAccel = 0;
   }
 
+  if(currentCmd == CMD_SPECTRUM_INPUT && encCount)
+  {
+    spectrumScannerInputRotate(encCount);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime;
+    encCount = encCountAccel = 0;
+  }
+
   if(currentCmd == CMD_SPECTRUM && encCount)
   {
     spectrumScannerRotate(encCount);
@@ -759,7 +767,7 @@ void loop()
     elapsedSleep = elapsedCommand = currentTime;
   }
 
-  if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && pushAndRotate)
+  if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_INPUT && pushAndRotate)
   {
     if(encCount)
     {
@@ -782,7 +790,7 @@ void loop()
     }
     elapsedSleep = elapsedCommand = currentTime;
   }
-  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM)
+  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_INPUT)
   {
     if(encCount)
     {
@@ -883,6 +891,20 @@ void loop()
     }
   }
 
+  if(currentCmd == CMD_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
+  {
+    spectrumScannerInputClick(true);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime = millis();
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+  else if(currentCmd == CMD_SPECTRUM_INPUT && pb1st.isLongPressed)
+  {
+    spectrumScannerInputCancel();
+    needRedraw = true;
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+
   if(currentCmd == CMD_SPECTRUM && (pb1st.wasClicked || pb1st.wasShortPressed))
   {
     spectrumScannerSelect();
@@ -893,7 +915,7 @@ void loop()
 
   if((currentTime - elapsedCommand) > ELAPSED_COMMAND)
   {
-    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM)
+    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_INPUT)
     {
       currentCmd = CMD_NONE;
       needRedraw = true;
