@@ -912,6 +912,13 @@ void loop()
     elapsedSleep = elapsedCommand = currentTime = millis();
     pb1st.wasClicked = pb1st.wasShortPressed = false;
   }
+  else if(currentCmd == CMD_SPECTRUM && pb1st.isLongPressed)
+  {
+    // Leave the graph without tuning; only a short click accepts a point.
+    currentCmd = CMD_NONE;
+    needRedraw = true;
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
 
   if((currentTime - elapsedCommand) > ELAPSED_COMMAND)
   {
