@@ -6,6 +6,30 @@
 #include <stdlib.h>
 #include <string.h>
 
+static constexpr uint16_t VHF_MIN = 8800;   // 88.00 MHz, 10 kHz units
+static constexpr uint16_t VHF_MAX = 10800;  // 108.00 MHz
+static constexpr uint16_t VHF_STEP = 10;    // 100 kHz
+static uint16_t selectedPoint = 0;
+static uint16_t scanStart = VHF_MIN;
+static uint16_t scanEnd = VHF_MAX;
+static bool spectrumHasData = false;
+
+// Scanner-owned keypad state. FreqKeypad.cpp and Dual RX are not used or modified.
+static const char *const spectrumKeys[16] = {
+  "1", "2", "3", "BS", "4", "5", "6", "0",
+  "7", "8", "9", ".", "OK", "MHz", "", "CLOSE"
+};
+static char spectrumInput[2][12] = {"", ""};
+static uint8_t spectrumInputStage = 0;
+static uint8_t spectrumKeyIndex = 5;
+static bool spectrumInputError = false;
+static bool spectrumScanning = false;
+static bool savedRadioStateValid = false;
+static uint8_t savedBandIndex = 0;
+static uint16_t savedFrequency = 0;
+static uint8_t savedMode = FM;
+static int16_t savedBFO = 0;
+
 // Independent native-scan sample storage and sweep loop. Do not share the Web
 // Spectrum buffer or state: the two scanner interfaces must not overwrite each other.
 static constexpr uint16_t SPECTRUM_MAX_POINTS = 201; // 88.00..108.00 MHz in 100 kHz steps
@@ -65,29 +89,7 @@ static bool spectrumScanRunRange(uint16_t startFreq, uint16_t endFreq, uint16_t 
   return spectrumPointCount > 0;
 }
 
-static constexpr uint16_t VHF_MIN = 8800;   // 88.00 MHz, 10 kHz units
-static constexpr uint16_t VHF_MAX = 10800;  // 108.00 MHz
-static constexpr uint16_t VHF_STEP = 10;    // 100 kHz
-static uint16_t selectedPoint = 0;
-static uint16_t scanStart = VHF_MIN;
-static uint16_t scanEnd = VHF_MAX;
-static bool spectrumHasData = false;
 
-// Scanner-owned keypad state. FreqKeypad.cpp and Dual RX are not used or modified.
-static const char *const spectrumKeys[16] = {
-  "1", "2", "3", "BS", "4", "5", "6", "0",
-  "7", "8", "9", ".", "OK", "MHz", "", "CLOSE"
-};
-static char spectrumInput[2][12] = {"", ""};
-static uint8_t spectrumInputStage = 0;
-static uint8_t spectrumKeyIndex = 5;
-static bool spectrumInputError = false;
-static bool spectrumScanning = false;
-static bool savedRadioStateValid = false;
-static uint8_t savedBandIndex = 0;
-static uint16_t savedFrequency = 0;
-static uint8_t savedMode = FM;
-static int16_t savedBFO = 0;
 
 static int findFmBandForRange(uint16_t startFreq, uint16_t endFreq)
 {
