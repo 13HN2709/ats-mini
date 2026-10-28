@@ -2,6 +2,7 @@
 #include "Menu.h"
 #include "Themes.h"
 #include "Draw.h"
+#include "Utils.h"
 #include "SpectrumScanner.h"
 #include <stdlib.h>
 #include <string.h>
@@ -228,7 +229,7 @@ bool spectrumScannerInputClick(bool shortPress)
   }
   if(!strcmp(key, "MHz")) return true; // fixed unit for VHF input
   if(!strcmp(key, ".") && strchr(value, '.')) return true;
-  if(len < sizeof(spectrumInput[0])-1 && (key[0] >= '0' && key[0] <= '9' || !strcmp(key, "."))) {
+  if(len < sizeof(spectrumInput[0])-1 && ((key[0] >= '0' && key[0] <= '9') || !strcmp(key, "."))) {
     value[len] = key[0];
     value[len+1] = '\0';
   }
