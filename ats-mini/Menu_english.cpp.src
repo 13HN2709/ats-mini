@@ -1010,6 +1010,7 @@ bool clickHandler(uint16_t cmd, bool shortPress)
     case CMD_MENU:     clickMenu(menuIdx, shortPress);break;
     case CMD_SPECTRUM_MENU:
       if(spectrumMenuIdx == 0) spectrumScannerStart();
+      else currentCmd = CMD_SPECTRUM_MENU; // All-band scanner is reserved for a later feature.
       break;
     case CMD_SETTINGS: clickSettings(settingsIdx, shortPress);break;
     case CMD_UPDATEFW: otaRequestLatest(updateFwIdx == 1);break;
