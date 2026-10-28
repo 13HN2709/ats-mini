@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-28 (VHF keypad pass committed; pre-build review still pending)
+Last updated: 2026-10-28 (VHF keypad styled to match native keypad; pre-build review still pending)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -31,6 +31,13 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Existing scan engine is in `Scan.cpp` and currently exposes `scanRunRange(uint16_t,uint16_t,uint16_t)`, `scanGetCount()`, and `scanGetPoint(uint16_t,uint16_t*,uint8_t*,uint8_t*)`. Inspect full implementation before relying on its memory/state/tuning side effects.
 - `Network.cpp` should not be changed unnecessarily; existing web-spectrum functionality must remain intact.
 - Scanner code must explicitly prevent the `ALL Band Spectrum` menu item from invoking the VHF scan until all-band support is implemented.
+
+
+### New UI requirements confirmed on 2026-10-28
+- VHF Spectrum keypad must visually match the existing native frequency keypad: same compact black panel, blue double frame, frequency field, fixed-position FM indicator, 4x4 key geometry, cyan selection state, and font treatment.
+- VHF keypad is FM-only and MHz-only. No selectable modulation control and no kHz toggle. The FM indicator and MHz key are fixed informational/entry labels, not mode/unit switches.
+- Future ALL Band Spectrum keypad must be a separate mode: offer only USB, LSB, AM (no FM) and allow kHz entry only (no MHz). Do not implement or expose these options on the VHF keypad.
+- The native VHF keypad drawing function was updated in commit `4414b3ccb32d93a313916a2ec1237cfa47232afe` to use the existing keypad's geometry/colors/fonts and fixed FM/MHz labels. This is source-only; no build or device test has been run.
 
 ## Current repository state observed on 2026-10-28
 - Branch: `development`.
@@ -69,6 +76,9 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - [ ] Existing Dual RX source/behavior is unchanged.
 - [ ] Web Spectrum remains functional; shared scan buffer behavior understood.
 - [ ] German and English menu labels are appropriate.
+- [ ] VHF keypad visually matches `drawFreqKeypad()` geometry/colors/fonts.
+- [ ] VHF keypad exposes only fixed FM and MHz; no mode or kHz switching.
+- [ ] Future ALL Band keypad is separate and exposes USB/LSB/AM only with kHz input.
 - [ ] Build workflow remains manual.
 - [ ] Handoff updated with actual changes, commit, and remaining risks.
 
