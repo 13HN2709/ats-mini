@@ -265,9 +265,11 @@ void drawSpectrumScanner()
   spr.setTextDatum(TL_DATUM);
   spr.setTextColor(white, panel);
   spr.setFont(FONT_DEFAULT);
-  char startLabel[16]; snprintf(startLabel, sizeof(startLabel), "%u.%02u", (unsigned)(scanStart/100), (unsigned)(scanStart%100));\n  spr.drawString(startLabel, gx, 143);
+  char startLabel[16]; snprintf(startLabel, sizeof(startLabel), "%u.%02u", (unsigned)(scanStart/100), (unsigned)(scanStart%100));
+  spr.drawString(startLabel, gx, 143);
   spr.setTextDatum(TR_DATUM);
-  char endLabel[20]; snprintf(endLabel, sizeof(endLabel), "%u.%02u MHz", (unsigned)(scanEnd/100), (unsigned)(scanEnd%100));\n  spr.drawString(endLabel, gx + gw, 143);
+  char endLabel[20]; snprintf(endLabel, sizeof(endLabel), "%u.%02u MHz", (unsigned)(scanEnd/100), (unsigned)(scanEnd%100));
+  spr.drawString(endLabel, gx + gw, 143);
 
   spr.setTextDatum(BC_DATUM);
   spr.setTextColor(muted, panel);
