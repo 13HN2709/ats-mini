@@ -126,37 +126,128 @@ bool spectrumScannerInputClick(bool shortPress)
 
 void drawSpectrumScannerInput()
 {
-  const uint16_t bg=0x0208, panel=0x030D, blue=0x167F, cyan=0x07FF, green=0x07E0, red=0xF800;
-  spr.fillSprite(bg);
-  spr.fillRoundRect(3,3,314,164,5,panel);
-  spr.drawRoundRect(3,3,314,164,5,blue);
-  spr.setTextDatum(TC_DATUM);
-  spr.setTextColor(cyan);
-  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.drawString(spectrumScanning ? "SCANNING SPECTRUM" : (spectrumInputStage == 0 ? "VHF START FREQUENCY" : "VHF END FREQUENCY"),160,6);
-  spr.setTextDatum(MC_DATUM);
-  char display[32];
-  snprintf(display,sizeof(display),"%s MHz",spectrumInput[spectrumInputStage][0] ? spectrumInput[spectrumInputStage] : "--.--");
-  spr.setTextColor(spectrumInputError ? red : green);
-  spr.drawRoundRect(22,25,276,27,3,spectrumInputError ? red : blue);
-  spr.drawString(display,160,38);
+  // Match the existing radio frequency keypad's geometry and styling.
+  // VHF is fixed to FM and MHz: the mode/unit indicators are informational,
+  // not controls, so no other modulation or kHz entry can be selected.
+  const int boxX = 6;
+  const int boxY = 2;
+  const int boxW = 308;
+  const int boxH = 166;
+  const uint16_t frameBlue = 0x001F;
+  const uint16_t brightBlue = 0x07FF;
+  const uint16_t darkButton = 0x0841;
+  const uint16_t red = 0xF800;
 
-  for(int i=0;i<16;i++) {
-    if(i==14) continue;
-    int x=12+(i%4)*76, y=58+(i/4)*24;
-    bool sel=(i==spectrumKeyIndex);
-    if(sel) spr.fillRoundRect(x,y,70,21,3,cyan);
-    else spr.fillRoundRect(x,y,70,21,3,0x0841);
-    spr.drawRoundRect(x,y,70,21,3,blue);
+  spr.fillRect(boxX, boxY, boxW, boxH, 0x0000);
+  spr.drawRoundRect(boxX, boxY, boxW, boxH, 4, frameBlue);
+  spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, frameBlue);
+
+  const int displayH = 26;
+  const int displayX = boxX + 8;
+  const int displayY = boxY + 15;
+  const int displayW = boxW - 100;
+  spr.fillRect(displayX, displayY, displayW, displayH, 0x0000);
+  spr.drawRoundRect(displayX, displayY, displayW, displayH, 2,
+                    spectrumInputError ? red : frameBlue);
+
+  char displayBuf[24];
+  const char *entered = spectrumInput[spectrumInputStage][0]
+      ? spectrumInput[spectrumInputStage] : "---";
+  snprintf(displayBuf, sizeof(displayBuf), "%s MHz", entered);
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(spectrumInputError ? red : brightBlue);
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.drawString(displayBuf, displayX + displayW / 2, displayY + displayH / 2);
+
+  // Fixed modulation indicator in the same position as the normal keypad's
+  // mode selector. It deliberately cannot be focused or changed.
+  const int modeX = boxX + boxW - 88;
+  const int modeY = displayY;
+  const int modeW = 80;
+  spr.fillRoundRect(modeX, modeY, modeW, displayH, 2, darkButton);
+  spr.drawRoundRect(modeX, modeY, modeW, displayH, 2, frameBlue);
+  spr.setTextColor(brightBlue);
+  spr.drawString("FM", modeX + modeW / 2, modeY + displayH / 2);
+
+  // Same 4x4 key grid, spacing, selection colors and font as drawFreqKeypad().
+  const int startX = boxX + 8;
+  const int startY = boxY + 45;
+  const int btnW = 68;
+  const int btnH = 27;
+  const int gapX = 5;
+  const int gapY = 2;
+
+  for(int i = 0; i < 16; ++i)
+  {
+    if(i == 14) continue;
+    const int col = i % 4;
+    const int row = i / 4;
+    const int x = startX + col * (btnW + gapX);
+    const int y = startY + row * (btnH + gapY);
+    const bool selected = (i == spectrumKeyIndex);
+
+    if(selected)
+    {
+      spr.fillRoundRect(x, y, btnW, btnH, 3, brightBlue);
+      spr.drawRoundRect(x, y, btnW, btnH, 3, 0xFFFF);
+      spr.setTextColor(0x0000);
+    }
+    else
+    {
+      spr.fillRoundRect(x, y, btnW, btnH, 3, darkButton);
+      spr.drawRoundRect(x, y, btnW, btnH, 3, frameBlue);
+      spr.drawRoundRect(x + 1, y + 1, btnW - 2, btnH - 2, 2, frameBlue);
+      spr.setTextColor(brightBlue);
+    }
+
     spr.setTextDatum(MC_DATUM);
-    spr.setTextColor(sel?0x0000:cyan);
-    spr.setFont(FONT_DEFAULT);
-    spr.drawString(spectrumKeys[i],x+35,y+10);
+    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+    spr.drawString(spectrumKeys[i], x + btnW / 2, y + btnH / 2);
+  }
+
+  // MHz is a fixed unit for this keypad, not a unit-toggle control.
+  const int unitX = startX + (13 % 4) * (btnW + gapX);
+  const int unitY = startY + (13 / 4) * (btnH + gapY);
+  const bool unitSelected = (spectrumKeyIndex == 13);
+  if(unitSelected)
+  {
+    spr.fillRoundRect(unitX, unitY, btnW, btnH, 3, brightBlue);
+    spr.drawRoundRect(unitX, unitY, btnW, btnH, 3, 0xFFFF);
+    spr.setTextColor(0x0000);
+  }
+  else
+  {
+    spr.fillRoundRect(unitX, unitY, btnW, btnH, 3, darkButton);
+    spr.drawRoundRect(unitX, unitY, btnW, btnH, 3, frameBlue);
+    spr.drawRoundRect(unitX + 1, unitY + 1, btnW - 2, btnH - 2, 2, frameBlue);
+    spr.setTextColor(brightBlue);
   }
   spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(spectrumInputError ? red : cyan);
-  spr.setFont(FONT_SMALL);
-  spr.drawString(spectrumInputError ? "Invalid frequency / end must be higher" : "Turn: select   Click: enter   Long click: cancel",160,158);
+  spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+  spr.drawString("MHz", unitX + btnW / 2, unitY + btnH / 2);
+
+  if(spectrumScanning)
+  {
+    char range[40];
+    snprintf(range, sizeof(range), "%u.%02u-%u.%02u MHz",
+             (unsigned)(scanStart / 100), (unsigned)(scanStart % 100),
+             (unsigned)(scanEnd / 100), (unsigned)(scanEnd % 100));
+    spr.fillRect(boxX + 8, boxY + boxH - 16, boxW - 16, 13, 0x0000);
+    spr.setTextDatum(MC_DATUM);
+    spr.setTextColor(brightBlue);
+    spr.setFont(FONT_SMALL);
+    spr.drawString(range, boxX + boxW / 2, boxY + boxH - 10);
+  }
+  else
+  {
+    spr.setTextDatum(MC_DATUM);
+    spr.setTextColor(spectrumInputError ? red : brightBlue);
+    spr.setFont(FONT_SMALL);
+    spr.drawString(spectrumInputError ? "Invalid MHz / end must be higher"
+                                     : (spectrumInputStage == 0 ? "START FREQUENCY - FM / MHz"
+                                                                : "END FREQUENCY - FM / MHz"),
+                   boxX + boxW / 2, boxY + boxH - 10);
+  }
 }
 
 void spectrumScannerRotate(int16_t delta)
