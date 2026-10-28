@@ -235,8 +235,8 @@ static uint8_t dateTimeHour;
 static uint8_t dateTimeMinute;
 static uint8_t dateTimeSecond;
 
-uint8_t uiLayoutIdx = 0;
-static const char *uiLayoutDesc[] = { "Default", "S-Meter", "NewUI", "Waterfall", "Clean", "TEF6686" };
+uint8_t uiLayoutIdx = 5;
+static const char *uiLayoutDesc[] = { "Original", "S-Meter", "NewUI", "Waterfall", "Clean", "TEF6686" };
 
 uint8_t usbModeIdx = USB_OFF;
 static const char *usbModeDesc[] = { "Off", "Ad hoc" };
