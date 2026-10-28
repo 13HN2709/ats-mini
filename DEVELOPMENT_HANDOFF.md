@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-28 (first manual build exposed missing Utils.h include; fixed on development, rebuild pending)
+Last updated: 2026-10-28 (VHF scanner compile fix committed; TEF6686 set as fresh-install default; build pending)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -109,3 +109,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - The supplied screenshot is the visual target: dark near-black background, compact top status bar with time/signal/battery, VHF FM heading, large frequency digits, RSSI/SNR horizontal meters, right-side compact receiver settings, large RDS panel at bottom-left, and small SIG graph panel at bottom-right.
 - Specific adjustment requested: raise the “MHz” unit slightly higher relative to the frequency digits.
 - This is a future layout task, not part of the current VHF Spectrum Scanner build fix. Before implementing, inspect the reference repository's actual source files and map the target drawing to the user's current layout architecture. Keep Layout-TEF6686.cpp and Clean Layout protected unless the user chooses the destination layout.
+
+
+## Layout default change (requested 2026-10-28)
+- User wants Layout-TEF6686 to be the standard/default layout, including on a fresh installation.
+- In both English and German menu source templates, `uiLayoutIdx` now initializes to `5` (TEF6686), and the layout formerly labeled `Default` is now labeled `Original`.
+- In `Draw.cpp`, the invalid/unrecognized layout-index fallback now draws `Layout-TEF6686` rather than `Layout-Default`.
+- Commits: `8eca92ce3358c38ebf60950a06836a1de3a746e8` (English default/label), `0adefb7ac7154f7bd627de7d6c562d472e45dc80` (German default/label), `ffb2b1cc284564090e306f0419591db3afabc195` (render fallback).
+- Existing devices with a saved `UILayout` preference will keep that saved choice; fresh installs/reset preferences should initialize to TEF6686. Build and hardware confirmation pending.
