@@ -580,7 +580,7 @@ void drawScreen()
   if(sleepOn()) return;
 
   // Full-screen TEF6686-style menu replaces the compact sidebar menu.
-  if(currentCmd == CMD_MENU || currentCmd == CMD_SETTINGS)
+  if(currentCmd == CMD_MENU || currentCmd == CMD_SETTINGS || currentCmd == CMD_SPECTRUM_MENU)
   {
     drawFullScreenMenu(currentCmd);
     spr.pushSprite(0, 0);
