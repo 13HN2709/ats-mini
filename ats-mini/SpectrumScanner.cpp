@@ -29,6 +29,37 @@ static uint8_t spectrumInputStage = 0;
 static uint8_t spectrumKeyIndex = 5;
 static bool spectrumInputError = false;
 static bool spectrumScanning = false;
+static bool savedRadioStateValid = false;
+static uint8_t savedBandIndex = 0;
+static uint16_t savedFrequency = 0;
+static uint8_t savedMode = FM;
+static int16_t savedBFO = 0;
+
+static int findFmBandForRange(uint16_t startFreq, uint16_t endFreq)
+{
+  for(int i = 0; i < getTotalBands(); ++i)
+  {
+    const Band &band = bands[i];
+    if(band.bandMode == FM && band.minimumFreq <= startFreq && band.maximumFreq >= endFreq)
+      return i;
+  }
+  return -1;
+}
+
+static void restoreSavedRadioState()
+{
+  if(!savedRadioStateValid) return;
+  selectBand(savedBandIndex, false);
+  currentMode = savedMode;
+  if(!updateFrequency(savedFrequency, false))
+  {
+    // A saved frequency should always fit its saved band; avoid leaving the
+    // receiver in a transient scanner band if stored band metadata changed.
+    useBand(&bands[savedBandIndex]);
+  }
+  if(isSSB()) updateBFO(savedBFO, true);
+  savedRadioStateValid = false;
+}
 
 void spectrumScannerStart()
 {
@@ -38,6 +69,7 @@ void spectrumScannerStart()
   spectrumInputError = false;
   spectrumHasData = false;
   spectrumScanning = false;
+  savedRadioStateValid = false;
   currentCmd = CMD_SPECTRUM_INPUT;
 }
 
@@ -102,7 +134,23 @@ bool spectrumScannerInputClick(bool shortPress)
     scanEnd = parsed;
     if(scanEnd <= scanStart) { spectrumInputError = true; return true; }
 
-    // Inputs are validated before invoking the shared sweep engine.
+    // Validate that a configured FM band can cover the whole requested sweep
+    // before changing the receiver at all.
+    const int fmBand = findFmBandForRange(scanStart, scanEnd);
+    if(fmBand < 0) { spectrumInputError = true; return true; }
+
+    savedBandIndex = bandIdx;
+    savedFrequency = currentFrequency;
+    savedMode = currentMode;
+    savedBFO = currentBFO;
+    savedRadioStateValid = true;
+
+    // The shared scan engine tunes the receiver directly, so first configure
+    // the tuner for FM, then restore the user's exact band/frequency/mode.
+    selectBand((uint8_t)fmBand, false);
+    currentMode = FM;
+    currentBFO = 0;
+
     currentCmd = CMD_SPECTRUM;
     spectrumScanning = true;
     spectrumHasData = false;
@@ -110,8 +158,13 @@ bool spectrumScannerInputClick(bool shortPress)
     drawSpectrumScannerInput();
     spr.pushSprite(0, 0);
     scanRunRange(scanStart, scanEnd, VHF_STEP);
-    spectrumHasData = scanGetCount() > 0;
+
+    uint16_t firstFreq = 0;
+    spectrumHasData = scanGetCount() > 0 &&
+                      scanGetPoint(0, &firstFreq, nullptr, nullptr) &&
+                      firstFreq == scanStart;
     spectrumScanning = false;
+    restoreSavedRadioState();
     if(spectrumHasData) selectedPoint = scanGetCount() / 2;
     return true;
   }
@@ -141,6 +194,24 @@ void drawSpectrumScannerInput()
   spr.fillRect(boxX, boxY, boxW, boxH, 0x0000);
   spr.drawRoundRect(boxX, boxY, boxW, boxH, 4, frameBlue);
   spr.drawRoundRect(boxX + 1, boxY + 1, boxW - 2, boxH - 2, 3, frameBlue);
+
+  if(spectrumScanning)
+  {
+    spr.setTextDatum(TC_DATUM);
+    spr.setTextColor(brightBlue);
+    spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
+    spr.drawString("SCANNING SPECTRUM", 160, 28);
+    char range[40];
+    snprintf(range, sizeof(range), "%u.%02u - %u.%02u MHz",
+             (unsigned)(scanStart / 100), (unsigned)(scanStart % 100),
+             (unsigned)(scanEnd / 100), (unsigned)(scanEnd % 100));
+    spr.setTextColor(0x07E0);
+    spr.drawString(range, 160, 62);
+    spr.setTextColor(brightBlue);
+    spr.setFont(FONT_DEFAULT);
+    spr.drawString("Please wait...", 160, 105);
+    return;
+  }
 
   const int displayH = 26;
   const int displayX = boxX + 8;
@@ -226,28 +297,12 @@ void drawSpectrumScannerInput()
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.drawString("MHz", unitX + btnW / 2, unitY + btnH / 2);
 
-  if(spectrumScanning)
-  {
-    char range[40];
-    snprintf(range, sizeof(range), "%u.%02u-%u.%02u MHz",
-             (unsigned)(scanStart / 100), (unsigned)(scanStart % 100),
-             (unsigned)(scanEnd / 100), (unsigned)(scanEnd % 100));
-    spr.fillRect(boxX + 8, boxY + boxH - 16, boxW - 16, 13, 0x0000);
-    spr.setTextDatum(MC_DATUM);
-    spr.setTextColor(brightBlue);
-    spr.setFont(FONT_SMALL);
-    spr.drawString(range, boxX + boxW / 2, boxY + boxH - 10);
-  }
-  else
-  {
-    spr.setTextDatum(MC_DATUM);
-    spr.setTextColor(spectrumInputError ? red : brightBlue);
-    spr.setFont(FONT_SMALL);
-    spr.drawString(spectrumInputError ? "Invalid MHz / end must be higher"
-                                     : (spectrumInputStage == 0 ? "START FREQUENCY - FM / MHz"
-                                                                : "END FREQUENCY - FM / MHz"),
-                   boxX + boxW / 2, boxY + boxH - 10);
-  }
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(spectrumInputError ? red : brightBlue);
+  spr.setFont(FONT_SMALL);
+  // Keep the bottom row clear: the native keypad uses the full height for keys.
+  if(spectrumInputError)
+    spr.drawString("Invalid MHz / end must be higher", boxX + boxW / 2, boxY + boxH - 5);
 }
 
 void spectrumScannerRotate(int16_t delta)
@@ -262,12 +317,16 @@ void spectrumScannerRotate(int16_t delta)
 void spectrumScannerSelect()
 {
   if(spectrumHasData) {
-    uint16_t freq=0;
-    if(scanGetPoint(selectedPoint,&freq,nullptr,nullptr)) {
-      // Only the accepted point tunes the radio; browsing the graph does not.
-      if(bandIdx != 0) selectBand(0,false);
-      currentMode = FM;
-      updateFrequency(freq,false);
+    uint16_t freq = 0;
+    if(scanGetPoint(selectedPoint, &freq, nullptr, nullptr)) {
+      const int fmBand = findFmBandForRange(freq, freq);
+      if(fmBand >= 0) {
+        selectBand((uint8_t)fmBand, false);
+        currentMode = FM;
+        currentBFO = 0;
+        updateFrequency(freq, false);
+        savedRadioStateValid = false; // Accepted selection intentionally replaces saved state.
+      }
     }
   }
   currentCmd = CMD_NONE;
