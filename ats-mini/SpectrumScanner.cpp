@@ -132,7 +132,7 @@ void spectrumScannerStart()
 bool spectrumScannerInputRotate(int16_t delta)
 {
   if(!delta) return false;
-  int next = (int)spectrumKeyIndex + (delta > 0 ? 1 : -1);
+  int next = (int)spectrumKeyIndex + (scrollDirection * delta > 0 ? 1 : -1);
   do {
     if(next < 0) next = 15;
     if(next > 15) next = 0;
@@ -201,7 +201,7 @@ bool spectrumScannerInputClick(bool shortPress)
     savedBFO = currentBFO;
     savedRadioStateValid = true;
 
-    // The shared scan engine tunes the receiver directly, so first configure
+    // The isolated native sweep tunes the receiver directly, so first configure
     // the tuner for FM, then restore the user's exact band/frequency/mode.
     selectBand((uint8_t)fmBand, false);
     currentMode = FM;
