@@ -4,7 +4,6 @@
 void spectrumScannerStart();
 void spectrumScannerRotate(int16_t delta);
 void spectrumScannerSelect();
-void spectrumScannerInputStart();
 bool spectrumScannerInputRotate(int16_t delta);
 bool spectrumScannerInputClick(bool shortPress);
 void spectrumScannerInputCancel();
