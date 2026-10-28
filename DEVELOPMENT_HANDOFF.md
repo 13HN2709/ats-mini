@@ -117,3 +117,10 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - In `Draw.cpp`, the invalid/unrecognized layout-index fallback now draws `Layout-TEF6686` rather than `Layout-Default`.
 - Commits: `8eca92ce3358c38ebf60950a06836a1de3a746e8` (English default/label), `0adefb7ac7154f7bd627de7d6c562d472e45dc80` (German default/label), `ffb2b1cc284564090e306f0419591db3afabc195` (render fallback).
 - Existing devices with a saved `UILayout` preference will keep that saved choice; fresh installs/reset preferences should initialize to TEF6686. Build and hardware confirmation pending.
+
+
+## VHF scanner keypad hang fix (2026-10-29)
+- User reported the ATS Mini V4 hung while rotating the native VHF Spectrum keypad from the MHz key toward CLOSE (photo showed the input screen stuck at `--- MHz`).
+- Root cause found in `spectrumScannerInputRotate()`: when the next key index was the intentionally blank slot 14, a `do/while(next == 14)` loop never changed `next`, causing an infinite loop and a hard UI freeze.
+- Fixed on `development` in commit `e35a2081c69861e71b284a4193f7ef7201ced944`: advance one additional step when landing on slot 14, with wrap-around handling. This directly addresses the freeze path without touching Web Spectrum, Dual RX, or existing layouts.
+- Not yet compiled or device-tested. Rerun the manual workflow on `development`; then test rotating in both directions across `.`, MHz, blank slot and CLOSE, plus OK/BS and cancel behavior.
