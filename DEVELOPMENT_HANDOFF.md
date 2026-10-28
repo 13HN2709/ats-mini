@@ -38,6 +38,7 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - VHF keypad is FM-only and MHz-only. No selectable modulation control and no kHz toggle. The FM indicator and MHz key are fixed informational/entry labels, not mode/unit switches.
 - Future ALL Band Spectrum keypad must be a separate mode: offer only USB, LSB, AM (no FM) and allow kHz entry only (no MHz). Do not implement or expose these options on the VHF keypad.
 - The native VHF keypad drawing function was updated in commit `4414b3ccb32d93a313916a2ec1237cfa47232afe` to use the existing keypad's geometry/colors/fonts and fixed FM/MHz labels. This is source-only; no build or device test has been run.
+- The VHF keypad close button label was aligned with the existing keypad (`CLOSE`) in commit `9a4d9c2fbda1796ed48e7e301c9c2a9b843aafd5`.
 
 ## Current repository state observed on 2026-10-28
 - Branch: `development`.
