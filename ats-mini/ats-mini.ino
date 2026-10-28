@@ -859,6 +859,11 @@ void loop()
       {
         needRedraw = true;
         elapsedSleep = elapsedCommand = currentTime = millis();
+
+        // Opening Spectrum from the menu uses this same encoder click.
+        // Consume it here so it cannot immediately accept/close the scanner below.
+        if(currentCmd == CMD_SPECTRUM)
+          pb1st.wasClicked = pb1st.wasShortPressed = false;
       }
       else if(currentCmd != CMD_NONE)
       {
