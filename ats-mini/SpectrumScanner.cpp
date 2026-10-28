@@ -297,12 +297,8 @@ void drawSpectrumScannerInput()
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.drawString("MHz", unitX + btnW / 2, unitY + btnH / 2);
 
-  spr.setTextDatum(MC_DATUM);
-  spr.setTextColor(spectrumInputError ? red : brightBlue);
-  spr.setFont(FONT_SMALL);
-  // Keep the bottom row clear: the native keypad uses the full height for keys.
-  if(spectrumInputError)
-    spr.drawString("Invalid MHz / end must be higher", boxX + boxW / 2, boxY + boxH - 5);
+  // Invalid input is indicated by the red frequency-field border/text, leaving
+  // the full bottom key row unobstructed just like the native keypad.
 }
 
 void spectrumScannerRotate(int16_t delta)
