@@ -149,6 +149,8 @@ static bool spectrumParseFrequency(uint16_t *out)
   size_t n = strlen(src);
   if(n >= sizeof(normalized)) return false;
   for(size_t i=0;i<=n;i++) normalized[i] = src[i] == ',' ? '.' : src[i];
+  const char *decimal = strchr(normalized, '.');
+  if(decimal && strlen(decimal + 1) > 2) return false;
   char *end = nullptr;
   float mhz = strtof(normalized, &end);
   if(end == normalized || *end != '\0' || mhz < 88.0f || mhz > 108.0f) return false;
