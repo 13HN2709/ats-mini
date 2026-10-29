@@ -286,7 +286,7 @@ void drawSpectrumScannerInput()
 
   const int displayH = 23;
   const int displayX = boxX + 8;
-  const int displayY = boxY + 20;
+  const int displayY = boxY + 26;
   const int displayW = boxW - 100;
   spr.fillRect(displayX, displayY, displayW, displayH, 0x0000);
   spr.drawRoundRect(displayX, displayY, displayW, displayH, 2,
@@ -304,12 +304,14 @@ void drawSpectrumScannerInput()
   spr.setFont(FONT_SMALL);
   spr.setTextColor(0xFFFF);
   if(spectrumInputStage == 0) {
-    spr.drawString("ENTER START FREQUENCY (MHz)", 160, 6);
+    // Keep the instruction inside the keypad itself, above the value field.
+    spr.drawString("ENTER START FREQUENCY (MHz)", 160, 5);
   } else {
-    char startInfo[40];
-    snprintf(startInfo, sizeof(startInfo), "START: %u.%02u MHz | ENTER END FREQUENCY",
+    char startInfo[32];
+    snprintf(startInfo, sizeof(startInfo), "START FREQUENCY: %u.%02u MHz",
              (unsigned)(scanStart / 100), (unsigned)(scanStart % 100));
-    spr.drawString(startInfo, 160, 6);
+    spr.drawString(startInfo, 160, 2);
+    spr.drawString("ENTER END FREQUENCY (MHz)", 160, 14);
   }
 
   // Fixed modulation indicator in the same position as the normal keypad's
@@ -324,7 +326,7 @@ void drawSpectrumScannerInput()
 
   // Same 4x4 key grid, spacing, selection colors and font as drawFreqKeypad().
   const int startX = boxX + 8;
-  const int startY = boxY + 47;
+  const int startY = boxY + 52;
   const int btnW = 68;
   const int btnH = 27;
   const int gapX = 5;
