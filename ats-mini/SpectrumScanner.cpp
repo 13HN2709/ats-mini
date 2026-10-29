@@ -550,6 +550,8 @@ void drawSpectrumScanner()
         int py = gy + gh - 2 - (int)((uint32_t)(here - minR) * (gh - 5) / (maxR - minR));
         spr.drawFastVLine(px, py, max(3, gy + gh - 2 - py), wave);
         spr.fillTriangle(px - 3, py - 1, px + 3, py - 1, px, py - 6, red);
+        // Bright red circular cap makes each detected peak stand out clearly.
+        spr.fillCircle(px, py - 4, 3, red);
       }
     }
     int sx = gx + 1 + (int)((uint32_t)selectedPoint * (gw - 3) / (count - 1));
