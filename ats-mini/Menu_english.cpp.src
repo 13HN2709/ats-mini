@@ -914,7 +914,8 @@ static void clickMenu(int cmd, bool shortPress)
       clickScan(true);
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
-    case MENU_SPECTRUM: spectrumScannerStart(); break;\n    case MENU_ALL_SPECTRUM: allBandSpectrumStart(); break;
+    case MENU_SPECTRUM: spectrumScannerStart(); break;
+    case MENU_ALL_SPECTRUM: allBandSpectrumStart(); break;
   }
 }
 
