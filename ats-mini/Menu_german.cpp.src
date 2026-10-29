@@ -1775,11 +1775,12 @@ void drawFullScreenMenu(uint16_t cmd)
   const uint16_t blue = 0x001F;
   const uint16_t cyan = 0x07FF;
   const bool settingsPage = cmd == CMD_SETTINGS;
-  const int rawIdx = settingsPage ? settingsIdx : menuIdx;
+  const bool spectrumPage = cmd == CMD_SPECTRUM_MENU;
+  const int rawIdx = settingsPage ? settingsIdx : (spectrumPage ? spectrumMenuIdx : menuIdx);
   const int idx = (settingsPage && rawIdx > MENU_ZOOM) ? rawIdx - 1 : rawIdx;
-  const int count = settingsPage ? ITEM_COUNT(settings) - 1 : ITEM_COUNT(menu);
-  const char *title = settingsPage ? "SETTINGS" : "HAUPTMENÜ";
-  const char *selected = settingsPage ? settingLabel(rawIdx) : menu[idx];
+  const int count = settingsPage ? ITEM_COUNT(settings) - 1 : (spectrumPage ? ITEM_COUNT(spectrumMenu) : ITEM_COUNT(menu));
+  const char *title = settingsPage ? "SETTINGS" : (spectrumPage ? "SPEKTRUM" : "HAUPTMENÜ");
+  const char *selected = settingsPage ? settingLabel(rawIdx) : (spectrumPage ? spectrumMenu[idx] : menu[idx]);
   const char *displaySelected = selected;
   // Render menu labels in uppercase without corrupting UTF-8 umlauts.
   char uppercaseLabel[96];
@@ -1831,6 +1832,12 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setFont(FONT_SMALL);
   spr.setTextColor(cyan);
   spr.drawString("KLICK: OK", 307, 151, FONT_SMALL);
+  if(spectrumPage) {
+    spr.setTextDatum(MC_DATUM);
+    spr.setTextColor(0xBDF7);
+    spr.setFont(FONT_SMALL);
+    spr.drawString("VHF-Spektrum waehlen: Startfrequenz eingeben", 160, 132);
+  }
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
