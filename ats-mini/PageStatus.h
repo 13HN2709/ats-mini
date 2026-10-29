@@ -574,7 +574,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const tuneButton=tuneForm.querySelector('button[type=submit]');
    tuneButton.disabled=true;stepDown.disabled=true;stepUp.disabled=true;volumeInput.disabled=true;
    startInput.disabled=true;endInput.disabled=true;stepInput.disabled=true;modeButtons.forEach(item=>item.disabled=true);
-   status.textContent='Starting receiver sweep…';
+   status.textContent='⏳ FM SPECTRUM SCAN RUNNING — PLEASE WAIT · Initializing receiver…';
    try{
      const params=new URLSearchParams({start_hz:String(startHz),end_hz:String(endHz),mode:selectedMode,step_hz:String(stepHz)});
      const start=await fetch('/spectrum/start',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:params,cache:'no-store'});
@@ -592,7 +592,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
          if(window.atsDebugLog) window.atsDebugLog('SCAN COMPLETE','mode='+lastSpectrumMode+', samples='+data.samples.length);
          return;
        }
-       status.textContent='Measuring receiver signal… '+(i+1)+' s';
+       status.textContent='⏳ FM SPECTRUM SCAN RUNNING — PLEASE WAIT · Measuring signal… '+(i+1)+' s';
      }
      throw new Error('Sweep timed out. Try again.');
    }catch(error){if(window.atsDebugLog) window.atsDebugLog('SCAN ERROR',error.message||error);status.textContent=error.message||'Spectrum request failed.';}
