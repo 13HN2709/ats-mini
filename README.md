@@ -6,6 +6,8 @@ Custom firmware for the ATS Mini V4 / SI4732 (ESP32-S3) Mini/Pocket Receiver.
 
 This project builds on the original ATS Mini firmware and adds features, controls and display improvements developed by **13HN2709**.
 
+**Custom firmware release: V1.31**
+
 ## Features and own extensions
 
 ### Added by 13HN2709
@@ -14,7 +16,10 @@ This project builds on the original ATS Mini firmware and adds features, control
 - **VFO A/B:** VFO A/B functionality and frequency transfer.
 - **Frequency step control:** Easily change the tuning step, including through the control interface.
 - **Web Control Center:** Control the radio from a phone or PC over Wi-Fi, even without an internet connection.
-- **Spectrum Scanner:** Scan frequency ranges in the Web Control Center, inspect signal peaks and tune to a selected signal.
+- **Web Spectrum Scanners:** Dedicated VHF/FM and ALL Band scanners in Web Control, with selectable ranges/steps, RSSI plots, highlighted peaks and tap-to-tune.
+- **Native VHF Spectrum Scanner:** Scan and select FM peaks directly on the ATS Mini display.
+- **Waterfall Layout:** Custom waterfall-style receiver display.
+- **TEF6686 Layout:** Original-inspired TEF6686-style display layout, with additional custom layout options.
 - **Memory management:** Browse saved memories and store new frequencies.
 - **Integrated BFO:** BFO control for reception.
 - **Multilingual interface:** German and English are available.
@@ -28,7 +33,10 @@ This project builds on the original ATS Mini firmware and adds features, control
 - **VFO A/B:** Funzioni VFO A/B e trasferimento della frequenza.
 - **Passo di sintonia:** Modifica facilmente il passo di sintonia, anche tramite l'interfaccia di controllo.
 - **Web Control Center:** Controlla la radio da smartphone o PC tramite Wi-Fi, anche senza connessione Internet.
-- **Spectrum Scanner:** Scansiona gli intervalli di frequenza nel Web Control Center, visualizza i picchi dei segnali e sintonizzati sul segnale selezionato.
+- **Scanner di spettro Web:** Scanner VHF/FM e ALL Band nel Web Control, con intervalli e passi selezionabili, grafici RSSI, picchi evidenziati e sintonia toccando il picco.
+- **Scanner VHF nativo:** Scansione e selezione dei picchi FM direttamente sul display ATS Mini.
+- **Layout Waterfall:** Schermata personalizzata con visualizzazione a cascata.
+- **Layout TEF6686:** Layout ispirato al display TEF6686, con ulteriori layout personalizzati.
 - **Gestione delle memorie:** Consulta le frequenze salvate e memorizza nuove frequenze.
 - **BFO integrato:** Controllo del BFO per la ricezione.
 - **Interfaccia multilingue:** Disponibili le lingue tedesca e inglese.
@@ -42,7 +50,10 @@ This project builds on the original ATS Mini firmware and adds features, control
 - **VFO A/B:** VFO-A/B-Funktion mit Übernahme bzw. Wechsel der Frequenzen.
 - **Frequenzschritt:** Die Frequenz-Schrittweite bequem ändern.
 - **Webseiten-Control-Center:** Das Radio per WLAN vom Smartphone oder PC steuern – auch ohne Internetverbindung.
-- **Spectrum Scanner:** Frequenzbereiche im Web Control Center scannen, Signalspitzen ansehen und die ausgewählte Frequenz übernehmen.
+- **Web-Spektrumscanner:** Separate VHF/UKW- und ALL-Band-Scanner im Web Control mit einstellbarem Frequenzbereich und Schrittweite, RSSI-Kurve, markierten Peaks und Abstimmung per Fingertipp.
+- **Interner VHF-Spektrumscanner:** UKW scannen und Signalspitzen direkt am ATS-Mini-Display auswählen.
+- **Waterfall-Layout:** Eigenes Wasserfall-Layout für die Radioanzeige.
+- **TEF6686-Layout:** TEF6686-inspiriertes Display-Layout sowie weitere eigene Layouts.
 - **Speicherverwaltung:** Gespeicherte Frequenzen auswählen und neue Frequenzen speichern.
 - **BFO integriert:** BFO für den Empfang einstellen.
 - **Mehrsprachige Oberfläche:** Deutsch und Englisch.
