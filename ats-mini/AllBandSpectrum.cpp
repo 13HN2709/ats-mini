@@ -22,14 +22,21 @@ static int16_t oldBfo=0;
 
 void allBandSpectrumStart(){input[0][0]=input[1][0]=0;stage=0;keyIndex=5;modeIndex=0;inputError=false;hasData=false;count=0;saved=false;currentCmd=CMD_ALL_SPECTRUM_INPUT;}
 bool allBandSpectrumInputRotate(int16_t delta){if(!delta)return false;int d=(scrollDirection*delta>0)?1:-1;int n=(int)keyIndex+d;if(n<0)n=15;if(n>15)n=0;if(n==14){n+=d;if(n<0)n=15;if(n>15)n=0;}keyIndex=n;return true;}
-void allBandSpectrumCancel(){inputError=false;if(saved){selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);bands[1].bandMode=oldAllBandMode;saved=false;}currentCmd=CMD_MENU;}
+void allBandSpectrumCancel(){inputError=false;if(saved){bands[1].bandMode=oldAllBandMode;selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);saved=false;}currentCmd=CMD_MENU;}
 static bool parseKHz(uint16_t *out){const char *s=input[stage];if(!*s)return false;char *e=nullptr;long v=strtol(s,&e,10);if(e==s||*e||v<MIN_KHZ||v>MAX_KHZ)return false;*out=(uint16_t)v;return true;}
-static void restoreRadio(bool clearSaved=true){if(!saved)return;selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);bands[1].bandMode=oldAllBandMode;if(clearSaved)saved=false;}
+static void restoreRadio(bool clearSaved=true){if(!saved)return;bands[1].bandMode=oldAllBandMode;selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);if(clearSaved)saved=false;}
 static void tuneAllBandPoint(uint16_t freq){if(bandIdx!=1||currentMode!=modes[modeIndex]){bands[1].bandMode=modes[modeIndex];selectBand(1,false);}currentBFO=0;updateFrequency(freq,false);}
 static void runSweep(){
- count=0;rx.setMaxDelaySetFrequency(60);muteOn(MUTE_TEMP,true);const uint16_t restoreFreq=currentFrequency;
+ count=0;rx.setMaxDelaySetFrequency(60);muteOn(MUTE_TEMP,true);const uint16_t restoreFreq=currentFrequency;bool aborted=false;
  const uint16_t points=(endKHz-startKHz)/STEP_KHZ+1;
- for(uint16_t i=0;i<points;i++){uint16_t f=startKHz+i*STEP_KHZ;rx.getStatus(1,0);rx.setFrequency(f);uint32_t t=millis();while(!rx.getTuneCompleteTriggered()&&millis()-t<350){delay(10);rx.getStatus(0,0);}rx.getCurrentReceivedSignalQuality(0);rssi[i]=rx.getCurrentRSSI();snr[i]=rx.getCurrentSNR();count=i+1;}
+ seekStop=false;
+ for(uint16_t i=0;i<points;i++){
+   uint16_t f=startKHz+i*STEP_KHZ;rx.getStatus(1,0);rx.setFrequency(f);uint32_t t=millis();
+   while(true){delay(10);rx.getStatus(0,0);if(rx.getTuneCompleteTriggered()||millis()-t>=350)break;if(consumeAbortPending()){aborted=true;break;}}
+   if(aborted)break;
+   rx.getCurrentReceivedSignalQuality(0);rssi[i]=rx.getCurrentRSSI();snr[i]=rx.getCurrentSNR();count=i+1;
+   if(i+1<points&&consumeAbortPending()){aborted=true;break;}
+ }
  rx.setFrequency(restoreFreq);muteOn(MUTE_TEMP,false);rx.setMaxDelaySetFrequency(30);hasData=count>0;selected=count/2;
 }
 bool allBandSpectrumInputClick(bool shortPress){if(!shortPress){allBandSpectrumCancel();return true;}const char*k=keys[keyIndex];char*v=input[stage];size_t n=strlen(v);inputError=false;
