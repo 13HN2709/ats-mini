@@ -16,7 +16,7 @@ static char input[2][12]={{0},{0}};
 static uint8_t stage=0,keyIndex=5,modeIndex=0;
 static const uint8_t modes[3]={AM,USB,LSB};
 static const char *modeNames[3]={"AM","USB","LSB"};
-static bool inputError=false,hasData=false,saved=false;
+static bool inputError=false,hasData=false,saved=false,allBandScanning=false;
 static uint16_t startKHz=7100,endKHz=7600,count=0,selected=0;
 static uint8_t allBandRssi[MAX_POINTS],allBandSnr[MAX_POINTS];
 static uint8_t oldBand=0,oldMode=AM,oldAllBandMode=AM;
@@ -50,7 +50,9 @@ bool allBandSpectrumInputClick(bool shortPress){if(!shortPress){allBandSpectrumC
  if(!strcmp(k,"OK")){uint16_t f;if(!parseKHz(&f)){inputError=true;return true;}if(stage==0){startKHz=f;stage=1;input[1][0]=0;keyIndex=5;return true;}endKHz=f;if(endKHz<=startKHz||endKHz-startKHz>MAX_WIDTH_KHZ||(endKHz-startKHz)%scanStepKHz!=0||((endKHz-startKHz)/scanStepKHz+1)>MAX_POINTS){inputError=true;return true;}
  // ALL band is the broad AM-capable tuner configuration; configure it only after validation.
  oldBand=bandIdx;oldFreq=currentFrequency;oldMode=currentMode;oldBfo=currentBFO;oldAllBandMode=bands[1].bandMode;saved=true;
- bands[1].bandMode=modes[modeIndex];selectBand(1,false);currentBFO=0;updateFrequency(startKHz,false);currentCmd=CMD_ALL_SPECTRUM;runSweep();restoreRadio(false);return true;}
+ bands[1].bandMode=modes[modeIndex];selectBand(1,false);currentBFO=0;updateFrequency(startKHz,false);
+ allBandScanning=true;drawAllBandSpectrumInput();spr.pushSprite(0,0);
+ currentCmd=CMD_ALL_SPECTRUM;runSweep();allBandScanning=false;restoreRadio(false);return true;}
  if(n<sizeof(input[0])-1&&k[0]>='0'&&k[0]<='9'){v[n]=k[0];v[n+1]=0;}return true;}
 void allBandSpectrumRotate(int16_t delta){
  if(!hasData||count<3||!delta)return;
@@ -64,6 +66,7 @@ void allBandSpectrumRotate(int16_t delta){
 }
 void allBandSpectrumSelect(){if(hasData){tuneAllBandPoint(startKHz+selected*scanStepKHz);saved=false;}else restoreRadio();currentCmd=CMD_NONE;}
 void drawAllBandSpectrumInput(){const uint16_t cyan=0x07FF,blue=0x001F,dark=0x0841,red=0xF800;spr.fillSprite(0);spr.fillRoundRect(6,2,308,166,4,0);spr.drawRoundRect(6,2,308,166,4,blue);spr.drawRoundRect(7,3,306,164,3,blue);
+ if(allBandScanning){spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString("SCANNING ALL BAND",160,30);char status[40];snprintf(status,sizeof(status),"%u - %u kHz  %s",startKHz,endKHz,modeNames[modeIndex]);spr.setTextColor(0x07E0);spr.drawString(status,160,65);spr.setTextColor(cyan);spr.setFont(FONT_DEFAULT);spr.drawString("Please wait...",160,105);return;}
  spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString(stage==0?"ALL BAND: START (kHz)":"ALL BAND: END (kHz)",160,5);
  char b[32];snprintf(b,sizeof(b),"%s kHz",input[stage][0]?input[stage]:"---");spr.setTextDatum(MC_DATUM);spr.setTextColor(inputError?red:cyan);spr.drawRoundRect(14,28,210,23,2,inputError?red:blue);spr.drawString(b,119,39);
  spr.fillRoundRect(230,28,76,23,2,keyIndex==16?cyan:dark);spr.drawRoundRect(230,28,76,23,2,keyIndex==16?0xFFFF:blue);spr.setTextColor(keyIndex==16?0:cyan);spr.drawString(modeNames[modeIndex],268,39);
