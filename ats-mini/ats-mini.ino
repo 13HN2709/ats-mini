@@ -842,7 +842,9 @@ void loop()
       clickFreqKeypad(true);
       needRedraw = true;
     }
-    else if(pb1st.wasClicked || pb1st.wasShortPressed)
+    // The native Spectrum keypad handles its own encoder clicks below.
+    // Do not let the generic click handler clear CMD_SPECTRUM_INPUT first.
+    else if((pb1st.wasClicked || pb1st.wasShortPressed) && currentCmd != CMD_SPECTRUM_INPUT)
     {
       elapsedSleep = elapsedCommand = currentTime;
 
