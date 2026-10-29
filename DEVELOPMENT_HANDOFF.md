@@ -236,3 +236,14 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Input uses kHz and a dedicated MODE key cycling AM / USB / LSB. Start and end are validated before selecting the broad ALL tuner band or starting a scan. End must exceed start, width must be <= 1000 kHz, and the span must align to 5 kHz steps; larger ranges show a red invalid-input/scan-width hint and do not start scanning.
 - Scanner uses its own 201-point RSSI/SNR buffers, 5 kHz steps, and separate graph/input rendering. Web Spectrum and the existing VHF Spectrum source were not edited in this feature.
 - Source implementation is committed on `development`; it has **not been compiled or hardware-tested**. Before the manual build, review encoder click routing, tuner mode setup/restore behavior, and verify `AllBandSpectrum.cpp` compiles under all four OSPI/QSPI × German/English matrix targets. Test 2000–3000 kHz accepted and 2000–3100 kHz rejected, plus AM/USB/LSB selection and VHF/Web/Dual RX regression.
+
+
+### ALL Band Spectrum source review update (2026-10-29)
+- Reviewed the native VHF sweep lifecycle and the ALL Band input/graph routing.
+- Corrected ALL Band radio restore order so the saved ALL-band modulation is restored before reinitializing the receiver. This matters if the radio was already on the broad ALL band when the scanner starts.
+- Added the same abort checks used by the native VHF sweep so an encoder/button/remote abort can stop the blocking sweep, while restoring frequency and mute/delay state.
+- Removed duplicate ALL Band click/long-press handler blocks from the main loop; one dedicated handler path remains.
+- Reduced keypad button height so the fourth row no longer overlaps the bottom instruction.
+- Follow-up commits on `development`: `7581598` (remove duplicate click handlers), `5495957` (restore/abort handling), `c42433a` (keypad spacing).
+- Re-check confirmed the GitHub Actions workflow compiles the full `ats-mini` sketch directory, so the new `AllBandSpectrum.cpp` is included in the workflow build even though the legacy Makefile source list is not maintained for this module.
+- Still **not compiled or hardware-tested**. Build remains on hold until final source pass is complete. Next: check timeout/command handling and source declarations, then authorize the user to start the manual build on `development`. Do not touch `main`.
