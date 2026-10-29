@@ -59,9 +59,9 @@ void allBandSpectrumRotate(int16_t delta){
    if(allBandRssi[candidate]>=threshold&&allBandRssi[candidate]>=allBandRssi[candidate-1]&&allBandRssi[candidate]>allBandRssi[candidate+1]){selected=candidate;tuneAllBandPoint(startKHz+selected*scanStepKHz);return;}}
  int best=-1;uint8_t bestR=0;candidate=selected;
  for(uint16_t n=0;n<count-1;n++){candidate+=dir;if(candidate<0)candidate=count-1;if(candidate>=count)candidate=0;if(candidate==selected)break;if(candidate==0||candidate==count-1)continue;if(best<0||allBandRssi[candidate]>bestR){best=candidate;bestR=allBandRssi[candidate];}}
- if(best>=0){selected=best;tuneAllBandPoint(startKHz+selected*STEP_KHZ);}
+ if(best>=0){selected=best;tuneAllBandPoint(startKHz+selected*scanStepKHz);}
 }
-void allBandSpectrumSelect(){if(hasData){tuneAllBandPoint(startKHz+selected*STEP_KHZ);saved=false;}else restoreRadio();currentCmd=CMD_NONE;}
+void allBandSpectrumSelect(){if(hasData){tuneAllBandPoint(startKHz+selected*scanStepKHz);saved=false;}else restoreRadio();currentCmd=CMD_NONE;}
 void drawAllBandSpectrumInput(){const uint16_t cyan=0x07FF,blue=0x001F,dark=0x0841,red=0xF800;spr.fillSprite(0);spr.fillRoundRect(6,2,308,166,4,0);spr.drawRoundRect(6,2,308,166,4,blue);spr.drawRoundRect(7,3,306,164,3,blue);
  spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString(stage==0?"ALL BAND: START (kHz)":"ALL BAND: END (kHz)",160,5);
  char b[32];snprintf(b,sizeof(b),"%s kHz",input[stage][0]?input[stage]:"---");spr.setTextDatum(MC_DATUM);spr.setTextColor(inputError?red:cyan);spr.drawRoundRect(14,28,210,23,2,inputError?red:blue);spr.drawString(b,119,39);
@@ -69,6 +69,6 @@ void drawAllBandSpectrumInput(){const uint16_t cyan=0x07FF,blue=0x001F,dark=0x08
  const int sx=14,sy=53,w=68,h=21,gx=5,gy=2;
  for(int i=0;i<16;i++){if(i==14)continue;int x=sx+(i%4)*(w+gx),y=sy+(i/4)*(h+gy);bool sel=i==keyIndex;spr.fillRoundRect(x,y,w,h,3,sel?cyan:dark);spr.drawRoundRect(x,y,w,h,3,sel?0xFFFF:blue);spr.setTextDatum(MC_DATUM);spr.setTextColor(sel?0:cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString(keys[i],x+w/2,y+h/2);}
  spr.setTextDatum(TC_DATUM);spr.setTextColor(inputError?red:0xBDF7);spr.setFont(FONT_SMALL);char hint[48];if(inputError)snprintf(hint,sizeof(hint),"Invalid input: max width 1000 kHz");else snprintf(hint,sizeof(hint),"MODE: %u kHz step",scanStepKHz);spr.drawString(hint,160,151); }
-void drawAllBandSpectrum(){const uint16_t cyan=0x07FF,blue=0x001F,green=0x07E0;spr.fillSprite(0);spr.fillRoundRect(3,3,314,164,5,0x0008);spr.drawRoundRect(3,3,314,164,5,blue);spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString("ALL BAND SPECTRUM",160,7);char b[32];snprintf(b,sizeof(b),"%u kHz  %s",startKHz+selected*STEP_KHZ,modeNames[modeIndex]);spr.setTextColor(green);spr.drawString(b,160,25);
+void drawAllBandSpectrum(){const uint16_t cyan=0x07FF,blue=0x001F,green=0x07E0;spr.fillSprite(0);spr.fillRoundRect(3,3,314,164,5,0x0008);spr.drawRoundRect(3,3,314,164,5,blue);spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString("ALL BAND SPECTRUM",160,7);char b[40];snprintf(b,sizeof(b),"%u kHz  %s  STEP %u",startKHz+selected*scanStepKHz,modeNames[modeIndex],scanStepKHz);spr.setTextColor(green);spr.drawString(b,160,25);
  const int x0=12,y0=43,w=296,h=86;spr.drawRect(x0,y0,w,h,blue);if(hasData&&count>1){uint8_t mn=255,mx=0;for(int i=0;i<count;i++){if(allBandRssi[i]<mn)mn=allBandRssi[i];if(allBandRssi[i]>mx)mx=allBandRssi[i];}if(mx<=mn)mx=mn+1;int px=x0,py=y0+h-2;for(int i=0;i<count;i++){int x=x0+1+(long)i*(w-3)/(count-1);int y=y0+h-2-(long)(allBandRssi[i]-mn)*(h-4)/(mx-mn);spr.drawLine(px,py,x,y,cyan);if(i==selected)spr.fillCircle(x,y,3,0xF800);px=x;py=y;}}
  spr.setTextColor(cyan);spr.setFont(FONT_SMALL);spr.setTextDatum(TL_DATUM);spr.drawString("Rotate: peak  Click: accept",12,137);spr.drawString("Width max 1000 kHz",12,151);}
