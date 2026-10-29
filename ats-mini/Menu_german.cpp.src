@@ -121,7 +121,7 @@ static int visibleBandIndexAtOffset(int offset)
 
 int8_t menuIdx = MENU_KEYPAD;
 int8_t spectrumMenuIdx = 0;
-static const char *spectrumMenu[] = { "VHF-Spektrum", "Gesamtes Bandspektrum" };
+static const char *spectrumMenu[] = { "VHF SPEKTRUM", "Gesamtes Bandspektrum" };
 
 static const char *menu[] =
 {
@@ -950,7 +950,7 @@ static void clickMenu(int cmd, bool shortPress)
       clickScan(true);
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
-    case MENU_SPECTRUM: spectrumMenuIdx = 0; currentCmd = CMD_SPECTRUM_MENU; break;
+    case MENU_SPECTRUM: spectrumScannerStart(); break;
   }
 }
 
@@ -1832,11 +1832,11 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setFont(FONT_SMALL);
   spr.setTextColor(cyan);
   spr.drawString("KLICK: OK", 307, 151, FONT_SMALL);
-  if(spectrumPage) {
+  if(!settingsPage && !spectrumPage && idx == MENU_SPECTRUM) {
     spr.setTextDatum(MC_DATUM);
     spr.setTextColor(0xBDF7);
     spr.setFont(FONT_SMALL);
-    spr.drawString("VHF-Spektrum waehlen: Startfrequenz eingeben", 160, 132);
+    spr.drawString("Nach Klick Startfrequenz eingeben", 160, 132);
   }
 }
 
