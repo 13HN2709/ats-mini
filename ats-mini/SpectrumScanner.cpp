@@ -279,9 +279,9 @@ void drawSpectrumScannerInput()
     return;
   }
 
-  const int displayH = 26;
+  const int displayH = 23;
   const int displayX = boxX + 8;
-  const int displayY = boxY + 15;
+  const int displayY = boxY + 20;
   const int displayW = boxW - 100;
   spr.fillRect(displayX, displayY, displayW, displayH, 0x0000);
   spr.drawRoundRect(displayX, displayY, displayW, displayH, 2,
@@ -299,12 +299,12 @@ void drawSpectrumScannerInput()
   spr.setFont(FONT_SMALL);
   spr.setTextColor(0xFFFF);
   if(spectrumInputStage == 0) {
-    spr.drawString("ENTER START FREQUENCY (MHz)", 160, 34);
+    spr.drawString("ENTER START FREQUENCY (MHz)", 160, 6);
   } else {
     char startInfo[40];
     snprintf(startInfo, sizeof(startInfo), "START: %u.%02u MHz | ENTER END FREQUENCY",
              (unsigned)(scanStart / 100), (unsigned)(scanStart % 100));
-    spr.drawString(startInfo, 160, 34);
+    spr.drawString(startInfo, 160, 6);
   }
 
   // Fixed modulation indicator in the same position as the normal keypad's
@@ -319,7 +319,7 @@ void drawSpectrumScannerInput()
 
   // Same 4x4 key grid, spacing, selection colors and font as drawFreqKeypad().
   const int startX = boxX + 8;
-  const int startY = boxY + 45;
+  const int startY = boxY + 47;
   const int btnW = 68;
   const int btnH = 27;
   const int gapX = 5;
@@ -388,7 +388,10 @@ void spectrumScannerRotate(int16_t delta)
     if(value < minR) minR = value;
     if(value > maxR) maxR = value;
   }
-  const uint8_t threshold = (uint8_t)(minR + ((uint16_t)(maxR - minR) * 12) / 100);
+  // Keep the threshold low enough to include ordinary FM stations, not only
+  // the strongest transmitters. Every encoder detent should target another
+  // local peak rather than stepping through adjacent 100 kHz samples.
+  const uint8_t threshold = (uint8_t)(minR + ((uint16_t)(maxR - minR) * 5) / 100);
   const int direction = delta > 0 ? 1 : -1;
   int candidate = selectedPoint;
   for(uint16_t step = 0; step < count; ++step) {
@@ -402,10 +405,25 @@ void spectrumScannerRotate(int16_t delta)
       return;
     }
   }
-  candidate = (int)selectedPoint + direction;
-  if(candidate < 0) candidate = count - 1;
-  if(candidate >= count) candidate = 0;
-  selectedPoint = (uint16_t)candidate;
+
+  // If the trace is unusually flat and has no qualifying local maximum,
+  // jump to the strongest sample in the requested direction instead of
+  // moving only 100 kHz and appearing to ignore peak navigation.
+  int best = -1;
+  uint8_t bestRssi = 0;
+  candidate = selectedPoint;
+  for(uint16_t step = 0; step < count - 1; ++step) {
+    candidate += direction;
+    if(candidate < 0) candidate = count - 1;
+    if(candidate >= count) candidate = 0;
+    if(candidate == selectedPoint) break;
+    if(candidate == 0 || candidate == count - 1) continue;
+    if(best < 0 || spectrumRssi[candidate] > bestRssi) {
+      best = candidate;
+      bestRssi = spectrumRssi[candidate];
+    }
+  }
+  if(best >= 0) selectedPoint = (uint16_t)best;
 }
 
 void spectrumScannerSelect()
@@ -429,13 +447,13 @@ void spectrumScannerSelect()
 void drawSpectrumScanner()
 {
   const uint16_t bg = 0x0000;
-  const uint16_t panel = 0x0000;
-  const uint16_t grid = 0x0841;
+  const uint16_t panel = 0x0008;
+  const uint16_t grid = 0x000F;
   const uint16_t cyan = 0x07FF;
   const uint16_t blue = 0x001F;
   const uint16_t green = 0x07E0;
   const uint16_t red = 0xF800;
-  const uint16_t wave = 0x39C7;
+  const uint16_t wave = 0x18C3;
   const uint16_t white = 0xFFFF;
   const uint16_t muted = 0x4208;
 
