@@ -260,3 +260,12 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Renamed the keypad button from `MODE` to `STEP`; its click handler now keys off `STEP` and still cycles the existing scan-step choices.
 - The `STEP: n kHz` hint now uses the same cyan color as the other keypad labels and a larger bold font. Validation errors remain red.
 - Updated on `development`; not yet rebuilt or hardware-verified. `main` untouched.
+
+
+### Web Control ALL Band Scanner (2026-10-29)
+- Work is being done on `development` only. No change to `main` is intended.
+- Added dedicated `AllBandWebScanner.cpp/.h` with its own sample buffer and API; it supports AM/USB/LSB, 150–30000 kHz, configurable step, range validation, and restores the prior radio band/mode/frequency/BFO after the scan.
+- Added independent `/all-spectrum/start` and `/all-spectrum.json` endpoints in `Network.cpp`, sharing the radio-operation lock with the existing spectrum scan to prevent simultaneous receiver scans.
+- Added an ALL BAND SCANNER panel directly below the existing FM/VHF Spectrum Scan in `PageStatus.h`, matching the existing dark-blue/cyan style and offering clickable signal peaks.
+- **Not yet built or hardware-tested.** Next: inspect compile diagnostics, run the manual build workflow on `development`, then hardware-test AM/USB/LSB, radio-state restoration, invalid ranges, clickable peaks, and regressions for VHF scanner/Web Control/Dual RX.
+- A temporary branch was created accidentally during setup; user explicitly requested no additional branches. Work was copied onto `development`; remove the temporary branch `all-band-web-scanner` if repository permissions/actions allow. Do not create any further branches and do not touch `main`.
