@@ -147,3 +147,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Found why the Spectrum submenu may disappear: the generic command timeout exempted the graph and keypad but not `CMD_SPECTRUM_MENU`. The timeout now also exempts the submenu so it stays open while the user reads/selects VHF Spectrum or ALL Band Spectrum.
 - Menu hint is present in both English and German. The start/end keypad text is present.
 - Next: manual build and device test. Verify first click on SPECTRUM opens and stays on the submenu; selecting VHF Spectrum opens the keypad; entering start frequency prompts for end frequency; graph colors/peak navigation; selecting a peak still tunes correctly. Source changes are not build-verified yet.
+
+
+## VHF Spectrum UI polish before next manual build (2026-10-29)
+- Commit `782a1f3985bd3ddcee04b1e262bcb7a3af7b63d2` adjusts the scanner keypad geometry so the instruction text is no longer drawn over the frequency field. The first stage explicitly says ENTER START FREQUENCY; the second stage shows the accepted start frequency and ENTER END FREQUENCY above the field.
+- Native graph panel and grid were darkened toward the near-black navy Web Spectrum aesthetic; trace color is a very dark blue-gray and peak tips remain vivid red.
+- Encoder peak navigation now uses a lower local-peak threshold (5% of the RSSI span) and, if the trace has no qualifying local peak, jumps to the strongest remaining sample in the requested direction instead of advancing by a single 100 kHz point.
+- The earlier timeout exemption for `CMD_SPECTRUM_MENU` remains in `ats-mini.ino` (commit `29f2865d193b3ef3ffb2132607c069cc24964414`).
+- Next step: manual build and device verification. These latest changes have not been built or tested on hardware yet.
