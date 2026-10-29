@@ -738,7 +738,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const points=Math.floor((end-start)/step)+1;
    if(!Number.isInteger(start)||!Number.isInteger(end)||start<150||end>30000||end<=start){status.textContent='Enter a valid range between 150 and 30000 kHz.';return;}
    if(end-start>1000||(end-start)%step!==0||points<2||points>201){status.textContent='Range must be at most 1000 kHz and align exactly to the selected step (maximum 201 points).';return;}
-   scanBusy=true;button.disabled=true;startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=true;draw([]);status.textContent='Starting ALL Band receiver sweep…';
+   scanBusy=true;button.disabled=true;button.textContent='⏳ SCAN RUNNING…';startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=true;draw([]);status.textContent='⏳ ALL BAND SCAN RUNNING — PLEASE WAIT · Initializing receiver…';
    try{
      const body=new URLSearchParams({start_khz:String(start),end_khz:String(end),step_khz:String(step),mode});
      const response=await fetch('/all-spectrum/start',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,cache:'no-store'});
@@ -749,11 +749,11 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
        await new Promise(resolve=>setTimeout(resolve,1000));
        const res=await fetch('/all-spectrum.json',{cache:'no-store'});const data=await res.json();
        if(data.ready&&Array.isArray(data.samples)&&data.samples.length){plotMode=data.mode||mode;draw(data.samples);status.textContent='ALL Band sweep complete · '+data.samples.length+' samples · '+plotMode+'. Tap a red peak to tune.';completed=true;break;}
-       status.textContent='Measuring ALL Band signal… '+(i+1)+' s';
+       status.textContent='⏳ ALL BAND SCAN RUNNING — PLEASE WAIT · Measuring signal… '+(i+1)+' s';
      }
      if(!completed)throw new Error('ALL Band sweep timed out. Try a narrower range or larger step.');
    }catch(error){status.textContent=error.message||'ALL Band scan failed.';}
-   finally{scanBusy=false;button.disabled=false;startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=false;}
+   finally{scanBusy=false;button.disabled=false;button.textContent='▶ SCAN ALL BAND';startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=false;}
  });
  canvas.addEventListener('click',async event=>{
    if(!peaks.length||!samples.length||scanBusy)return;
