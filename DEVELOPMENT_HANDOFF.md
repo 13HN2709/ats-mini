@@ -183,3 +183,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Start keypad now displays `ENTER START FREQUENCY (MHz)` above the value field. End keypad displays the accepted start frequency on its own line and `ENTER END FREQUENCY (MHz)` on a second line.
 - Moved the frequency display down slightly and the key grid down 5 px to make room while keeping the keypad within the screen frame. Commit: `e24c2967d4e278e21750d2093e82f63bfe15ee4c`.
 - No build or hardware test has been run; verify both keypad stages visually on the device.
+
+
+## VHF Spectrum visual fixes and peak-tune follow-up (2026-10-29)
+- User tested the current build successfully: start/end frequency keypads now transition correctly and the native VHF graph appears.
+- Requested keypad refinement: on the end-frequency keypad, show only `ENTER END FREQUENCY (MHz)`; remove the repeated start-frequency line and use the same bright cyan as the keypad labels. Committed to `development` in `60b9177cf669ef68f2c237d7e911c5e7406561f2`.
+- Requested graph refinement: waveform/vertical peak stems should remain subdued dark blue-gray; only the small peak-tip triangles should be vivid red. Changed the vertical stems from red to the subdued waveform color in the same commit.
+- Remaining reported behavior: turning the encoder to select a peak updates the frequency shown on the graph, but clicking does not tune to that selected peak and instead retains the frequency that was already shown on the main radio layout. This must be traced through the actual encoder/click dispatch before patching; do not assume `spectrumScannerSelect()` is being called correctly until verified.
+- Build/device status: the previous build confirmed the keypad transition and graph on hardware. The latest visual-only patch has not yet been built or tested. Peak-selection tuning bug remains open.
