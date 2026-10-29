@@ -478,7 +478,7 @@ void drawSpectrumScanner()
   const uint16_t blue = 0x001F;
   const uint16_t green = 0x07E0;
   const uint16_t red = 0xF800;
-  const uint16_t wave = 0x18C3;
+  const uint16_t wave = 0x07FF;
   const uint16_t white = 0xFFFF;
   const uint16_t muted = 0x4208;
 
@@ -549,9 +549,9 @@ void drawSpectrumScanner()
         int px = gx + 1 + (int)((uint32_t)i * (gw - 3) / (count - 1));
         int py = gy + gh - 2 - (int)((uint32_t)(here - minR) * (gh - 5) / (maxR - minR));
         spr.drawFastVLine(px, py, max(3, gy + gh - 2 - py), wave);
-        spr.fillTriangle(px - 3, py - 1, px + 3, py - 1, px, py - 6, red);
-        // Bright red circular cap makes each detected peak stand out clearly.
-        spr.fillCircle(px, py - 4, 3, red);
+        // Keep peak markers inside the graph; only the dots are red.
+        const int dotY = max(gy + 3, min(gy + gh - 4, py));
+        spr.fillCircle(px, dotY, 3, red);
       }
     }
     int sx = gx + 1 + (int)((uint32_t)selectedPoint * (gw - 3) / (count - 1));
