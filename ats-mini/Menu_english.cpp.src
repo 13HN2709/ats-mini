@@ -127,7 +127,7 @@ static const char *menu[] =
 {
   "Mode", "Bands", "Volume", "Keypad", "DUAL RX", "VFO A/B",
   "Frequency", "BFO", "Steps", "Seek", "Scan", "Memory", "Squelch",
-  "Bandwidth", "AGC/ATTN", "AVC", "SoftMute", "Settings", "Spectrum",
+  "Bandwidth", "AGC/ATTN", "AVC", "SoftMute", "Settings", "VHF Spectrum",
 };
 
 #define MENU_BRIGHTNESS   0
