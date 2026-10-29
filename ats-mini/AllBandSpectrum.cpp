@@ -63,7 +63,7 @@ void drawAllBandSpectrumInput(){const uint16_t cyan=0x07FF,blue=0x001F,dark=0x08
  spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString(stage==0?"ALL BAND: START (kHz)":"ALL BAND: END (kHz)",160,5);
  char b[32];snprintf(b,sizeof(b),"%s kHz",input[stage][0]?input[stage]:"---");spr.setTextDatum(MC_DATUM);spr.setTextColor(inputError?red:cyan);spr.drawRoundRect(14,28,210,23,2,inputError?red:blue);spr.drawString(b,119,39);
  spr.fillRoundRect(230,28,76,23,2,dark);spr.drawRoundRect(230,28,76,23,2,blue);spr.setTextColor(cyan);spr.drawString(modeNames[modeIndex],268,39);
- const int sx=14,sy=55,w=68,h=27,gx=5,gy=2;
+ const int sx=14,sy=55,w=68,h=24,gx=5,gy=2;
  for(int i=0;i<16;i++){if(i==14)continue;int x=sx+(i%4)*(w+gx),y=sy+(i/4)*(h+gy);bool sel=i==keyIndex;spr.fillRoundRect(x,y,w,h,3,sel?cyan:dark);spr.drawRoundRect(x,y,w,h,3,sel?0xFFFF:blue);spr.setTextDatum(MC_DATUM);spr.setTextColor(sel?0:cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString(keys[i],x+w/2,y+h/2);}
  spr.setTextDatum(TC_DATUM);spr.setTextColor(inputError?red:0xBDF7);spr.setFont(FONT_SMALL);spr.drawString(inputError?"Invalid Input / Scan Width > 1000 kHz":"MODE cycles AM / USB / LSB",160,158); }
 void drawAllBandSpectrum(){const uint16_t cyan=0x07FF,blue=0x001F,green=0x07E0;spr.fillSprite(0);spr.fillRoundRect(3,3,314,164,5,0x0008);spr.drawRoundRect(3,3,314,164,5,blue);spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString("ALL BAND SPECTRUM",160,7);char b[32];snprintf(b,sizeof(b),"%u kHz  %s",startKHz+selected*STEP_KHZ,modeNames[modeIndex]);spr.setTextColor(green);spr.drawString(b,160,25);
