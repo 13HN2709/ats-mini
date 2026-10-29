@@ -236,7 +236,7 @@ void drawFreqKeypad()
   spr.drawRoundRect(modeX, modeY, modeW, modeH, 2, frameBlue);
   spr.setTextDatum(MC_DATUM);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.drawString(bandModeDesc[tempMode], modeX + modeW / 2, modeY + modeH / 2 - 3);
+  spr.drawString(bandModeDesc[tempMode], modeX + modeW / 2, modeY + modeH / 2);
 
   // 4x4 Tastenfeld
   int startX = boxX + 8;
