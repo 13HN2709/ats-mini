@@ -105,8 +105,8 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
     <DIV CLASS="LIVE-MARK"><SPAN></SPAN> RECEIVER</DIV>
   </DIV>
   <FORM ID="allBandSpectrumForm" CLASS="RANGE-FORM">
-    <LABEL>START <SPAN>kHz</SPAN><INPUT ID="allBandStart" TYPE="number" MIN="150" MAX="29995" STEP="1" VALUE="7100" REQUIRED></LABEL>
-    <LABEL>STOP <SPAN>kHz</SPAN><INPUT ID="allBandEnd" TYPE="number" MIN="151" MAX="30000" STEP="1" VALUE="7600" REQUIRED></LABEL>
+    <LABEL>START <SPAN>kHz</SPAN><INPUT ID="allBandStart" TYPE="number" MIN="150" MAX="29995" STEP="1" VALUE="" PLACEHOLDER="Start kHz" REQUIRED></LABEL>
+    <LABEL>STOP <SPAN>kHz</SPAN><INPUT ID="allBandEnd" TYPE="number" MIN="151" MAX="30000" STEP="1" VALUE="" PLACEHOLDER="Stop kHz" REQUIRED></LABEL>
     <LABEL>MODULATION<SELECT ID="allBandMode" STYLE="width:100%;margin-top:6px"><OPTION VALUE="AM" SELECTED>AM</OPTION><OPTION VALUE="USB">USB</OPTION><OPTION VALUE="LSB">LSB</OPTION></SELECT></LABEL>
     <LABEL>STEP<SELECT ID="allBandStep" STYLE="width:100%;margin-top:6px"><OPTION VALUE="5" SELECTED>5 kHz</OPTION><OPTION VALUE="10">10 kHz</OPTION><OPTION VALUE="25">25 kHz</OPTION><OPTION VALUE="50">50 kHz</OPTION><OPTION VALUE="100">100 kHz</OPTION><OPTION VALUE="250">250 kHz</OPTION><OPTION VALUE="500">500 kHz</OPTION><OPTION VALUE="1000">1000 kHz</OPTION></SELECT></LABEL>
     <BUTTON ID="allBandStartScan" TYPE="submit">▶ SCAN ALL BAND</BUTTON>
@@ -712,32 +712,45 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    samples.forEach((p,i)=>{if(i===0||i===samples.length-1||p.r<samples[i-1].r||p.r<=samples[i+1].r||p.r<threshold)return;const q=pts[i];peaks.push(q);ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle='#ff4c50';ctx.shadowColor='#ff334b';ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#ffd4dc';ctx.lineWidth=1;ctx.stroke();});
    ctx.fillStyle='#8ea2ae';ctx.font='10px monospace';ctx.textAlign='left';ctx.fillText(samples[0].f+' kHz',left,h-8);ctx.textAlign='right';ctx.fillText(samples[samples.length-1].f+' kHz',w-right,h-8);ctx.textAlign='center';ctx.fillStyle='#167bff';ctx.fillText('TAP RED PEAK TO TUNE',w/2,h-8);ctx.textAlign='left';
  }
- // When the user moves from START to STOP, configure the receiver immediately
- // so the chosen start frequency and modulation are confirmed before scanning.
+ // Keep the receiver synchronized with the current ALL Band settings.
+ // Empty frequency fields on page load and after every completed/failed scan
+ // force a fresh, explicit range entry for the next sweep.
  let preTuneKey='';
- endInput.addEventListener('focus',async()=>{
-   if(scanBusy)return;
-   const start=Number(startInput.value),mode=modeInput.value;
-   if(!Number.isInteger(start)||start<150||start>30000)return;
+ let tuneTimer=null;
+ async function syncAllBandReceiver(){
+   if(scanBusy)return false;
+   const start=Number(startInput.value),end=Number(endInput.value),mode=modeInput.value;
+   if(!startInput.value.trim()||!Number.isInteger(start)||start<150||start>30000)return false;
    const key=String(start)+'|'+mode;
-   if(key===preTuneKey)return;
+   if(key===preTuneKey)return true;
    preTuneKey=key;
    status.textContent='Preparing receiver: '+start+' kHz '+mode+'…';
-   if(window.atsDebugLog)window.atsDebugLog('ALL BAND PRE-TUNE','Focus STOP field: '+start+' kHz '+mode);
+   if(window.atsDebugLog)window.atsDebugLog('ALL BAND PRE-TUNE','Settings changed: '+start+' kHz '+mode);
    try{
      const ok=await postRadioCommand('/radio/tune',{freq:String(start*1000),mode},status);
-     if(ok)status.textContent='Receiver ready at '+start+' kHz '+mode+'. Enter STOP frequency, then scan.';
+     if(ok)status.textContent='Receiver ready at '+start+' kHz '+mode+'.';
      else preTuneKey='';
-   }catch(_){preTuneKey='';status.textContent='Could not prepare receiver at '+start+' kHz '+mode+'.';}
- });
- startInput.addEventListener('change',()=>{preTuneKey='';});
- modeInput.addEventListener('change',()=>{preTuneKey='';});
+     return !!ok;
+   }catch(_){preTuneKey='';status.textContent='Could not prepare receiver at '+start+' kHz '+mode+'.';return false;}
+ }
+ function scheduleAllBandTune(){
+   if(tuneTimer)clearTimeout(tuneTimer);
+   preTuneKey='';
+   tuneTimer=setTimeout(()=>{syncAllBandReceiver();},250);
+ }
+ startInput.addEventListener('change',scheduleAllBandTune);
+ endInput.addEventListener('change',scheduleAllBandTune);
+ modeInput.addEventListener('change',scheduleAllBandTune);
+ stepInput.addEventListener('change',scheduleAllBandTune);
  form.addEventListener('submit',async event=>{
    event.preventDefault();if(scanBusy)return;
    const start=Number(startInput.value),end=Number(endInput.value),step=Number(stepInput.value),mode=modeInput.value;
    const points=Math.floor((end-start)/step)+1;
    if(!Number.isInteger(start)||!Number.isInteger(end)||start<150||end>30000||end<=start){status.textContent='Enter a valid range between 150 and 30000 kHz.';return;}
    if(end-start>1000||(end-start)%step!==0||points<2||points>201){status.textContent='Range must be at most 1000 kHz and align exactly to the selected step (maximum 201 points).';return;}
+   status.textContent='Preparing receiver at '+start+' kHz '+mode+' before scan…';
+   const tuned=await syncAllBandReceiver();
+   if(!tuned){status.textContent='Could not tune receiver to '+start+' kHz '+mode+'. Scan not started.';return;}
    scanBusy=true;button.disabled=true;button.textContent='⏳ SCAN RUNNING…';startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=true;draw([]);status.textContent='⏳ ALL BAND SCAN RUNNING — PLEASE WAIT · Initializing receiver…';
    try{
      const body=new URLSearchParams({start_khz:String(start),end_khz:String(end),step_khz:String(step),mode});
@@ -753,7 +766,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
      }
      if(!completed)throw new Error('ALL Band sweep timed out. Try a narrower range or larger step.');
    }catch(error){status.textContent=error.message||'ALL Band scan failed.';}
-   finally{scanBusy=false;button.disabled=false;button.textContent='▶ SCAN ALL BAND';startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=false;}
+   finally{scanBusy=false;button.disabled=false;button.textContent='▶ SCAN ALL BAND';startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=false;startInput.value='';endInput.value='';preTuneKey='';}
  });
  canvas.addEventListener('click',async event=>{
    if(!peaks.length||!samples.length||scanBusy)return;
