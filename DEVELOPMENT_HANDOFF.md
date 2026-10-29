@@ -155,3 +155,10 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Encoder peak navigation now uses a lower local-peak threshold (5% of the RSSI span) and, if the trace has no qualifying local peak, jumps to the strongest remaining sample in the requested direction instead of advancing by a single 100 kHz point.
 - The earlier timeout exemption for `CMD_SPECTRUM_MENU` remains in `ats-mini.ino` (commit `29f2865d193b3ef3ffb2132607c069cc24964414`).
 - Next step: manual build and device verification. These latest changes have not been built or tested on hardware yet.
+
+
+## VHF Spectrum keypad click-dispatch regression (2026-10-29)
+- User clarified that before the Spectrum submenu was introduced, selecting Spectrum opened the keypad immediately; confirming the start frequency opened the end-frequency keypad; confirming the end frequency ran the scan successfully. The current regression appeared after the submenu and follow-up UI changes.
+- Root cause found in `ats-mini/ats-mini.ino`: a click while `currentCmd == CMD_SPECTRUM_INPUT` was first sent to the generic `clickHandler()`. Since that handler has no `CMD_SPECTRUM_INPUT` case, it returned false and the generic fallback changed `currentCmd` to `CMD_NONE` before the dedicated `spectrumScannerInputClick(true)` block could run. This breaks keypad confirmation/state progression and can make the keypad appear frozen or exit unexpectedly.
+- Targeted fix committed on `development` as `b37791abdb8b28d9ab83d24df9493fac8f182e56`: exclude `CMD_SPECTRUM_INPUT` clicks from the generic click handler so the existing dedicated scanner input handler receives them. No Spectrum scanning algorithm, menu source, layout source, or Dual RX code was changed.
+- Verification: source-level root cause confirmed and targeted edit committed. Manual build and hardware test are still required; do not claim compile/device success yet. Test menu -> VHF Spectrum -> enter/confirm start frequency -> enter/confirm end frequency -> scan; also verify Back/Close and that normal radio keypad and Dual RX still behave as before.
