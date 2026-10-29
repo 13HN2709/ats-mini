@@ -885,6 +885,8 @@ void loop()
           needRedraw = true;
         }
       }
+      else if(currentCmd == CMD_ALL_SPECTRUM_INPUT || currentCmd == CMD_ALL_SPECTRUM)
+      { /* Dedicated ALL Band handlers below own these clicks. */ }
       else if(clickHandler(currentCmd, pb1st.wasShortPressed))
       {
         needRedraw = true;
@@ -985,7 +987,7 @@ void loop()
 
   if((currentTime - elapsedCommand) > ELAPSED_COMMAND)
   {
-    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT)
+    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT && currentCmd != CMD_ALL_SPECTRUM && currentCmd != CMD_ALL_SPECTRUM_INPUT)
     {
       currentCmd = CMD_NONE;
       needRedraw = true;
