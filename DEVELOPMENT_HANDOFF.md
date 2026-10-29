@@ -177,3 +177,9 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Preserved peak-to-peak encoder navigation, including fallback selection of the strongest remaining sample when no qualifying local peak is found; it does not intentionally step through every 100 kHz sample.
 - German and English main-menu hints remain localized. No changes to Dual RX, existing radio keypad, or layout files.
 - Source-only update. No build or hardware test has been run; run the manual GitHub Actions workflow on `development` and test start confirmation -> immediate end-frequency keypad, graph appearance, and peak-to-peak navigation.
+
+## Make scanner keypad instructions explicit (2026-10-29)
+- User pointed out that the end-frequency instruction should also be visible inside the pop-up keypad, not only in the main menu.
+- Start keypad now displays `ENTER START FREQUENCY (MHz)` above the value field. End keypad displays the accepted start frequency on its own line and `ENTER END FREQUENCY (MHz)` on a second line.
+- Moved the frequency display down slightly and the key grid down 5 px to make room while keeping the keypad within the screen frame. Commit: `e24c2967d4e278e21750d2093e82f63bfe15ee4c`.
+- No build or hardware test has been run; verify both keypad stages visually on the device.
