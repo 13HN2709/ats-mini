@@ -16,6 +16,7 @@
 #include "PageConfig.h"
 #include "PageUpdate.h"
 #include "PagePatches.h"
+#include "AllBandWebScanner.h"
 #include <new>
 
 #include <WiFi.h>
@@ -76,6 +77,12 @@ static void webUploadSplash(AsyncWebServerRequest *request, const String &filena
                             size_t index, uint8_t *data, size_t len, bool final);
 static bool webIsAuthenticated(AsyncWebServerRequest *request);
 static volatile bool webSpectrumRequested = false;
+static volatile bool webAllSpectrumRequested = false;
+static volatile bool webAllSpectrumReady = false;
+static volatile uint16_t webAllSpectrumStartKHz = 7100;
+static volatile uint16_t webAllSpectrumEndKHz = 7600;
+static volatile uint16_t webAllSpectrumStepKHz = 5;
+static volatile int8_t webAllSpectrumRequestedMode = AM;
 static volatile bool webSpectrumReady = false;
 static volatile bool webSpectrumBusy = false;
 static volatile int32_t webTuneFrequencyHz = 0;
@@ -650,6 +657,72 @@ static void webInit()
       if(!scanGetPoint(i, &freq, &signal, &noise)) break;
       if(i) json += ',';
       json += "{\"f\":" + String(freq) + ",\"r\":" + String(signal) + ",\"s\":" + String(noise) + "}";
+    }
+    json += "]}";
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
+    response->addHeader("Cache-Control", "no-store");
+    request->send(response);
+  });
+
+  // Isolated ALL Band web scanner: independent endpoints and result buffer.
+  server.on("/all-spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(currentCmd == CMD_DUAL_RX)
+      return request->send(409, "application/json", "{\\"ready\\":false,\\"error\\":\\"Stop Dual RX before scanning.\\"}");
+    if(webSpectrumBusy || webSpectrumRequested || webAllSpectrumRequested)
+      return request->send(409, "application/json", "{\\"ready\\":false,\\"error\\":\\"A spectrum scan is already running.\\"}");
+    if(!request->hasParam("start_khz", true) || !request->hasParam("end_khz", true) ||
+       !request->hasParam("step_khz", true) || !request->hasParam("mode", true))
+      return request->send(400, "application/json", "{\\"ready\\":false,\\"error\\":\\"Provide start, end, step and modulation.\\"}");
+
+    String startValue = request->getParam("start_khz", true)->value();
+    String endValue = request->getParam("end_khz", true)->value();
+    String stepValue = request->getParam("step_khz", true)->value();
+    String modeValue = request->getParam("mode", true)->value();
+    char *startEnd = nullptr, *endEnd = nullptr, *stepEnd = nullptr;
+    long start = strtol(startValue.c_str(), &startEnd, 10);
+    long end = strtol(endValue.c_str(), &endEnd, 10);
+    long step = strtol(stepValue.c_str(), &stepEnd, 10);
+    int8_t mode = modeValue == "AM" ? AM : modeValue == "USB" ? USB : modeValue == "LSB" ? LSB : -1;
+    if(!startEnd || *startEnd || !endEnd || *endEnd || !stepEnd || *stepEnd ||
+       start < 150 || end > 30000 || end <= start)
+      return request->send(400, "application/json", "{\\"ready\\":false,\\"error\\":\\"Range must be 150–30000 kHz and end must exceed start.\\"}");
+    if(mode < 0)
+      return request->send(422, "application/json", "{\\"ready\\":false,\\"error\\":\\"Choose AM, USB or LSB.\\"}");
+    if(step != 5 && step != 10 && step != 25 && step != 50 && step != 100 && step != 250 && step != 500 && step != 1000)
+      return request->send(422, "application/json", "{\\"ready\\":false,\\"error\\":\\"Unsupported step size.\\"}");
+    uint32_t width = (uint32_t)(end - start);
+    uint32_t points = width / (uint32_t)step + 1;
+    if(width > 1000 || width % (uint32_t)step != 0 || points < 2 || points > 201)
+      return request->send(422, "application/json", "{\\"ready\\":false,\\"error\\":\\"Scan width must be at most 1000 kHz and align to the selected step.\\"}");
+
+    webAllSpectrumStartKHz = (uint16_t)start;
+    webAllSpectrumEndKHz = (uint16_t)end;
+    webAllSpectrumStepKHz = (uint16_t)step;
+    webAllSpectrumRequestedMode = mode;
+    webAllSpectrumReady = false;
+    webSpectrumBusy = true; // Shared radio-operation lock; result buffers remain separate.
+    webAllSpectrumRequested = true;
+    request->send(202, "application/json", "{\\"ready\\":false}");
+  });
+
+  server.on("/all-spectrum.json", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    if(!webIsAuthenticated(request)) return request->requestAuthentication();
+    if(!webAllSpectrumReady)
+      return request->send(200, "application/json", "{\\"ready\\":false}");
+    String json;
+    json.reserve(7200);
+    const int8_t mode = allBandWebScanMode();
+    const char *modeName = mode == AM ? "AM" : mode == USB ? "USB" : "LSB";
+    json = "{\\"ready\\":true,\\"mode\\":\\"" + String(modeName) + "\\",\\"samples\\":[";
+    const uint16_t count = allBandWebScanCount();
+    for(uint16_t i = 0; i < count; i++)
+    {
+      uint16_t frequency = 0;
+      uint8_t signal = 0, noise = 0;
+      if(!allBandWebScanPoint(i, &frequency, &signal, &noise)) break;
+      if(i) json += ',';
+      json += "{\\"f\\":" + String(frequency) + ",\\"r\\":" + String(signal) + ",\\"s\\":" + String(noise) + "}";
     }
     json += "]}";
     AsyncWebServerResponse *response = request->beginResponse(200, "application/json", json);
@@ -1436,6 +1509,25 @@ void webSpectrumTick()
     webSpectrumRequestedMode = -1;
     webSpectrumStep = 1;
     webSpectrumBusy = false;
+    return;
+  }
+
+  // Run the isolated ALL Band web scan in the main loop, never in the async HTTP task.
+  if(webAllSpectrumRequested)
+  {
+    webAllSpectrumRequested = false;
+    webTuneStep = 0;
+    webRequestedVolume = -1;
+    webTuneFrequencyHz = 0;
+    webTuneRequestedMode = -1;
+    const uint16_t start = webAllSpectrumStartKHz;
+    const uint16_t end = webAllSpectrumEndKHz;
+    const uint16_t step = webAllSpectrumStepKHz;
+    const int8_t mode = webAllSpectrumRequestedMode;
+    webDiagLog("ALL BAND SPECTRUM start");
+    webAllSpectrumReady = allBandWebScanRun(start, end, step, mode);
+    webSpectrumBusy = false;
+    webDiagLog(webAllSpectrumReady ? "ALL BAND SPECTRUM complete" : "ALL BAND SPECTRUM failed");
     return;
   }
 
