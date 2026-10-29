@@ -53,6 +53,8 @@
 #define CMD_SPECTRUM    0x3900 // Native spectrum scanner
 #define CMD_SPECTRUM_MENU 0x3A00 // Spectrum submenu
 #define CMD_SPECTRUM_INPUT 0x3B00 // Independent VHF scanner frequency keypad
+#define CMD_ALL_SPECTRUM 0x3C00 // Isolated ALL Band Spectrum graph
+#define CMD_ALL_SPECTRUM_INPUT 0x3D00 // Isolated ALL Band Spectrum keypad
 
 
 

@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-29 (VHF scanner UI/peak-navigation changes committed; build pending)
+Last updated: 2026-10-29 (ALL Band Spectrum source implementation committed; build pending)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -228,3 +228,35 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Fix commit: `f8efb9a52e0eea85c63d981bc43a7ac750aeb550`; the change moves `dualRxTick()` after button handling and skips starting a band switch while the physical encoder button is held.
 - User's device test confirms the reported stop bug is resolved. Long-press dim/wake behavior was not separately reconfirmed in this message; keep that behavior as a regression check if further Dual RX code changes are made.
 - Main remains untouched; do not merge unless the user explicitly asks.
+
+
+## ALL Band Spectrum implementation (2026-10-29)
+- Added a separate `AllBandSpectrum.cpp/.h` module and dedicated commands for ALL Band Spectrum input and graph, without reusing the VHF scanner buffers or keypad state.
+- Added `ALL Band Spectrum` as a separate main-menu entry in English and German. Menu hint identifies AM/USB/LSB and the maximum scan width of 1000 kHz.
+- Input uses kHz and a dedicated MODE key cycling AM / USB / LSB. Start and end are validated before selecting the broad ALL tuner band or starting a scan. End must exceed start, width must be <= 1000 kHz, and the span must align to 5 kHz steps; larger ranges show a red invalid-input/scan-width hint and do not start scanning.
+- Scanner uses its own 201-point RSSI/SNR buffers, 5 kHz steps, and separate graph/input rendering. Web Spectrum and the existing VHF Spectrum source were not edited in this feature.
+- Source implementation is committed on `development`; it has **not been compiled or hardware-tested**. Before the manual build, review encoder click routing, tuner mode setup/restore behavior, and verify `AllBandSpectrum.cpp` compiles under all four OSPI/QSPI × German/English matrix targets. Test 2000–3000 kHz accepted and 2000–3100 kHz rejected, plus AM/USB/LSB selection and VHF/Web/Dual RX regression.
+
+
+### ALL Band Spectrum source review update (2026-10-29)
+- Reviewed the native VHF sweep lifecycle and the ALL Band input/graph routing.
+- Corrected ALL Band radio restore order so the saved ALL-band modulation is restored before reinitializing the receiver. This matters if the radio was already on the broad ALL band when the scanner starts.
+- Added the same abort checks used by the native VHF sweep so an encoder/button/remote abort can stop the blocking sweep, while restoring frequency and mute/delay state.
+- Removed duplicate ALL Band click/long-press handler blocks from the main loop; one dedicated handler path remains.
+- Reduced keypad button height so the fourth row no longer overlaps the bottom instruction.
+- Follow-up commits on `development`: `7581598` (remove duplicate click handlers), `5495957` (restore/abort handling), `c42433a` (keypad spacing).
+- Re-check confirmed the GitHub Actions workflow compiles the full `ats-mini` sketch directory, so the new `AllBandSpectrum.cpp` is included in the workflow build even though the legacy Makefile source list is not maintained for this module.
+- Final source pass completed: verified dedicated draw/encoder/button paths, command timeout exclusions, English/German menu wiring, and the full-sketch GitHub Actions compilation path. Found and fixed a compile blocker where scanner buffers named `rssi`/`snr` conflicted with globals; the buffers are now `allBandRssi`/`allBandSnr`.
+- Current source is ready for the manual build, but it is **not yet compiled or hardware-tested**. Next: user may start the manual GitHub Actions build on `development`; if it succeeds, hardware-test accepted/rejected widths, AM/USB/LSB, radio restore, encoder peak selection/accept, and VHF/Web/Dual RX regression. Do not touch `main`.
+
+
+### WLAN-Menübezeichnung (2026-10-29)
+- In den englischen und deutschen Menüquellen sind die sichtbaren WLAN-Modus-Beschriftungen korrekt zugeordnet: `AP Only` wird als `WEB CTRL` angezeigt; `AP+Connect` wird als `WEB+Conn` angezeigt. Es wurden nur Labels geändert, die WLAN-Logik blieb unverändert.
+- Es wurde ausschließlich der Text in `wifiModeDesc[]` geändert; WLAN-Modus-Index und AP-/Connect-Logik bleiben unverändert.
+- Noch nicht kompiliert oder am Gerät verifiziert. Auf `development`; `main` bleibt unangetastet.
+
+
+### ALL Band Spectrum STEP label and hint readability (2026-10-29)
+- Renamed the keypad button from `MODE` to `STEP`; its click handler now keys off `STEP` and still cycles the existing scan-step choices.
+- The `STEP: n kHz` hint now uses the same cyan color as the other keypad labels and a larger bold font. Validation errors remain red.
+- Updated on `development`; not yet rebuilt or hardware-verified. `main` untouched.

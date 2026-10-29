@@ -11,6 +11,7 @@
 #include "Patches.h"
 #include "FreqKeypad.h"
 #include "SpectrumScanner.h"
+#include "AllBandSpectrum.h"
 #include "Storage.h"
 
 #include <time.h>
@@ -118,6 +119,7 @@ static int visibleBandIndexAtOffset(int offset)
 #define MENU_SOFTMUTE    16
 #define MENU_SETTINGS    17
 #define MENU_SPECTRUM    18
+#define MENU_ALL_SPECTRUM 19
 
 int8_t menuIdx = MENU_KEYPAD;
 int8_t spectrumMenuIdx = 0;
@@ -144,6 +146,7 @@ static const char *menu[] =
   "SOFT-MUTE",
   "EINSTELLUNGEN",
   "VHF SPEKTRUM",
+  "ALL BAND SPEKTRUM",
 };
 
 #define MENU_BRIGHTNESS   0
@@ -287,7 +290,7 @@ static uint8_t bleModeMenuIdx = BLE_OFF;
 static const char *bleModeDesc[] = { "Off", "Ad hoc", "HID", "Unpair All" };
 
 uint8_t wifiModeIdx = NET_OFF;
-static const char *wifiModeDesc[] = { "Off", "AP Only", "AP+Connect", "Connect", "Sync Only" };
+static const char *wifiModeDesc[] = { "Off", "WEB CTRL", "WEB+Conn", "Connect", "Sync Only" };
 
 static const Step fmSteps[] = { { 1, "10k", 1 }, { 5, "50k", 5 }, { 10, "100k", 10 }, { 20, "200k", 20 }, { 100, "1M", 10 } };
 static const Step ssbSteps[] = { { 10, "10", 1 }, { 25, "25", 1 }, { 50, "50", 1 }, { 100, "100", 1 }, { 500, "500", 1 }, { 1000, "1k", 1 }, { 5000, "5k", 5 }, { 9000, "9k", 9 }, { 10000, "10k", 10 } };
@@ -951,6 +954,7 @@ static void clickMenu(int cmd, bool shortPress)
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
     case MENU_SPECTRUM: spectrumScannerStart(); break;
+    case MENU_ALL_SPECTRUM: allBandSpectrumStart(); break;
   }
 }
 
@@ -1832,11 +1836,11 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setFont(FONT_SMALL);
   spr.setTextColor(cyan);
   spr.drawString("KLICK: OK", 307, 151, FONT_SMALL);
-  if(!settingsPage && !spectrumPage && idx == MENU_SPECTRUM) {
+  if(!settingsPage && !spectrumPage && (idx == MENU_SPECTRUM || idx == MENU_ALL_SPECTRUM)) {
     spr.setTextDatum(MC_DATUM);
     spr.setTextColor(0xBDF7);
     spr.setFont(FONT_SMALL);
-    spr.drawString("Nach Klick Startfrequenz eingeben", 160, 132);
+    spr.drawString(idx == MENU_ALL_SPECTRUM ? "AM / USB / LSB - Max. Scanbreite: 1000 kHz" : "Nach Klick Startfrequenz eingeben", 160, 132);
   }
 }
 

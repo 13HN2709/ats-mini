@@ -22,6 +22,7 @@
 #include <time.h>
 #include "FreqKeypad.h"
 #include "SpectrumScanner.h"
+#include "AllBandSpectrum.h"
 
 
 // SI473/5 and UI
@@ -756,6 +757,21 @@ void loop()
   if(currentCmd == CMD_DUAL_RX && digitalRead(ENCODER_PUSH_BUTTON) != LOW && dualRxTick(currentTime))
     needRedraw = true;
 
+  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && encCount)
+  {
+    allBandSpectrumInputRotate(encCount);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime;
+    encCount = encCountAccel = 0;
+  }
+
+  if(currentCmd == CMD_ALL_SPECTRUM && encCount)
+  {
+    allBandSpectrumRotate(encCount);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime;
+  }
+
   if(currentCmd == CMD_SPECTRUM_INPUT && encCount)
   {
     spectrumScannerInputRotate(encCount);
@@ -771,7 +787,7 @@ void loop()
     elapsedSleep = elapsedCommand = currentTime;
   }
 
-  if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_INPUT && pushAndRotate)
+  if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_INPUT && currentCmd != CMD_ALL_SPECTRUM && currentCmd != CMD_ALL_SPECTRUM_INPUT && pushAndRotate)
   {
     if(encCount)
     {
@@ -794,7 +810,7 @@ void loop()
     }
     elapsedSleep = elapsedCommand = currentTime;
   }
-  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT)
+  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT && currentCmd != CMD_ALL_SPECTRUM && currentCmd != CMD_ALL_SPECTRUM_INPUT)
   {
     if(encCount)
     {
@@ -869,6 +885,8 @@ void loop()
           needRedraw = true;
         }
       }
+      else if(currentCmd == CMD_ALL_SPECTRUM_INPUT || currentCmd == CMD_ALL_SPECTRUM)
+      { /* Dedicated ALL Band handlers below own these clicks. */ }
       else if(clickHandler(currentCmd, pb1st.wasShortPressed))
       {
         needRedraw = true;
@@ -876,7 +894,7 @@ void loop()
 
         // Opening Spectrum from the menu uses this same encoder click.
         // Consume it here so it cannot immediately accept/close the scanner below.
-        if(currentCmd == CMD_SPECTRUM || currentCmd == CMD_SPECTRUM_MENU || currentCmd == CMD_SPECTRUM_INPUT)
+        if(currentCmd == CMD_SPECTRUM || currentCmd == CMD_SPECTRUM_MENU || currentCmd == CMD_SPECTRUM_INPUT || currentCmd == CMD_ALL_SPECTRUM || currentCmd == CMD_ALL_SPECTRUM_INPUT)
           pb1st.wasClicked = pb1st.wasShortPressed = false;
       }
       else if(currentCmd != CMD_NONE)
@@ -896,6 +914,35 @@ void loop()
       }
     }
   }
+
+  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
+  {
+    allBandSpectrumInputClick(true);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime = millis();
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+  else if(currentCmd == CMD_ALL_SPECTRUM_INPUT && pb1st.isLongPressed)
+  {
+    allBandSpectrumCancel();
+    needRedraw = true;
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+
+  if(currentCmd == CMD_ALL_SPECTRUM && (pb1st.wasClicked || pb1st.wasShortPressed))
+  {
+    allBandSpectrumSelect();
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime = millis();
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+  else if(currentCmd == CMD_ALL_SPECTRUM && pb1st.isLongPressed)
+  {
+    allBandSpectrumCancel();
+    needRedraw = true;
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+
 
   if(currentCmd == CMD_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
   {
@@ -928,7 +975,7 @@ void loop()
 
   if((currentTime - elapsedCommand) > ELAPSED_COMMAND)
   {
-    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT)
+    if(currentCmd != CMD_NONE && currentCmd != CMD_SEEK && currentCmd != CMD_SCAN && currentCmd != CMD_MEMORY && currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT && currentCmd != CMD_ALL_SPECTRUM && currentCmd != CMD_ALL_SPECTRUM_INPUT)
     {
       currentCmd = CMD_NONE;
       needRedraw = true;
