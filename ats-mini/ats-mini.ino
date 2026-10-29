@@ -757,7 +757,22 @@ void loop()
   if(currentCmd == CMD_DUAL_RX && digitalRead(ENCODER_PUSH_BUTTON) != LOW && dualRxTick(currentTime))
     needRedraw = true;
 
-  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && encCount)\n  {\n    allBandSpectrumInputRotate(encCount);\n    needRedraw = true;\n    elapsedSleep = elapsedCommand = currentTime;\n    encCount = encCountAccel = 0;\n  }\n\n  if(currentCmd == CMD_ALL_SPECTRUM && encCount)\n  {\n    allBandSpectrumRotate(encCount);\n    needRedraw = true;\n    elapsedSleep = elapsedCommand = currentTime;\n  }\n\n  if(currentCmd == CMD_SPECTRUM_INPUT && encCount)
+  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && encCount)
+  {
+    allBandSpectrumInputRotate(encCount);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime;
+    encCount = encCountAccel = 0;
+  }
+
+  if(currentCmd == CMD_ALL_SPECTRUM && encCount)
+  {
+    allBandSpectrumRotate(encCount);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime;
+  }
+
+  if(currentCmd == CMD_SPECTRUM_INPUT && encCount)
   {
     spectrumScannerInputRotate(encCount);
     needRedraw = true;
@@ -795,7 +810,7 @@ void loop()
     }
     elapsedSleep = elapsedCommand = currentTime;
   }
-  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT)
+  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT && currentCmd != CMD_ALL_SPECTRUM && currentCmd != CMD_ALL_SPECTRUM_INPUT)
   {
     if(encCount)
     {
@@ -877,7 +892,7 @@ void loop()
 
         // Opening Spectrum from the menu uses this same encoder click.
         // Consume it here so it cannot immediately accept/close the scanner below.
-        if(currentCmd == CMD_SPECTRUM || currentCmd == CMD_SPECTRUM_MENU || currentCmd == CMD_SPECTRUM_INPUT)
+        if(currentCmd == CMD_SPECTRUM || currentCmd == CMD_SPECTRUM_MENU || currentCmd == CMD_SPECTRUM_INPUT || currentCmd == CMD_ALL_SPECTRUM || currentCmd == CMD_ALL_SPECTRUM_INPUT)
           pb1st.wasClicked = pb1st.wasShortPressed = false;
       }
       else if(currentCmd != CMD_NONE)
@@ -898,7 +913,48 @@ void loop()
     }
   }
 
-  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))\n  {\n    allBandSpectrumInputClick(true);\n    needRedraw = true;\n    elapsedSleep = elapsedCommand = currentTime = millis();\n    pb1st.wasClicked = pb1st.wasShortPressed = false;\n  }\n  else if(currentCmd == CMD_ALL_SPECTRUM_INPUT && pb1st.isLongPressed)\n  {\n    allBandSpectrumCancel();\n    needRedraw = true;\n    pb1st.wasClicked = pb1st.wasShortPressed = false;\n  }\n\n  if(currentCmd == CMD_ALL_SPECTRUM && (pb1st.wasClicked || pb1st.wasShortPressed))\n  {\n    allBandSpectrumSelect();\n    needRedraw = true;\n    elapsedSleep = elapsedCommand = currentTime = millis();\n    pb1st.wasClicked = pb1st.wasShortPressed = false;\n  }\n  else if(currentCmd == CMD_ALL_SPECTRUM && pb1st.isLongPressed)\n  {\n    allBandSpectrumCancel();\n    needRedraw = true;\n    pb1st.wasClicked = pb1st.wasShortPressed = false;\n  }\n\n  if(currentCmd == CMD_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
+  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
+  {
+    allBandSpectrumInputClick(true);
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime = millis();
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+  else if(currentCmd == CMD_ALL_SPECTRUM_INPUT && pb1st.isLongPressed)
+  {
+    allBandSpectrumCancel();
+    needRedraw = true;
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+
+  if(currentCmd == CMD_ALL_SPECTRUM && (pb1st.wasClicked || pb1st.wasShortPressed))
+  {
+    allBandSpectrumSelect();
+    needRedraw = true;
+    elapsedSleep = elapsedCommand = currentTime = millis();
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+  else if(currentCmd == CMD_ALL_SPECTRUM && pb1st.isLongPressed)
+  {
+    allBandSpectrumCancel();
+    needRedraw = true;
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+
+  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
+  {
+    allBandSpectrumInputClick(true); needRedraw = true; elapsedSleep = elapsedCommand = currentTime = millis();
+    pb1st.wasClicked = pb1st.wasShortPressed = false;
+  }
+  else if(currentCmd == CMD_ALL_SPECTRUM_INPUT && pb1st.isLongPressed)
+  { allBandSpectrumCancel(); needRedraw = true; pb1st.wasClicked = pb1st.wasShortPressed = false; }
+
+  if(currentCmd == CMD_ALL_SPECTRUM && (pb1st.wasClicked || pb1st.wasShortPressed))
+  { allBandSpectrumSelect(); needRedraw = true; elapsedSleep = elapsedCommand = currentTime = millis(); pb1st.wasClicked = pb1st.wasShortPressed = false; }
+  else if(currentCmd == CMD_ALL_SPECTRUM && pb1st.isLongPressed)
+  { allBandSpectrumCancel(); needRedraw = true; pb1st.wasClicked = pb1st.wasShortPressed = false; }
+
+  if(currentCmd == CMD_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
   {
     spectrumScannerInputClick(true);
     needRedraw = true;
