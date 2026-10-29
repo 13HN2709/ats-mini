@@ -7,6 +7,7 @@
 #include "Draw.h"
 #include "FreqKeypad.h" // <--- Eingebundenes Keypad-Modul
 #include "SpectrumScanner.h"
+#include "AllBandSpectrum.h"
 
 // Layout-Prototypen
 void drawLayoutSmeter();
@@ -588,6 +589,13 @@ void drawScreen()
   }
 
   // Dedicated scanner keypad; independent from radio/Dual RX keypad.
+  if(currentCmd == CMD_ALL_SPECTRUM_INPUT)
+  {
+    drawAllBandSpectrumInput();
+    spr.pushSprite(0, 0);
+    return;
+  }
+
   if(currentCmd == CMD_SPECTRUM_INPUT)
   {
     drawSpectrumScannerInput();
@@ -604,6 +612,13 @@ void drawScreen()
   }
 
   spr.fillSprite(TH.bg);
+
+  if(currentCmd == CMD_ALL_SPECTRUM)
+  {
+    drawAllBandSpectrum();
+    spr.pushSprite(0, 0);
+    return;
+  }
 
   if(currentCmd == CMD_SPECTRUM)
   {
