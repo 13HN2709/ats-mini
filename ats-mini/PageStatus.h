@@ -99,6 +99,24 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
   </DIV>
   <DIV ID="spectrumStatus" CLASS="SCAN-STATUS" ROLE="status">Choose a modulation and frequency range, then scan. Tap a red peak to tune the receiver.</DIV>
 </SECTION>
+<SECTION CLASS="SPECTRUM-PANEL" ID="allBandScannerPanel" STYLE="margin-top:14px">
+  <DIV CLASS="PANEL-HEAD">
+    <DIV><DIV CLASS="EYEBROW">02 / HF &amp; SHORTWAVE</DIV><H2>ALL BAND SCANNER</H2><DIV CLASS="SUB">AM / USB / LSB · 150–30000 kHz</DIV></DIV>
+    <DIV CLASS="LIVE-MARK"><SPAN></SPAN> RECEIVER</DIV>
+  </DIV>
+  <FORM ID="allBandSpectrumForm" CLASS="RANGE-FORM">
+    <LABEL>START <SPAN>kHz</SPAN><INPUT ID="allBandStart" TYPE="number" MIN="150" MAX="29995" STEP="1" VALUE="7100" REQUIRED></LABEL>
+    <LABEL>STOP <SPAN>kHz</SPAN><INPUT ID="allBandEnd" TYPE="number" MIN="151" MAX="30000" STEP="1" VALUE="7600" REQUIRED></LABEL>
+    <LABEL>MODULATION<SELECT ID="allBandMode" STYLE="width:100%;margin-top:6px"><OPTION VALUE="AM" SELECTED>AM</OPTION><OPTION VALUE="USB">USB</OPTION><OPTION VALUE="LSB">LSB</OPTION></SELECT></LABEL>
+    <LABEL>STEP<SELECT ID="allBandStep" STYLE="width:100%;margin-top:6px"><OPTION VALUE="5" SELECTED>5 kHz</OPTION><OPTION VALUE="10">10 kHz</OPTION><OPTION VALUE="25">25 kHz</OPTION><OPTION VALUE="50">50 kHz</OPTION><OPTION VALUE="100">100 kHz</OPTION><OPTION VALUE="250">250 kHz</OPTION><OPTION VALUE="500">500 kHz</OPTION><OPTION VALUE="1000">1000 kHz</OPTION></SELECT></LABEL>
+    <BUTTON ID="allBandStartScan" TYPE="submit">▶ SCAN ALL BAND</BUTTON>
+  </FORM>
+  <DIV CLASS="SPECTRUM-FRAME">
+    <DIV CLASS="SPECTRUM-META"><SPAN>FIELD STRENGTH / RSSI</SPAN><SPAN>PEAKS ARE SELECTABLE</SPAN></DIV>
+    <CANVAS ID="allBandCanvas" HEIGHT="230" STYLE="display:block;width:100%;height:230px;cursor:crosshair" aria-label="Clickable ALL Band spectrum plot"></CANVAS>
+  </DIV>
+  <DIV ID="allBandStatus" CLASS="SCAN-STATUS" ROLE="status">Choose a shortwave range and modulation, then scan. Tap a red peak to tune the receiver.</DIV>
+</SECTION>
 <DIV CLASS="GRID">
   <DIV CLASS="STAT"><SPAN CLASS="LABEL">Signal strength</SPAN><SPAN CLASS="VALUE">{{rssi}} <SMALL STYLE="color:#8ea2ae;font-size:.72rem">dBµV</SMALL></SPAN></DIV>
   <DIV CLASS="STAT"><SPAN CLASS="LABEL">Signal / noise</SPAN><SPAN CLASS="VALUE">{{snr}} <SMALL STYLE="color:#8ea2ae;font-size:.72rem">dB</SMALL></SPAN></DIV>
@@ -661,6 +679,74 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const ok=await postRadioCommand('/radio/tune',{freq:String(frequencyHz),mode:lastSpectrumMode},status);
    if(ok){status.textContent='Tuned to '+(fmMode?(sample.f/100).toFixed(2)+' MHz':sample.f+' kHz')+'. Updating receiver display…';setTimeout(()=>location.reload(),700);}
  });
+ 
+// Separate ALL Band scanner UI and state. It uses its own API and result buffer.
+(function initAllBandScanner(){
+ const form=document.getElementById('allBandSpectrumForm');
+ const startInput=document.getElementById('allBandStart');
+ const endInput=document.getElementById('allBandEnd');
+ const modeInput=document.getElementById('allBandMode');
+ const stepInput=document.getElementById('allBandStep');
+ const button=document.getElementById('allBandStartScan');
+ const status=document.getElementById('allBandStatus');
+ const canvas=document.getElementById('allBandCanvas');
+ if(!form||!canvas)return;
+ const ctx=canvas.getContext('2d');
+ let samples=[],peaks=[],scanBusy=false,plotMode='AM';
+ function draw(data){
+   samples=data||[];peaks=[];
+   const dpr=window.devicePixelRatio||1,w=Math.max(260,canvas.clientWidth),h=230;
+   canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+   ctx.fillStyle='#050810';ctx.fillRect(0,0,w,h);
+   const left=36,right=10,top=14,bottom=30,pw=w-left-right,ph=h-top-bottom;
+   ctx.strokeStyle='#293958';ctx.lineWidth=1;ctx.fillStyle='#a5b9e1';ctx.font='10px system-ui';
+   for(let i=0;i<5;i++){const y=top+ph*i/4;ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();}
+   if(samples.length<2){ctx.fillStyle='#8ea2ae';ctx.font='12px system-ui';ctx.fillText('No ALL Band sweep data yet',left+8,top+22);return;}
+   const vals=samples.map(p=>p.r),lo=Math.min(...vals),hi=Math.max(...vals),pad=Math.max(4,(hi-lo)*.15),minR=Math.max(0,lo-pad),maxR=hi+pad,span=Math.max(10,maxR-minR);
+   for(let i=0;i<5;i++){const y=top+ph*i/4;ctx.fillStyle='#a5b9e1';ctx.fillText(String(Math.round(maxR-(maxR-minR)*i/4)),3,y+3);}
+   ctx.fillStyle='#8ea2ae';ctx.fillText('RSSI',4,10);
+   const pts=samples.map((p,i)=>({x:left+i*pw/(samples.length-1),y:top+ph-(p.r-minR)/span*ph,index:i}));
+   ctx.beginPath();ctx.moveTo(pts[0].x,top+ph);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,top+ph);ctx.closePath();ctx.fillStyle='rgba(0,65,255,.22)';ctx.fill();
+   ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.strokeStyle='#167bff';ctx.lineWidth=2.5;ctx.shadowColor='#087cff';ctx.shadowBlur=8;ctx.stroke();ctx.shadowBlur=0;
+   const threshold=lo+(hi-lo)*.22;
+   samples.forEach((p,i)=>{if(i===0||i===samples.length-1||p.r<samples[i-1].r||p.r<=samples[i+1].r||p.r<threshold)return;const q=pts[i];peaks.push(q);ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle='#ff4c50';ctx.shadowColor='#ff334b';ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#ffd4dc';ctx.lineWidth=1;ctx.stroke();});
+   ctx.fillStyle='#8ea2ae';ctx.font='10px monospace';ctx.textAlign='left';ctx.fillText(samples[0].f+' kHz',left,h-8);ctx.textAlign='right';ctx.fillText(samples[samples.length-1].f+' kHz',w-right,h-8);ctx.textAlign='center';ctx.fillStyle='#167bff';ctx.fillText('TAP RED PEAK TO TUNE',w/2,h-8);ctx.textAlign='left';
+ }
+ form.addEventListener('submit',async event=>{
+   event.preventDefault();if(scanBusy)return;
+   const start=Number(startInput.value),end=Number(endInput.value),step=Number(stepInput.value),mode=modeInput.value;
+   const points=Math.floor((end-start)/step)+1;
+   if(!Number.isInteger(start)||!Number.isInteger(end)||start<150||end>30000||end<=start){status.textContent='Enter a valid range between 150 and 30000 kHz.';return;}
+   if(end-start>1000||(end-start)%step!==0||points<2||points>201){status.textContent='Range must be at most 1000 kHz and align exactly to the selected step (maximum 201 points).';return;}
+   scanBusy=true;button.disabled=true;startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=true;draw([]);status.textContent='Starting ALL Band receiver sweep…';
+   try{
+     const body=new URLSearchParams({start_khz:String(start),end_khz:String(end),step_khz:String(step),mode});
+     const response=await fetch('/all-spectrum/start',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body,cache:'no-store'});
+     const result=await response.json().catch(()=>({}));
+     if(!response.ok)throw new Error(result.error||'ALL Band scan could not be started.');
+     let completed=false;
+     for(let i=0;i<100;i++){
+       await new Promise(resolve=>setTimeout(resolve,1000));
+       const res=await fetch('/all-spectrum.json',{cache:'no-store'});const data=await res.json();
+       if(data.ready&&Array.isArray(data.samples)&&data.samples.length){plotMode=data.mode||mode;draw(data.samples);status.textContent='ALL Band sweep complete · '+data.samples.length+' samples · '+plotMode+'. Tap a red peak to tune.';completed=true;break;}
+       status.textContent='Measuring ALL Band signal… '+(i+1)+' s';
+     }
+     if(!completed)throw new Error('ALL Band sweep timed out. Try a narrower range or larger step.');
+   }catch(error){status.textContent=error.message||'ALL Band scan failed.';}
+   finally{scanBusy=false;button.disabled=false;startInput.disabled=endInput.disabled=modeInput.disabled=stepInput.disabled=false;}
+ });
+ canvas.addEventListener('click',async event=>{
+   if(!peaks.length||!samples.length||scanBusy)return;
+   const rect=canvas.getBoundingClientRect(),scaleX=canvas.width/(window.devicePixelRatio||1)/rect.width,x=(event.clientX-rect.left)*scaleX;
+   let near=null,distance=Infinity;peaks.forEach(p=>{const d=Math.abs(p.x-x);if(d<distance){distance=d;near=p;}});
+   if(!near||distance>22){status.textContent='Tap one of the red peaks to tune to that frequency.';return;}
+   const p=samples[near.index];status.textContent='Tuning to '+p.f+' kHz '+plotMode+'…';
+   try{const ok=await postRadioCommand('/radio/tune',{freq:String(Math.round(p.f*1000)),mode:plotMode},status);if(ok){status.textContent='Tuned to '+p.f+' kHz '+plotMode+'.';setTimeout(()=>location.reload(),700);}}
+   catch(_){status.textContent='Could not tune to selected peak.';}
+ });
+ draw([]);window.addEventListener('resize',()=>draw(samples));
+})();
+
  let restored=false;
  try{
    const saved=JSON.parse(sessionStorage.getItem('atsSpectrumSnapshotV2')||'null');
