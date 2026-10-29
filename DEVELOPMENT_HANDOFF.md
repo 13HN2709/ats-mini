@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-29 (VHF scanner UI/peak-navigation changes committed; build pending)
+Last updated: 2026-10-29 (ALL Band Spectrum source implementation committed; build pending)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -228,3 +228,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Fix commit: `f8efb9a52e0eea85c63d981bc43a7ac750aeb550`; the change moves `dualRxTick()` after button handling and skips starting a band switch while the physical encoder button is held.
 - User's device test confirms the reported stop bug is resolved. Long-press dim/wake behavior was not separately reconfirmed in this message; keep that behavior as a regression check if further Dual RX code changes are made.
 - Main remains untouched; do not merge unless the user explicitly asks.
+
+
+## ALL Band Spectrum implementation (2026-10-29)
+- Added a separate `AllBandSpectrum.cpp/.h` module and dedicated commands for ALL Band Spectrum input and graph, without reusing the VHF scanner buffers or keypad state.
+- Added `ALL Band Spectrum` as a separate main-menu entry in English and German. Menu hint identifies AM/USB/LSB and the maximum scan width of 1000 kHz.
+- Input uses kHz and a dedicated MODE key cycling AM / USB / LSB. Start and end are validated before selecting the broad ALL tuner band or starting a scan. End must exceed start, width must be <= 1000 kHz, and the span must align to 5 kHz steps; larger ranges show a red invalid-input/scan-width hint and do not start scanning.
+- Scanner uses its own 201-point RSSI/SNR buffers, 5 kHz steps, and separate graph/input rendering. Web Spectrum and the existing VHF Spectrum source were not edited in this feature.
+- Source implementation is committed on `development`; it has **not been compiled or hardware-tested**. Before the manual build, review encoder click routing, tuner mode setup/restore behavior, and verify `AllBandSpectrum.cpp` compiles under all four OSPI/QSPI × German/English matrix targets. Test 2000–3000 kHz accepted and 2000–3100 kHz rejected, plus AM/USB/LSB selection and VHF/Web/Dual RX regression.
