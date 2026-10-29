@@ -198,3 +198,9 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Added `spectrumTuneSelectedPeak()` in `ats-mini/SpectrumScanner.cpp`; both local-peak navigation and strongest-sample fallback now tune the selected frequency live via the existing FM-band selection and `updateFrequency(freq, false)` path.
 - Commit on `development`: `7763294a9c94fc10f51f7e0af476a239202f17c6`.
 - Not yet built or tested after this change. Verify encoder rotation audibly tunes each selected peak, and encoder click leaves the selected station in the main layout. Also verify existing cancel/exit behavior because live preview changes the receiver before the final click.
+
+
+## VHF Spectrum red dot peak markers (2026-10-29)
+- Added a small filled vivid-red circle at each detected peak tip, on top of the red triangular marker, so peaks are easier to spot at a glance. Trace and vertical stems remain subdued dark blue-gray; selected peak remains marked in green.
+- Commit on `development`: `9ce4dff617820a1e8268246216cdb05502edbbd7`.
+- This visual change has not yet been built or checked on hardware.
