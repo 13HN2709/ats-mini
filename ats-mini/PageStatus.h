@@ -741,7 +741,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    let near=null,distance=Infinity;peaks.forEach(p=>{const d=Math.abs(p.x-x);if(d<distance){distance=d;near=p;}});
    if(!near||distance>22){status.textContent='Tap one of the red peaks to tune to that frequency.';return;}
    const p=samples[near.index];status.textContent='Tuning to '+p.f+' kHz '+plotMode+'…';
-   try{const ok=await postRadioCommand('/radio/tune',{freq:String(Math.round(p.f*1000)),mode:plotMode},status);if(ok){status.textContent='Tuned to '+p.f+' kHz '+plotMode+'.';setTimeout(()=>location.reload(),700);}}
+   try{const ok=await postRadioCommand('/radio/tune',{freq:String(Math.round(p.f*1000)),mode:plotMode},status);if(ok){status.textContent='Tuned to '+p.f+' kHz '+plotMode+'. Spectrum peaks remain visible; scan again when you want fresh measurements.';}}
    catch(_){status.textContent='Could not tune to selected peak.';}
  });
  draw([]);window.addEventListener('resize',()=>draw(samples));
