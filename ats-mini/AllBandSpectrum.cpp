@@ -15,7 +15,7 @@ static const uint8_t modes[3]={AM,USB,LSB};
 static const char *modeNames[3]={"AM","USB","LSB"};
 static bool inputError=false,hasData=false,saved=false;
 static uint16_t startKHz=7100,endKHz=7600,count=0,selected=0;
-static uint8_t rssi[MAX_POINTS],snr[MAX_POINTS];
+static uint8_t allBandRssi[MAX_POINTS],allBandSnr[MAX_POINTS];
 static uint8_t oldBand=0,oldMode=AM,oldAllBandMode=AM;
 static uint16_t oldFreq=0;
 static int16_t oldBfo=0;
@@ -34,7 +34,7 @@ static void runSweep(){
    uint16_t f=startKHz+i*STEP_KHZ;rx.getStatus(1,0);rx.setFrequency(f);uint32_t t=millis();
    while(true){delay(10);rx.getStatus(0,0);if(rx.getTuneCompleteTriggered()||millis()-t>=350)break;if(consumeAbortPending()){aborted=true;break;}}
    if(aborted)break;
-   rx.getCurrentReceivedSignalQuality(0);rssi[i]=rx.getCurrentRSSI();snr[i]=rx.getCurrentSNR();count=i+1;
+   rx.getCurrentReceivedSignalQuality(0);allBandRssi[i]=rx.getCurrentRSSI();allBandSnr[i]=rx.getCurrentSNR();count=i+1;
    if(i+1<points&&consumeAbortPending()){aborted=true;break;}
  }
  rx.setFrequency(restoreFreq);muteOn(MUTE_TEMP,false);rx.setMaxDelaySetFrequency(30);hasData=count>0;selected=count/2;
@@ -50,12 +50,12 @@ bool allBandSpectrumInputClick(bool shortPress){if(!shortPress){allBandSpectrumC
  if(n<sizeof(input[0])-1&&k[0]>='0'&&k[0]<='9'){v[n]=k[0];v[n+1]=0;}return true;}
 void allBandSpectrumRotate(int16_t delta){
  if(!hasData||count<3||!delta)return;
- uint8_t mn=255,mx=0;for(uint16_t i=0;i<count;i++){if(rssi[i]<mn)mn=rssi[i];if(rssi[i]>mx)mx=rssi[i];}
+ uint8_t mn=255,mx=0;for(uint16_t i=0;i<count;i++){if(allBandRssi[i]<mn)mn=allBandRssi[i];if(allBandRssi[i]>mx)mx=allBandRssi[i];}
  uint8_t threshold=(uint8_t)(mn+((uint16_t)(mx-mn)*5)/100);int dir=delta>0?1:-1;int candidate=selected;
  for(uint16_t n=0;n<count;n++){candidate+=dir;if(candidate<0)candidate=count-1;if(candidate>=count)candidate=0;if(candidate==0||candidate==count-1)continue;
-   if(rssi[candidate]>=threshold&&rssi[candidate]>=rssi[candidate-1]&&rssi[candidate]>rssi[candidate+1]){selected=candidate;tuneAllBandPoint(startKHz+selected*STEP_KHZ);return;}}
+   if(allBandRssi[candidate]>=threshold&&allBandRssi[candidate]>=allBandRssi[candidate-1]&&allBandRssi[candidate]>allBandRssi[candidate+1]){selected=candidate;tuneAllBandPoint(startKHz+selected*STEP_KHZ);return;}}
  int best=-1;uint8_t bestR=0;candidate=selected;
- for(uint16_t n=0;n<count-1;n++){candidate+=dir;if(candidate<0)candidate=count-1;if(candidate>=count)candidate=0;if(candidate==selected)break;if(candidate==0||candidate==count-1)continue;if(best<0||rssi[candidate]>bestR){best=candidate;bestR=rssi[candidate];}}
+ for(uint16_t n=0;n<count-1;n++){candidate+=dir;if(candidate<0)candidate=count-1;if(candidate>=count)candidate=0;if(candidate==selected)break;if(candidate==0||candidate==count-1)continue;if(best<0||allBandRssi[candidate]>bestR){best=candidate;bestR=allBandRssi[candidate];}}
  if(best>=0){selected=best;tuneAllBandPoint(startKHz+selected*STEP_KHZ);}
 }
 void allBandSpectrumSelect(){if(hasData){tuneAllBandPoint(startKHz+selected*STEP_KHZ);saved=false;}else restoreRadio();currentCmd=CMD_NONE;}
@@ -67,5 +67,5 @@ void drawAllBandSpectrumInput(){const uint16_t cyan=0x07FF,blue=0x001F,dark=0x08
  for(int i=0;i<16;i++){if(i==14)continue;int x=sx+(i%4)*(w+gx),y=sy+(i/4)*(h+gy);bool sel=i==keyIndex;spr.fillRoundRect(x,y,w,h,3,sel?cyan:dark);spr.drawRoundRect(x,y,w,h,3,sel?0xFFFF:blue);spr.setTextDatum(MC_DATUM);spr.setTextColor(sel?0:cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString(keys[i],x+w/2,y+h/2);}
  spr.setTextDatum(TC_DATUM);spr.setTextColor(inputError?red:0xBDF7);spr.setFont(FONT_SMALL);spr.drawString(inputError?"Invalid Input / Scan Width > 1000 kHz":"MODE cycles AM / USB / LSB",160,158); }
 void drawAllBandSpectrum(){const uint16_t cyan=0x07FF,blue=0x001F,green=0x07E0;spr.fillSprite(0);spr.fillRoundRect(3,3,314,164,5,0x0008);spr.drawRoundRect(3,3,314,164,5,blue);spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString("ALL BAND SPECTRUM",160,7);char b[32];snprintf(b,sizeof(b),"%u kHz  %s",startKHz+selected*STEP_KHZ,modeNames[modeIndex]);spr.setTextColor(green);spr.drawString(b,160,25);
- const int x0=12,y0=48,w=296,h=91;spr.drawRect(x0,y0,w,h,blue);if(hasData&&count>1){uint8_t mn=255,mx=0;for(int i=0;i<count;i++){if(rssi[i]<mn)mn=rssi[i];if(rssi[i]>mx)mx=rssi[i];}if(mx<=mn)mx=mn+1;int px=x0,py=y0+h-2;for(int i=0;i<count;i++){int x=x0+1+(long)i*(w-3)/(count-1);int y=y0+h-2-(long)(rssi[i]-mn)*(h-4)/(mx-mn);spr.drawLine(px,py,x,y,cyan);if(i==selected)spr.fillCircle(x,y,3,0xF800);px=x;py=y;}}
+ const int x0=12,y0=48,w=296,h=91;spr.drawRect(x0,y0,w,h,blue);if(hasData&&count>1){uint8_t mn=255,mx=0;for(int i=0;i<count;i++){if(allBandRssi[i]<mn)mn=allBandRssi[i];if(allBandRssi[i]>mx)mx=allBandRssi[i];}if(mx<=mn)mx=mn+1;int px=x0,py=y0+h-2;for(int i=0;i<count;i++){int x=x0+1+(long)i*(w-3)/(count-1);int y=y0+h-2-(long)(allBandRssi[i]-mn)*(h-4)/(mx-mn);spr.drawLine(px,py,x,y,cyan);if(i==selected)spr.fillCircle(x,y,3,0xF800);px=x;py=y;}}
  spr.setTextColor(cyan);spr.setFont(FONT_SMALL);spr.setTextDatum(TL_DATUM);spr.drawString("Rotate: peak/frequency  Click: accept",12,147);spr.drawString("Max scan width: 1000 kHz",12,158);}
