@@ -195,6 +195,11 @@ bool spectrumScannerInputClick(bool shortPress)
       spectrumInputStage = 1;
       spectrumInput[1][0] = '\0';
       spectrumKeyIndex = 5;
+      // Immediately redraw the same dedicated keypad in its END-frequency
+      // stage. This avoids leaving the accepted start value on screen until
+      // a later background refresh and does not route through a prompt/menu.
+      drawSpectrumScannerInput();
+      spr.pushSprite(0, 0);
       return true;
     }
     scanEnd = parsed;
