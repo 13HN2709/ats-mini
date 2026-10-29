@@ -169,3 +169,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - The main menu shows a short hint that the start frequency is required after clicking. Closing/canceling the keypad returns to the main menu instead of the removed submenu.
 - The spectrum graph, scanning logic, Web Spectrum, Dual RX and radio layout files are unchanged. The legacy submenu code remains unreachable as a conservative minimal change; ALL Band Spectrum is not exposed as a menu choice.
 - No build or hardware test has been run for this change yet.
+
+## Apply the three remaining VHF Spectrum requests without restoring the submenu (2026-10-29)
+- Kept the direct main-menu flow: selecting `VHF SPEKTRUM` / `VHF SPECTRUM` opens the start-frequency keypad immediately. The submenu remains bypassed and ALL Band Spectrum is not exposed.
+- After the start frequency is confirmed, the same dedicated scanner keypad is now explicitly redrawn immediately in its end-frequency stage, rather than relying on a later background refresh or routing through a separate prompt/menu. Commit: `96f1c537b273165f4cdd9a8ff14feef02fe2a430`.
+- Preserved the already-implemented Web-Control-inspired graph treatment: near-black/dark-navy background, subdued dark blue-gray waveform/grid, and vivid red peak tips.
+- Preserved peak-to-peak encoder navigation, including fallback selection of the strongest remaining sample when no qualifying local peak is found; it does not intentionally step through every 100 kHz sample.
+- German and English main-menu hints remain localized. No changes to Dual RX, existing radio keypad, or layout files.
+- Source-only update. No build or hardware test has been run; run the manual GitHub Actions workflow on `development` and test start confirmation -> immediate end-frequency keypad, graph appearance, and peak-to-peak navigation.
