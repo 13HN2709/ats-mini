@@ -712,6 +712,26 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    samples.forEach((p,i)=>{if(i===0||i===samples.length-1||p.r<samples[i-1].r||p.r<=samples[i+1].r||p.r<threshold)return;const q=pts[i];peaks.push(q);ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle='#ff4c50';ctx.shadowColor='#ff334b';ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#ffd4dc';ctx.lineWidth=1;ctx.stroke();});
    ctx.fillStyle='#8ea2ae';ctx.font='10px monospace';ctx.textAlign='left';ctx.fillText(samples[0].f+' kHz',left,h-8);ctx.textAlign='right';ctx.fillText(samples[samples.length-1].f+' kHz',w-right,h-8);ctx.textAlign='center';ctx.fillStyle='#167bff';ctx.fillText('TAP RED PEAK TO TUNE',w/2,h-8);ctx.textAlign='left';
  }
+ // When the user moves from START to STOP, configure the receiver immediately
+ // so the chosen start frequency and modulation are confirmed before scanning.
+ let preTuneKey='';
+ endInput.addEventListener('focus',async()=>{
+   if(scanBusy)return;
+   const start=Number(startInput.value),mode=modeInput.value;
+   if(!Number.isInteger(start)||start<150||start>30000)return;
+   const key=String(start)+'|'+mode;
+   if(key===preTuneKey)return;
+   preTuneKey=key;
+   status.textContent='Preparing receiver: '+start+' kHz '+mode+'…';
+   if(window.atsDebugLog)window.atsDebugLog('ALL BAND PRE-TUNE','Focus STOP field: '+start+' kHz '+mode);
+   try{
+     const ok=await postRadioCommand('/radio/tune',{freq:String(start*1000),mode},status);
+     if(ok)status.textContent='Receiver ready at '+start+' kHz '+mode+'. Enter STOP frequency, then scan.';
+     else preTuneKey='';
+   }catch(_){preTuneKey='';status.textContent='Could not prepare receiver at '+start+' kHz '+mode+'.';}
+ });
+ startInput.addEventListener('change',()=>{preTuneKey='';});
+ modeInput.addEventListener('change',()=>{preTuneKey='';});
  form.addEventListener('submit',async event=>{
    event.preventDefault();if(scanBusy)return;
    const start=Number(startInput.value),end=Number(endInput.value),step=Number(stepInput.value),mode=modeInput.value;
