@@ -667,8 +667,8 @@ static void webInit()
   // Isolated ALL Band web scanner: independent endpoints and result buffer.
   server.on("/all-spectrum/start", HTTP_POST, [] (AsyncWebServerRequest *request) {
     if(!webIsAuthenticated(request)) return request->requestAuthentication();
-    if(currentCmd == CMD_DUAL_RX)
-      return request->send(409, "application/json", "{\"ready\":false,\"error\":\"Stop Dual RX before scanning.\"}");
+    if(currentCmd == CMD_DUAL_RX || currentCmd == CMD_SPECTRUM || currentCmd == CMD_SPECTRUM_INPUT)
+      return request->send(409, "application/json", "{\"ready\":false,\"error\":\"Stop the active receiver scan before starting ALL Band scan.\"}");
     if(webSpectrumBusy || webSpectrumRequested || webAllSpectrumRequested)
       return request->send(409, "application/json", "{\"ready\":false,\"error\":\"A spectrum scan is already running.\"}");
     if(!request->hasParam("start_khz", true) || !request->hasParam("end_khz", true) ||
