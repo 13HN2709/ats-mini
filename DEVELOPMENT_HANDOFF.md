@@ -191,3 +191,10 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Requested graph refinement: waveform/vertical peak stems should remain subdued dark blue-gray; only the small peak-tip triangles should be vivid red. Changed the vertical stems from red to the subdued waveform color in the same commit.
 - Remaining reported behavior: turning the encoder to select a peak updates the frequency shown on the graph, but clicking does not tune to that selected peak and instead retains the frequency that was already shown on the main radio layout. This must be traced through the actual encoder/click dispatch before patching; do not assume `spectrumScannerSelect()` is being called correctly until verified.
 - Build/device status: the previous build confirmed the keypad transition and graph on hardware. The latest visual-only patch has not yet been built or tested. Peak-selection tuning bug remains open.
+
+
+## VHF Spectrum live peak preview (2026-10-29)
+- Clarified user intent: rotating the encoder from peak to peak should immediately tune the ATS Mini receiver to that selected peak so the user can listen before deciding to accept it. Encoder click then accepts the current frequency and exits the scanner.
+- Added `spectrumTuneSelectedPeak()` in `ats-mini/SpectrumScanner.cpp`; both local-peak navigation and strongest-sample fallback now tune the selected frequency live via the existing FM-band selection and `updateFrequency(freq, false)` path.
+- Commit on `development`: `7763294a9c94fc10f51f7e0af476a239202f17c6`.
+- Not yet built or tested after this change. Verify encoder rotation audibly tunes each selected peak, and encoder click leaves the selected station in the main layout. Also verify existing cancel/exit behavior because live preview changes the receiver before the final click.
