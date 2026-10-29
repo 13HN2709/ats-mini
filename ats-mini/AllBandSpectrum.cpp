@@ -44,7 +44,8 @@ static void runSweep(){
 }
 bool allBandSpectrumInputClick(bool shortPress){if(!shortPress){allBandSpectrumCancel();return true;}const char*k=(keyIndex==16)?"TOPMODE":keys[keyIndex];char*v=input[stage];size_t n=strlen(v);inputError=false;
  if(!strcmp(k,"CLOSE")){allBandSpectrumCancel();return true;}if(!strcmp(k,"BS")){if(n)v[n-1]=0;return true;}
- if(!strcmp(k,"TOPMODE")){modeIndex=(modeIndex+1)%3;return true;}\n if(!strcmp(k,"MODE")){stepIndex=(stepIndex+1)%8;scanStepKHz=scanSteps[stepIndex];return true;}
+ if(!strcmp(k,"TOPMODE")){modeIndex=(modeIndex+1)%3;return true;}
+ if(!strcmp(k,"MODE")){stepIndex=(stepIndex+1)%8;scanStepKHz=scanSteps[stepIndex];return true;}
  if(!strcmp(k,"."))return true;
  if(!strcmp(k,"OK")){uint16_t f;if(!parseKHz(&f)){inputError=true;return true;}if(stage==0){startKHz=f;stage=1;input[1][0]=0;keyIndex=5;return true;}endKHz=f;if(endKHz<=startKHz||endKHz-startKHz>MAX_WIDTH_KHZ||(endKHz-startKHz)%scanStepKHz!=0||((endKHz-startKHz)/scanStepKHz+1)>MAX_POINTS){inputError=true;return true;}
  // ALL band is the broad AM-capable tuner configuration; configure it only after validation.
