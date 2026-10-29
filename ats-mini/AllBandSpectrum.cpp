@@ -24,7 +24,8 @@ void allBandSpectrumStart(){input[0][0]=input[1][0]=0;stage=0;keyIndex=5;modeInd
 bool allBandSpectrumInputRotate(int16_t delta){if(!delta)return false;int d=(scrollDirection*delta>0)?1:-1;int n=(int)keyIndex+d;if(n<0)n=15;if(n>15)n=0;if(n==14){n+=d;if(n<0)n=15;if(n>15)n=0;}keyIndex=n;return true;}
 void allBandSpectrumCancel(){inputError=false;if(saved){selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);saved=false;}currentCmd=CMD_MENU;}
 static bool parseKHz(uint16_t *out){const char *s=input[stage];if(!*s)return false;char *e=nullptr;long v=strtol(s,&e,10);if(e==s||*e||v<MIN_KHZ||v>MAX_KHZ)return false;*out=(uint16_t)v;return true;}
-static void restoreRadio(){if(!saved)return;selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);saved=false;}
+static void restoreRadio(bool clearSaved=true){if(!saved)return;selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);if(clearSaved)saved=false;}
+static void tuneAllBandPoint(uint16_t freq){selectBand(1,false);currentMode=modes[modeIndex];currentBFO=0;updateFrequency(freq,false);}
 static void runSweep(){
  count=0;rx.setMaxDelaySetFrequency(60);muteOn(MUTE_TEMP,true);const uint16_t restoreFreq=currentFrequency;
  const uint16_t points=(endKHz-startKHz)/STEP_KHZ+1;
@@ -35,13 +36,13 @@ bool allBandSpectrumInputClick(bool shortPress){if(!shortPress){allBandSpectrumC
  if(!strcmp(k,"CLOSE")){allBandSpectrumCancel();return true;}if(!strcmp(k,"BS")){if(n)v[n-1]=0;return true;}
  if(!strcmp(k,"MODE")){modeIndex=(modeIndex+1)%3;return true;}
  if(!strcmp(k,".")||!strcmp(k,"MODE"))return true;
- if(!strcmp(k,"OK")){uint16_t f;if(!parseKHz(&f)){inputError=true;return true;}if(stage==0){startKHz=f;stage=1;input[1][0]=0;keyIndex=5;return true;}endKHz=f;if(endKHz<=startKHz||endKHz-startKHz>MAX_WIDTH_KHZ){inputError=true;return true;}
+ if(!strcmp(k,"OK")){uint16_t f;if(!parseKHz(&f)){inputError=true;return true;}if(stage==0){startKHz=f;stage=1;input[1][0]=0;keyIndex=5;return true;}endKHz=f;if(endKHz<=startKHz||endKHz-startKHz>MAX_WIDTH_KHZ||((endKHz-startKHz)/STEP_KHZ+1)>MAX_POINTS){inputError=true;return true;}
  // ALL band is the broad AM-capable tuner configuration; configure it only after validation.
  oldBand=bandIdx;oldFreq=currentFrequency;oldMode=currentMode;oldBfo=currentBFO;saved=true;
- int allBand=1;selectBand(allBand,false);currentMode=modes[modeIndex];currentBFO=0;updateFrequency(startKHz,false);currentCmd=CMD_ALL_SPECTRUM;runSweep();restoreRadio();return true;}
+ int allBand=1;selectBand(allBand,false);currentMode=modes[modeIndex];currentBFO=0;updateFrequency(startKHz,false);currentCmd=CMD_ALL_SPECTRUM;runSweep();restoreRadio(false);return true;}
  if(n<sizeof(input[0])-1&&k[0]>='0'&&k[0]<='9'){v[n]=k[0];v[n+1]=0;}return true;}
-void allBandSpectrumRotate(int16_t delta){if(!hasData||!delta)return;int n=(int)selected+(delta>0?1:-1);if(n<0)n=count-1;if(n>=count)n=0;selected=n;updateFrequency(startKHz+selected*STEP_KHZ,false);}
-void allBandSpectrumSelect(){if(hasData){updateFrequency(startKHz+selected*STEP_KHZ,false);saved=false;}else restoreRadio();currentCmd=CMD_NONE;}
+void allBandSpectrumRotate(int16_t delta){if(!hasData||!delta)return;int n=(int)selected+(delta>0?1:-1);if(n<0)n=count-1;if(n>=count)n=0;selected=n;tuneAllBandPoint(startKHz+selected*STEP_KHZ);}
+void allBandSpectrumSelect(){if(hasData){tuneAllBandPoint(startKHz+selected*STEP_KHZ);saved=false;}else restoreRadio();currentCmd=CMD_NONE;}
 void drawAllBandSpectrumInput(){const uint16_t cyan=0x07FF,blue=0x001F,dark=0x0841,red=0xF800;spr.fillSprite(0);spr.fillRoundRect(6,2,308,166,4,0);spr.drawRoundRect(6,2,308,166,4,blue);spr.drawRoundRect(7,3,306,164,3,blue);
  spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString(stage==0?"ALL BAND: START (kHz)":"ALL BAND: END (kHz)",160,5);
  char b[32];snprintf(b,sizeof(b),"%s kHz",input[stage][0]?input[stage]:"---");spr.setTextDatum(MC_DATUM);spr.setTextColor(inputError?red:cyan);spr.drawRoundRect(14,28,210,23,2,inputError?red:blue);spr.drawString(b,119,39);
