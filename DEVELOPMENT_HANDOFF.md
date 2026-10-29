@@ -204,3 +204,12 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Added a small filled vivid-red circle at each detected peak tip, on top of the red triangular marker, so peaks are easier to spot at a glance. Trace and vertical stems remain subdued dark blue-gray; selected peak remains marked in green.
 - Commit on `development`: `9ce4dff617820a1e8268246216cdb05502edbbd7`.
 - This visual change has not yet been built or checked on hardware.
+
+
+## VHF trace color and peak clipping (2026-10-29)
+- User confirmed the red peak-dot version looks good, but the trace/stems were too dim to see.
+- Changed the VHF spectrum trace and peak stems to bright keypad cyan (`0x07FF`). Peak markers are now red circles only; removed the red triangles so only the dots remain red.
+- Dot Y coordinate is clamped inside the graph area so strong peaks/markers do not protrude above the graph's top border.
+- Commit on `development`: `2a35a96ef48903e76c051dacaff567b6419edcec`.
+- New user-reported bug to investigate: while Dual RX is active, a short encoder click should stop the scan, exit Dual RX and return to the layout, but currently Dual RX keeps scanning. Not fixed yet; trace encoder click/short-press dispatch and Dual RX state transitions before changing code.
+- This latest visual change has not yet been built or tested on hardware.
