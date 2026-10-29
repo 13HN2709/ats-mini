@@ -302,16 +302,13 @@ void drawSpectrumScannerInput()
   spr.drawString(displayBuf, displayX + displayW / 2, displayY + displayH / 2);
   spr.setTextDatum(TC_DATUM);
   spr.setFont(FONT_SMALL);
-  spr.setTextColor(0xFFFF);
+  spr.setTextColor(brightBlue);
   if(spectrumInputStage == 0) {
     // Keep the instruction inside the keypad itself, above the value field.
     spr.drawString("ENTER START FREQUENCY (MHz)", 160, 5);
   } else {
-    char startInfo[32];
-    snprintf(startInfo, sizeof(startInfo), "START FREQUENCY: %u.%02u MHz",
-             (unsigned)(scanStart / 100), (unsigned)(scanStart % 100));
-    spr.drawString(startInfo, 160, 2);
-    spr.drawString("ENTER END FREQUENCY (MHz)", 160, 14);
+    // The end keypad needs only the action prompt; don't repeat the start value.
+    spr.drawString("ENTER END FREQUENCY (MHz)", 160, 8);
   }
 
   // Fixed modulation indicator in the same position as the normal keypad's
@@ -530,7 +527,7 @@ void drawSpectrumScanner()
       if(here >= peakThreshold && here >= prev && here > next) {
         int px = gx + 1 + (int)((uint32_t)i * (gw - 3) / (count - 1));
         int py = gy + gh - 2 - (int)((uint32_t)(here - minR) * (gh - 5) / (maxR - minR));
-        spr.drawFastVLine(px, py, max(3, gy + gh - 2 - py), red);
+        spr.drawFastVLine(px, py, max(3, gy + gh - 2 - py), wave);
         spr.fillTriangle(px - 3, py - 1, px + 3, py - 1, px, py - 6, red);
       }
     }
