@@ -290,7 +290,7 @@ static uint8_t bleModeMenuIdx = BLE_OFF;
 static const char *bleModeDesc[] = { "Off", "Ad hoc", "HID", "Unpair All" };
 
 uint8_t wifiModeIdx = NET_OFF;
-static const char *wifiModeDesc[] = { "Off", "AP Only", "WEB CTRL", "Connect", "Sync Only" };
+static const char *wifiModeDesc[] = { "Off", "WEB CTRL", "WEB+Conn", "Connect", "Sync Only" };
 
 static const Step fmSteps[] = { { 1, "10k", 1 }, { 5, "50k", 5 }, { 10, "100k", 10 }, { 20, "200k", 20 }, { 100, "1M", 10 } };
 static const Step ssbSteps[] = { { 10, "10", 1 }, { 25, "25", 1 }, { 50, "50", 1 }, { 100, "100", 1 }, { 500, "500", 1 }, { 1000, "1k", 1 }, { 5000, "5k", 5 }, { 9000, "9k", 9 }, { 10000, "10k", 10 } };
