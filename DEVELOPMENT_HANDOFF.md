@@ -1,6 +1,6 @@
 # ATS Mini Development Handoff
 
-Last updated: 2026-10-28 (VHF scanner compile fix committed; TEF6686 set as fresh-install default; build pending)
+Last updated: 2026-10-29 (VHF scanner UI/peak-navigation changes committed; build pending)
 Repository: https://github.com/13HN2709/ats-mini
 Active work branch: `development` (never modify `main` unless explicitly requested)
 
@@ -131,3 +131,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - The repository is an AM/FM/SSB SI4732 receiver firmware project for ATS Mini and GeekNest V5A. Inspect the specific screenshot/image near the bottom of the linked repository page and its corresponding implementation before planning a port.
 - Treat this as a separate future layout option, not a replacement for the TEF6686 default layout or the previously requested GNBD miniradio-inspired layout. Preserve existing layouts and isolate the implementation where possible.
 - Priority: after current VHF Spectrum scanner build and menu/input bugs are resolved. Confirm which exact bottom-of-page layout the user means if the repository page contains multiple candidates.
+
+
+## VHF Spectrum scanner device-test findings and patch (2026-10-29)
+- User confirmed on ATS Mini V4 that native VHF scanning completes and displays a graph for 88.00–108.00 MHz, and selecting a point tunes the chosen frequency on the main layout correctly.
+- Encoder keypad hang is no longer observed in the user's current build.
+- User requested: (1) Spectrum submenu must appear on the first click, with VHF Spectrum and ALL Band Spectrum plus start-frequency guidance; (2) after entering start frequency, clearly explain that end frequency is next; (3) dark Web Control Spectrum style, subdued waveform and vivid red peak tips; (4) encoder moves from peak to peak rather than every 100 kHz.
+- Patch adds start/end guidance to the scanner keypad, submenu rendering and a menu hint in both languages, and excludes CMD_SPECTRUM_MENU from the generic command timeout. It darkens the graph, marks local maxima in vivid red and changes encoder navigation to select local peaks, falling back to adjacent points if no peaks are detected.
+- Source-only change; manual GitHub Actions build and device regression tests are required. Verify first-click submenu behavior, input-stage instructions, graph contrast, peak-to-peak selection, and existing Web Spectrum/Dual RX behavior.
