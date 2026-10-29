@@ -22,6 +22,7 @@
 #include <time.h>
 #include "FreqKeypad.h"
 #include "SpectrumScanner.h"
+#include "AllBandSpectrum.h"
 
 
 // SI473/5 and UI
@@ -756,7 +757,7 @@ void loop()
   if(currentCmd == CMD_DUAL_RX && digitalRead(ENCODER_PUSH_BUTTON) != LOW && dualRxTick(currentTime))
     needRedraw = true;
 
-  if(currentCmd == CMD_SPECTRUM_INPUT && encCount)
+  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && encCount)\n  {\n    allBandSpectrumInputRotate(encCount);\n    needRedraw = true;\n    elapsedSleep = elapsedCommand = currentTime;\n    encCount = encCountAccel = 0;\n  }\n\n  if(currentCmd == CMD_ALL_SPECTRUM && encCount)\n  {\n    allBandSpectrumRotate(encCount);\n    needRedraw = true;\n    elapsedSleep = elapsedCommand = currentTime;\n  }\n\n  if(currentCmd == CMD_SPECTRUM_INPUT && encCount)
   {
     spectrumScannerInputRotate(encCount);
     needRedraw = true;
@@ -771,7 +772,7 @@ void loop()
     elapsedSleep = elapsedCommand = currentTime;
   }
 
-  if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_INPUT && pushAndRotate)
+  if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_INPUT && currentCmd != CMD_ALL_SPECTRUM && currentCmd != CMD_ALL_SPECTRUM_INPUT && pushAndRotate)
   {
     if(encCount)
     {
@@ -897,7 +898,7 @@ void loop()
     }
   }
 
-  if(currentCmd == CMD_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
+  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))\n  {\n    allBandSpectrumInputClick(true);\n    needRedraw = true;\n    elapsedSleep = elapsedCommand = currentTime = millis();\n    pb1st.wasClicked = pb1st.wasShortPressed = false;\n  }\n  else if(currentCmd == CMD_ALL_SPECTRUM_INPUT && pb1st.isLongPressed)\n  {\n    allBandSpectrumCancel();\n    needRedraw = true;\n    pb1st.wasClicked = pb1st.wasShortPressed = false;\n  }\n\n  if(currentCmd == CMD_ALL_SPECTRUM && (pb1st.wasClicked || pb1st.wasShortPressed))\n  {\n    allBandSpectrumSelect();\n    needRedraw = true;\n    elapsedSleep = elapsedCommand = currentTime = millis();\n    pb1st.wasClicked = pb1st.wasShortPressed = false;\n  }\n  else if(currentCmd == CMD_ALL_SPECTRUM && pb1st.isLongPressed)\n  {\n    allBandSpectrumCancel();\n    needRedraw = true;\n    pb1st.wasClicked = pb1st.wasShortPressed = false;\n  }\n\n  if(currentCmd == CMD_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
   {
     spectrumScannerInputClick(true);
     needRedraw = true;
