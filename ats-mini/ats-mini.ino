@@ -672,7 +672,6 @@ void loop()
 
   ButtonTracker::State pb1st = pb1.update(digitalRead(ENCODER_PUSH_BUTTON) == LOW);
 
-  if(currentCmd == CMD_DUAL_RX && dualRxTick(currentTime)) needRedraw = true;
 
   int ser_event = serialLoop(usbModeIdx);
   needRedraw |= !!(ser_event & REMOTE_CHANGED);
@@ -751,6 +750,11 @@ void loop()
     }
     encCount = encCountAccel = 0;
   }
+
+  // Prioritize encoder input before a Dual RX band switch. selectBand() can
+  // block while retuning; avoid starting that work while the physical button is held.
+  if(currentCmd == CMD_DUAL_RX && digitalRead(ENCODER_PUSH_BUTTON) != LOW && dualRxTick(currentTime))
+    needRedraw = true;
 
   if(currentCmd == CMD_SPECTRUM_INPUT && encCount)
   {
