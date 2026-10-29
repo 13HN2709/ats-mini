@@ -162,3 +162,10 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Root cause found in `ats-mini/ats-mini.ino`: a click while `currentCmd == CMD_SPECTRUM_INPUT` was first sent to the generic `clickHandler()`. Since that handler has no `CMD_SPECTRUM_INPUT` case, it returned false and the generic fallback changed `currentCmd` to `CMD_NONE` before the dedicated `spectrumScannerInputClick(true)` block could run. This breaks keypad confirmation/state progression and can make the keypad appear frozen or exit unexpectedly.
 - Targeted fix committed on `development` as `b37791abdb8b28d9ab83d24df9493fac8f182e56`: exclude `CMD_SPECTRUM_INPUT` clicks from the generic click handler so the existing dedicated scanner input handler receives them. No Spectrum scanning algorithm, menu source, layout source, or Dual RX code was changed.
 - Verification: source-level root cause confirmed and targeted edit committed. Manual build and hardware test are still required; do not claim compile/device success yet. Test menu -> VHF Spectrum -> enter/confirm start frequency -> enter/confirm end frequency -> scan; also verify Back/Close and that normal radio keypad and Dual RX still behave as before.
+
+
+## Restore direct VHF Spectrum menu flow (2026-10-29)
+- User requested reverting the new Spectrum submenu flow because the encoder confirmation still crashed/hung. The main menu now labels the item `VHF SPEKTRUM` / `VHF SPECTRUM` and selecting it opens the existing native scanner start-frequency keypad directly, restoring the pre-submenu interaction sequence.
+- The main menu shows a short hint that the start frequency is required after clicking. Closing/canceling the keypad returns to the main menu instead of the removed submenu.
+- The spectrum graph, scanning logic, Web Spectrum, Dual RX and radio layout files are unchanged. The legacy submenu code remains unreachable as a conservative minimal change; ALL Band Spectrum is not exposed as a menu choice.
+- No build or hardware test has been run for this change yet.
