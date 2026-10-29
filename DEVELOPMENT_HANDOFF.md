@@ -251,7 +251,7 @@ Active work branch: `development` (never modify `main` unless explicitly request
 
 
 ### WLAN-Menübezeichnung (2026-10-29)
-- In den englischen und deutschen Menüquellen wurde die sichtbare Beschriftung `AP+Connect` in `WEB CTRL` umbenannt, damit sie auf die schmale ATS-Mini-Zeile passt.
+- In den englischen und deutschen Menüquellen sind die sichtbaren WLAN-Modus-Beschriftungen korrekt zugeordnet: `AP Only` wird als `WEB CTRL` angezeigt; `AP+Connect` wird als `WEB+Conn` angezeigt. Es wurden nur Labels geändert, die WLAN-Logik blieb unverändert.
 - Es wurde ausschließlich der Text in `wifiModeDesc[]` geändert; WLAN-Modus-Index und AP-/Connect-Logik bleiben unverändert.
 - Noch nicht kompiliert oder am Gerät verifiziert. Auf `development`; `main` bleibt unangetastet.
 
