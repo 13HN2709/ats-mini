@@ -943,18 +943,6 @@ void loop()
     pb1st.wasClicked = pb1st.wasShortPressed = false;
   }
 
-  if(currentCmd == CMD_ALL_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
-  {
-    allBandSpectrumInputClick(true); needRedraw = true; elapsedSleep = elapsedCommand = currentTime = millis();
-    pb1st.wasClicked = pb1st.wasShortPressed = false;
-  }
-  else if(currentCmd == CMD_ALL_SPECTRUM_INPUT && pb1st.isLongPressed)
-  { allBandSpectrumCancel(); needRedraw = true; pb1st.wasClicked = pb1st.wasShortPressed = false; }
-
-  if(currentCmd == CMD_ALL_SPECTRUM && (pb1st.wasClicked || pb1st.wasShortPressed))
-  { allBandSpectrumSelect(); needRedraw = true; elapsedSleep = elapsedCommand = currentTime = millis(); pb1st.wasClicked = pb1st.wasShortPressed = false; }
-  else if(currentCmd == CMD_ALL_SPECTRUM && pb1st.isLongPressed)
-  { allBandSpectrumCancel(); needRedraw = true; pb1st.wasClicked = pb1st.wasShortPressed = false; }
 
   if(currentCmd == CMD_SPECTRUM_INPUT && (pb1st.wasClicked || pb1st.wasShortPressed))
   {
