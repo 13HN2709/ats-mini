@@ -139,3 +139,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - User requested: (1) Spectrum submenu must appear on the first click, with VHF Spectrum and ALL Band Spectrum plus start-frequency guidance; (2) after entering start frequency, clearly explain that end frequency is next; (3) dark Web Control Spectrum style, subdued waveform and vivid red peak tips; (4) encoder moves from peak to peak rather than every 100 kHz.
 - Patch adds start/end guidance to the scanner keypad, submenu rendering and a menu hint in both languages, and excludes CMD_SPECTRUM_MENU from the generic command timeout. It darkens the graph, marks local maxima in vivid red and changes encoder navigation to select local peaks, falling back to adjacent points if no peaks are detected.
 - Source-only change; manual GitHub Actions build and device regression tests are required. Verify first-click submenu behavior, input-stage instructions, graph contrast, peak-to-peak selection, and existing Web Spectrum/Dual RX behavior.
+
+
+## Follow-up fix after VHF scanner test (2026-10-29)
+- User confirmed the scanner graph runs and clicking a frequency tunes the main layout correctly. The encoder keypad hang is gone.
+- Native VHF scanner source already includes start/end-frequency instructions, dark graph styling, vivid red local-peak markers, and peak-to-peak encoder navigation with adjacent-point fallback.
+- Found why the Spectrum submenu may disappear: the generic command timeout exempted the graph and keypad but not `CMD_SPECTRUM_MENU`. The timeout now also exempts the submenu so it stays open while the user reads/selects VHF Spectrum or ALL Band Spectrum.
+- Menu hint is present in both English and German. The start/end keypad text is present.
+- Next: manual build and device test. Verify first click on SPECTRUM opens and stays on the submenu; selecting VHF Spectrum opens the keypad; entering start frequency prompts for end frequency; graph colors/peak navigation; selecting a peak still tunes correctly. Source changes are not build-verified yet.
