@@ -193,6 +193,7 @@ bool spectrumScannerInputClick(bool shortPress)
     if(spectrumInputStage == 0) {
       scanStart = parsed;
       spectrumInputStage = 1;
+      spectrumInput[1][0] = '\0';
       spectrumKeyIndex = 5;
       return true;
     }
@@ -294,6 +295,17 @@ void drawSpectrumScannerInput()
   spr.setTextColor(spectrumInputError ? red : brightBlue);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
   spr.drawString(displayBuf, displayX + displayW / 2, displayY + displayH / 2);
+  spr.setTextDatum(TC_DATUM);
+  spr.setFont(FONT_SMALL);
+  spr.setTextColor(0xFFFF);
+  if(spectrumInputStage == 0) {
+    spr.drawString("ENTER START FREQUENCY (MHz)", 160, 34);
+  } else {
+    char startInfo[40];
+    snprintf(startInfo, sizeof(startInfo), "START: %u.%02u MHz | ENTER END FREQUENCY",
+             (unsigned)(scanStart / 100), (unsigned)(scanStart % 100));
+    spr.drawString(startInfo, 160, 34);
+  }
 
   // Fixed modulation indicator in the same position as the normal keypad's
   // mode selector. It deliberately cannot be focused or changed.
@@ -369,10 +381,31 @@ void drawSpectrumScannerInput()
 void spectrumScannerRotate(int16_t delta)
 {
   const uint16_t count = spectrumPointCount;
-  if(!spectrumHasData || !count || !delta) return;
-  int32_t next = (int32_t)selectedPoint + delta;
-  while(next < 0) next += count;
-  selectedPoint = (uint16_t)(next % count);
+  if(!spectrumHasData || count < 3 || !delta) return;
+  uint8_t minR = 255, maxR = 0;
+  for(uint16_t i = 0; i < count; ++i) {
+    const uint8_t value = spectrumRssi[i];
+    if(value < minR) minR = value;
+    if(value > maxR) maxR = value;
+  }
+  const uint8_t threshold = (uint8_t)(minR + ((uint16_t)(maxR - minR) * 12) / 100);
+  const int direction = delta > 0 ? 1 : -1;
+  int candidate = selectedPoint;
+  for(uint16_t step = 0; step < count; ++step) {
+    candidate += direction;
+    if(candidate < 0) candidate = count - 1;
+    if(candidate >= count) candidate = 0;
+    if(candidate == 0 || candidate == count - 1) continue;
+    const uint8_t here = spectrumRssi[candidate];
+    if(here >= threshold && here >= spectrumRssi[candidate - 1] && here > spectrumRssi[candidate + 1]) {
+      selectedPoint = (uint16_t)candidate;
+      return;
+    }
+  }
+  candidate = (int)selectedPoint + direction;
+  if(candidate < 0) candidate = count - 1;
+  if(candidate >= count) candidate = 0;
+  selectedPoint = (uint16_t)candidate;
 }
 
 void spectrumScannerSelect()
@@ -395,14 +428,16 @@ void spectrumScannerSelect()
 
 void drawSpectrumScanner()
 {
-  const uint16_t bg = 0x0208;
-  const uint16_t panel = 0x030D;
-  const uint16_t grid = 0x123A;
+  const uint16_t bg = 0x0000;
+  const uint16_t panel = 0x0000;
+  const uint16_t grid = 0x0841;
   const uint16_t cyan = 0x07FF;
-  const uint16_t blue = 0x167F;
+  const uint16_t blue = 0x001F;
   const uint16_t green = 0x07E0;
+  const uint16_t red = 0xF800;
+  const uint16_t wave = 0x39C7;
   const uint16_t white = 0xFFFF;
-  const uint16_t muted = 0x7192;
+  const uint16_t muted = 0x4208;
 
   spr.fillSprite(bg);
   spr.fillRoundRect(3, 3, 314, 164, 5, panel);
@@ -458,9 +493,21 @@ void drawSpectrumScanner()
       if(!spectrumScanGetPoint(i, nullptr, &r, nullptr)) continue;
       int x = gx + 1 + (int)((uint32_t)i * (gw - 3) / (count - 1));
       int y = gy + gh - 2 - (int)((uint32_t)(r - minR) * (gh - 5) / (maxR - minR));
-      if(i) spr.drawLine(lastX, lastY, x, y, cyan);
+      if(i) spr.drawLine(lastX, lastY, x, y, wave);
       lastX = x;
       lastY = y;
+    }
+    const uint8_t peakThreshold = (uint8_t)(minR + ((uint16_t)(maxR - minR) * 12) / 100);
+    for(uint16_t i = 1; i + 1 < count; ++i) {
+      const uint8_t prev = spectrumRssi[i - 1];
+      const uint8_t here = spectrumRssi[i];
+      const uint8_t next = spectrumRssi[i + 1];
+      if(here >= peakThreshold && here >= prev && here > next) {
+        int px = gx + 1 + (int)((uint32_t)i * (gw - 3) / (count - 1));
+        int py = gy + gh - 2 - (int)((uint32_t)(here - minR) * (gh - 5) / (maxR - minR));
+        spr.drawFastVLine(px, py, max(3, gy + gh - 2 - py), red);
+        spr.fillTriangle(px - 3, py - 1, px + 3, py - 1, px, py - 6, red);
+      }
     }
     int sx = gx + 1 + (int)((uint32_t)selectedPoint * (gw - 3) / (count - 1));
     spr.drawLine(sx, gy + 1, sx, gy + gh - 1, green);
