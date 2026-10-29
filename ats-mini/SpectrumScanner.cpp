@@ -171,7 +171,7 @@ void spectrumScannerInputCancel()
 {
   spectrumInputError = false;
   spectrumScanning = false;
-  currentCmd = CMD_SPECTRUM_MENU;
+  currentCmd = CMD_MENU;
 }
 
 bool spectrumScannerInputClick(bool shortPress)
