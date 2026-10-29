@@ -747,7 +747,7 @@ static const char pageStatus[] PROGMEM = R"HTML(<DIV CLASS="TOP">
    const start=Number(startInput.value),end=Number(endInput.value),step=Number(stepInput.value),mode=modeInput.value;
    const points=Math.floor((end-start)/step)+1;
    if(!Number.isInteger(start)||!Number.isInteger(end)||start<150||end>30000||end<=start){status.textContent='Enter a valid range between 150 and 30000 kHz.';return;}
-   if(end-start>1000||(end-start)%step!==0||points<2||points>201){status.textContent='Range must be at most 1000 kHz and align exactly to the selected step (maximum 201 points).';return;}
+   if(end-start>1000||(end-start)%step!==0||points<6||points>201){status.textContent='Range must contain at least 5 measurement steps (6 points), be at most 1000 kHz wide, and align exactly to the selected step (maximum 201 points).';return;}
    status.textContent='Preparing receiver at '+start+' kHz '+mode+' before scan…';
    const tuned=await syncAllBandReceiver();
    if(!tuned){status.textContent='Could not tune receiver to '+start+' kHz '+mode+'. Scan not started.';return;}
