@@ -1790,6 +1790,12 @@ void drawFullScreenMenu(uint16_t cmd)
   spr.setFont(FONT_SMALL);
   spr.setTextColor(cyan);
   spr.drawString("CLICK: OK", 307, 151, FONT_SMALL);
+  if(spectrumPage) {
+    spr.setTextDatum(MC_DATUM);
+    spr.setTextColor(0xBDF7);
+    spr.setFont(FONT_SMALL);
+    spr.drawString("Select VHF Spectrum to enter start frequency", 160, 132);
+  }
 }
 
 void drawSideBar(uint16_t cmd, int x, int y, int sx)
