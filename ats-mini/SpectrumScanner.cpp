@@ -382,6 +382,23 @@ void drawSpectrumScannerInput()
   // the full bottom key row unobstructed just like the native keypad.
 }
 
+static void spectrumTuneSelectedPeak()
+{
+  uint16_t freq = 0;
+  if(!spectrumHasData || !spectrumScanGetPoint(selectedPoint, &freq, nullptr, nullptr)) return;
+
+  // Live-preview the selected peak while the graph remains open. The scan
+  // range was validated against an FM band before the sweep started.
+  const int fmBand = findFmBandForRange(freq, freq);
+  if(fmBand < 0) return;
+  if(bandIdx != (uint8_t)fmBand || currentMode != FM) {
+    selectBand((uint8_t)fmBand, false);
+    currentMode = FM;
+    currentBFO = 0;
+  }
+  updateFrequency(freq, false);
+}
+
 void spectrumScannerRotate(int16_t delta)
 {
   const uint16_t count = spectrumPointCount;
@@ -406,6 +423,7 @@ void spectrumScannerRotate(int16_t delta)
     const uint8_t here = spectrumRssi[candidate];
     if(here >= threshold && here >= spectrumRssi[candidate - 1] && here > spectrumRssi[candidate + 1]) {
       selectedPoint = (uint16_t)candidate;
+      spectrumTuneSelectedPeak();
       return;
     }
   }
@@ -427,7 +445,10 @@ void spectrumScannerRotate(int16_t delta)
       bestRssi = spectrumRssi[candidate];
     }
   }
-  if(best >= 0) selectedPoint = (uint16_t)best;
+  if(best >= 0) {
+    selectedPoint = (uint16_t)best;
+    spectrumTuneSelectedPeak();
+  }
 }
 
 void spectrumScannerSelect()
