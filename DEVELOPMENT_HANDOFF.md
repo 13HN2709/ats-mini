@@ -254,3 +254,9 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - In den englischen und deutschen Menüquellen wurde die sichtbare Beschriftung `AP+Connect` in `WEB CTRL` umbenannt, damit sie auf die schmale ATS-Mini-Zeile passt.
 - Es wurde ausschließlich der Text in `wifiModeDesc[]` geändert; WLAN-Modus-Index und AP-/Connect-Logik bleiben unverändert.
 - Noch nicht kompiliert oder am Gerät verifiziert. Auf `development`; `main` bleibt unangetastet.
+
+
+### ALL Band Spectrum STEP label and hint readability (2026-10-29)
+- Renamed the keypad button from `MODE` to `STEP`; its click handler now keys off `STEP` and still cycles the existing scan-step choices.
+- The `STEP: n kHz` hint now uses the same cyan color as the other keypad labels and a larger bold font. Validation errors remain red.
+- Updated on `development`; not yet rebuilt or hardware-verified. `main` untouched.
