@@ -321,7 +321,7 @@ void drawSpectrumScannerInput()
   spr.setTextColor(brightBlue);
   spr.setTextDatum(MC_DATUM);
   spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);
-  spr.drawString("FM", modeX + modeW / 2, modeY + displayH / 2);
+  spr.drawString("FM", modeX + modeW / 2, modeY + displayH / 2 - 3);
 
   // Same 4x4 key grid, spacing, selection colors and font as drawFreqKeypad().
   const int startX = boxX + 8;
