@@ -248,3 +248,9 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Re-check confirmed the GitHub Actions workflow compiles the full `ats-mini` sketch directory, so the new `AllBandSpectrum.cpp` is included in the workflow build even though the legacy Makefile source list is not maintained for this module.
 - Final source pass completed: verified dedicated draw/encoder/button paths, command timeout exclusions, English/German menu wiring, and the full-sketch GitHub Actions compilation path. Found and fixed a compile blocker where scanner buffers named `rssi`/`snr` conflicted with globals; the buffers are now `allBandRssi`/`allBandSnr`.
 - Current source is ready for the manual build, but it is **not yet compiled or hardware-tested**. Next: user may start the manual GitHub Actions build on `development`; if it succeeds, hardware-test accepted/rejected widths, AM/USB/LSB, radio restore, encoder peak selection/accept, and VHF/Web/Dual RX regression. Do not touch `main`.
+
+
+### WLAN-Menübezeichnung (2026-10-29)
+- In den englischen und deutschen Menüquellen wurde die sichtbare Beschriftung `AP+Connect` in `WEB CTRL` umbenannt, damit sie auf die schmale ATS-Mini-Zeile passt.
+- Es wurde ausschließlich der Text in `wifiModeDesc[]` geändert; WLAN-Modus-Index und AP-/Connect-Logik bleiben unverändert.
+- Noch nicht kompiliert oder am Gerät verifiziert. Auf `development`; `main` bleibt unangetastet.
