@@ -213,3 +213,11 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Commit on `development`: `2a35a96ef48903e76c051dacaff567b6419edcec`.
 - New user-reported bug to investigate: while Dual RX is active, a short encoder click should stop the scan, exit Dual RX and return to the layout, but currently Dual RX keeps scanning. Not fixed yet; trace encoder click/short-press dispatch and Dual RX state transitions before changing code.
 - This latest visual change has not yet been built or tested on hardware.
+
+
+## Dual RX encoder stop responsiveness (2026-10-29)
+- Traced the dedicated encoder handler in `ats-mini/ats-mini.ino`, `Button.cpp`, and the Dual RX functions in `Menu_german.cpp.src`.
+- `dualRxTick()` was called before remote-input merging and before the dedicated Dual RX click handler. It may enter `selectBand()`, which performs DSP patch loading and retuning and can block the main loop. During weak-signal alternation, the 250 ms switching cadence makes this a plausible contributor to missed short clicks; the physical button tracker emits click events on release.
+- Minimal source change committed to `development`: moved the Dual RX tick until after the current loop has handled the click/long-press input, and skip starting a band switch while the physical encoder button is held. This gives stop input priority and reduces the chance that a retune blocks an in-progress press.
+- Commit: `f8efb9a52e0eea85c63d981bc43a7ac750aeb550` (`Prioritize encoder clicks during Dual RX switching`). Re-fetched the file and confirmed exactly one `dualRxTick(currentTime)` call remains in the new position.
+- This is a targeted mitigation, not yet a hardware-confirmed root-cause fix. No build/test run has been executed from this session. Next: run the manual GitHub Actions build on `development`, then on hardware test short-click stop repeatedly during both A RX/B WAIT and A WAIT/B RX; verify long-press dim/wake keeps Dual RX scanning. Do not merge to `main` until confirmed.
