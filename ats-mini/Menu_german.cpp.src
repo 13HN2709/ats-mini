@@ -123,7 +123,7 @@ static int visibleBandIndexAtOffset(int offset)
 
 int8_t menuIdx = MENU_KEYPAD;
 int8_t spectrumMenuIdx = 0;
-static const char *spectrumMenu[] = { "VHF SPEKTRUM",\n  "ALL BAND SPEKTRUM", "Gesamtes Bandspektrum" };
+static const char *spectrumMenu[] = { "VHF SPEKTRUM", "Gesamtes Bandspektrum" };
 
 static const char *menu[] =
 {
@@ -146,6 +146,7 @@ static const char *menu[] =
   "SOFT-MUTE",
   "EINSTELLUNGEN",
   "VHF SPEKTRUM",
+  "ALL BAND SPEKTRUM",
 };
 
 #define MENU_BRIGHTNESS   0
@@ -952,7 +953,8 @@ static void clickMenu(int cmd, bool shortPress)
       clickScan(true);
       break;
     case MENU_DUAL_RX: dualRxStart(); break;
-    case MENU_SPECTRUM: spectrumScannerStart(); break;\n    case MENU_ALL_SPECTRUM: allBandSpectrumStart(); break;
+    case MENU_SPECTRUM: spectrumScannerStart(); break;
+    case MENU_ALL_SPECTRUM: allBandSpectrumStart(); break;
   }
 }
 
