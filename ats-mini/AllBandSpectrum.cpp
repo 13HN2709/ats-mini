@@ -25,7 +25,7 @@ bool allBandSpectrumInputRotate(int16_t delta){if(!delta)return false;int d=(scr
 void allBandSpectrumCancel(){inputError=false;if(saved){selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);bands[1].bandMode=oldAllBandMode;saved=false;}currentCmd=CMD_MENU;}
 static bool parseKHz(uint16_t *out){const char *s=input[stage];if(!*s)return false;char *e=nullptr;long v=strtol(s,&e,10);if(e==s||*e||v<MIN_KHZ||v>MAX_KHZ)return false;*out=(uint16_t)v;return true;}
 static void restoreRadio(bool clearSaved=true){if(!saved)return;selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);bands[1].bandMode=oldAllBandMode;if(clearSaved)saved=false;}
-static void tuneAllBandPoint(uint16_t freq){bands[1].bandMode=modes[modeIndex];selectBand(1,false);currentBFO=0;updateFrequency(freq,false);}
+static void tuneAllBandPoint(uint16_t freq){if(bandIdx!=1||currentMode!=modes[modeIndex]){bands[1].bandMode=modes[modeIndex];selectBand(1,false);}currentBFO=0;updateFrequency(freq,false);}
 static void runSweep(){
  count=0;rx.setMaxDelaySetFrequency(60);muteOn(MUTE_TEMP,true);const uint16_t restoreFreq=currentFrequency;
  const uint16_t points=(endKHz-startKHz)/STEP_KHZ+1;
@@ -41,7 +41,16 @@ bool allBandSpectrumInputClick(bool shortPress){if(!shortPress){allBandSpectrumC
  oldBand=bandIdx;oldFreq=currentFrequency;oldMode=currentMode;oldBfo=currentBFO;oldAllBandMode=bands[1].bandMode;saved=true;
  bands[1].bandMode=modes[modeIndex];selectBand(1,false);currentBFO=0;updateFrequency(startKHz,false);currentCmd=CMD_ALL_SPECTRUM;runSweep();restoreRadio(false);return true;}
  if(n<sizeof(input[0])-1&&k[0]>='0'&&k[0]<='9'){v[n]=k[0];v[n+1]=0;}return true;}
-void allBandSpectrumRotate(int16_t delta){if(!hasData||!delta)return;int n=(int)selected+(delta>0?1:-1);if(n<0)n=count-1;if(n>=count)n=0;selected=n;tuneAllBandPoint(startKHz+selected*STEP_KHZ);}
+void allBandSpectrumRotate(int16_t delta){
+ if(!hasData||count<3||!delta)return;
+ uint8_t mn=255,mx=0;for(uint16_t i=0;i<count;i++){if(rssi[i]<mn)mn=rssi[i];if(rssi[i]>mx)mx=rssi[i];}
+ uint8_t threshold=(uint8_t)(mn+((uint16_t)(mx-mn)*5)/100);int dir=delta>0?1:-1;int candidate=selected;
+ for(uint16_t n=0;n<count;n++){candidate+=dir;if(candidate<0)candidate=count-1;if(candidate>=count)candidate=0;if(candidate==0||candidate==count-1)continue;
+   if(rssi[candidate]>=threshold&&rssi[candidate]>=rssi[candidate-1]&&rssi[candidate]>rssi[candidate+1]){selected=candidate;tuneAllBandPoint(startKHz+selected*STEP_KHZ);return;}}
+ int best=-1;uint8_t bestR=0;candidate=selected;
+ for(uint16_t n=0;n<count-1;n++){candidate+=dir;if(candidate<0)candidate=count-1;if(candidate>=count)candidate=0;if(candidate==selected)break;if(candidate==0||candidate==count-1)continue;if(best<0||rssi[candidate]>bestR){best=candidate;bestR=rssi[candidate];}}
+ if(best>=0){selected=best;tuneAllBandPoint(startKHz+selected*STEP_KHZ);}
+}
 void allBandSpectrumSelect(){if(hasData){tuneAllBandPoint(startKHz+selected*STEP_KHZ);saved=false;}else restoreRadio();currentCmd=CMD_NONE;}
 void drawAllBandSpectrumInput(){const uint16_t cyan=0x07FF,blue=0x001F,dark=0x0841,red=0xF800;spr.fillSprite(0);spr.fillRoundRect(6,2,308,166,4,0);spr.drawRoundRect(6,2,308,166,4,blue);spr.drawRoundRect(7,3,306,164,3,blue);
  spr.setTextDatum(TC_DATUM);spr.setTextColor(cyan);spr.setFont(&lgfx::fonts::FreeSansBold9pt7b);spr.drawString(stage==0?"ALL BAND: START (kHz)":"ALL BAND: END (kHz)",160,5);
