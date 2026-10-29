@@ -16,16 +16,16 @@ static const char *modeNames[3]={"AM","USB","LSB"};
 static bool inputError=false,hasData=false,saved=false;
 static uint16_t startKHz=7100,endKHz=7600,count=0,selected=0;
 static uint8_t rssi[MAX_POINTS],snr[MAX_POINTS];
-static uint8_t oldBand=0,oldMode=AM;
+static uint8_t oldBand=0,oldMode=AM,oldAllBandMode=AM;
 static uint16_t oldFreq=0;
 static int16_t oldBfo=0;
 
 void allBandSpectrumStart(){input[0][0]=input[1][0]=0;stage=0;keyIndex=5;modeIndex=0;inputError=false;hasData=false;count=0;saved=false;currentCmd=CMD_ALL_SPECTRUM_INPUT;}
 bool allBandSpectrumInputRotate(int16_t delta){if(!delta)return false;int d=(scrollDirection*delta>0)?1:-1;int n=(int)keyIndex+d;if(n<0)n=15;if(n>15)n=0;if(n==14){n+=d;if(n<0)n=15;if(n>15)n=0;}keyIndex=n;return true;}
-void allBandSpectrumCancel(){inputError=false;if(saved){selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);saved=false;}currentCmd=CMD_MENU;}
+void allBandSpectrumCancel(){inputError=false;if(saved){selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);bands[1].bandMode=oldAllBandMode;saved=false;}currentCmd=CMD_MENU;}
 static bool parseKHz(uint16_t *out){const char *s=input[stage];if(!*s)return false;char *e=nullptr;long v=strtol(s,&e,10);if(e==s||*e||v<MIN_KHZ||v>MAX_KHZ)return false;*out=(uint16_t)v;return true;}
-static void restoreRadio(bool clearSaved=true){if(!saved)return;selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);if(clearSaved)saved=false;}
-static void tuneAllBandPoint(uint16_t freq){selectBand(1,false);currentMode=modes[modeIndex];currentBFO=0;updateFrequency(freq,false);}
+static void restoreRadio(bool clearSaved=true){if(!saved)return;selectBand(oldBand,false);currentMode=oldMode;updateFrequency(oldFreq,false);if(isSSB())updateBFO(oldBfo,true);bands[1].bandMode=oldAllBandMode;if(clearSaved)saved=false;}
+static void tuneAllBandPoint(uint16_t freq){bands[1].bandMode=modes[modeIndex];selectBand(1,false);currentBFO=0;updateFrequency(freq,false);}
 static void runSweep(){
  count=0;rx.setMaxDelaySetFrequency(60);muteOn(MUTE_TEMP,true);const uint16_t restoreFreq=currentFrequency;
  const uint16_t points=(endKHz-startKHz)/STEP_KHZ+1;
@@ -35,11 +35,11 @@ static void runSweep(){
 bool allBandSpectrumInputClick(bool shortPress){if(!shortPress){allBandSpectrumCancel();return true;}const char*k=keys[keyIndex];char*v=input[stage];size_t n=strlen(v);inputError=false;
  if(!strcmp(k,"CLOSE")){allBandSpectrumCancel();return true;}if(!strcmp(k,"BS")){if(n)v[n-1]=0;return true;}
  if(!strcmp(k,"MODE")){modeIndex=(modeIndex+1)%3;return true;}
- if(!strcmp(k,".")||!strcmp(k,"MODE"))return true;
+ if(!strcmp(k,"."))return true;
  if(!strcmp(k,"OK")){uint16_t f;if(!parseKHz(&f)){inputError=true;return true;}if(stage==0){startKHz=f;stage=1;input[1][0]=0;keyIndex=5;return true;}endKHz=f;if(endKHz<=startKHz||endKHz-startKHz>MAX_WIDTH_KHZ||(endKHz-startKHz)%STEP_KHZ!=0||((endKHz-startKHz)/STEP_KHZ+1)>MAX_POINTS){inputError=true;return true;}
  // ALL band is the broad AM-capable tuner configuration; configure it only after validation.
- oldBand=bandIdx;oldFreq=currentFrequency;oldMode=currentMode;oldBfo=currentBFO;saved=true;
- int allBand=1;selectBand(allBand,false);currentMode=modes[modeIndex];currentBFO=0;updateFrequency(startKHz,false);currentCmd=CMD_ALL_SPECTRUM;runSweep();restoreRadio(false);return true;}
+ oldBand=bandIdx;oldFreq=currentFrequency;oldMode=currentMode;oldBfo=currentBFO;oldAllBandMode=bands[1].bandMode;saved=true;
+ bands[1].bandMode=modes[modeIndex];selectBand(1,false);currentBFO=0;updateFrequency(startKHz,false);currentCmd=CMD_ALL_SPECTRUM;runSweep();restoreRadio(false);return true;}
  if(n<sizeof(input[0])-1&&k[0]>='0'&&k[0]<='9'){v[n]=k[0];v[n+1]=0;}return true;}
 void allBandSpectrumRotate(int16_t delta){if(!hasData||!delta)return;int n=(int)selected+(delta>0?1:-1);if(n<0)n=count-1;if(n>=count)n=0;selected=n;tuneAllBandPoint(startKHz+selected*STEP_KHZ);}
 void allBandSpectrumSelect(){if(hasData){tuneAllBandPoint(startKHz+selected*STEP_KHZ);saved=false;}else restoreRadio();currentCmd=CMD_NONE;}
