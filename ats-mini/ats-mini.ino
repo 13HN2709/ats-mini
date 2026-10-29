@@ -790,7 +790,7 @@ void loop()
     }
     elapsedSleep = elapsedCommand = currentTime;
   }
-  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_INPUT)
+  else if(currentCmd != CMD_DUAL_RX && currentCmd != CMD_SPECTRUM && currentCmd != CMD_SPECTRUM_MENU && currentCmd != CMD_SPECTRUM_INPUT)
   {
     if(encCount)
     {
