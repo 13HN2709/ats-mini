@@ -221,3 +221,10 @@ Active work branch: `development` (never modify `main` unless explicitly request
 - Minimal source change committed to `development`: moved the Dual RX tick until after the current loop has handled the click/long-press input, and skip starting a band switch while the physical encoder button is held. This gives stop input priority and reduces the chance that a retune blocks an in-progress press.
 - Commit: `f8efb9a52e0eea85c63d981bc43a7ac750aeb550` (`Prioritize encoder clicks during Dual RX switching`). Re-fetched the file and confirmed exactly one `dualRxTick(currentTime)` call remains in the new position.
 - This is a targeted mitigation, not yet a hardware-confirmed root-cause fix. No build/test run has been executed from this session. Next: run the manual GitHub Actions build on `development`, then on hardware test short-click stop repeatedly during both A RX/B WAIT and A WAIT/B RX; verify long-press dim/wake keeps Dual RX scanning. Do not merge to `main` until confirmed.
+
+
+## Dual RX encoder stop fix confirmed on hardware (2026-10-29)
+- User confirmed the fix works: Dual RX exits with a short encoder click both during active VFO switching and when one VFO is receiving (RX).
+- Fix commit: `f8efb9a52e0eea85c63d981bc43a7ac750aeb550`; the change moves `dualRxTick()` after button handling and skips starting a band switch while the physical encoder button is held.
+- User's device test confirms the reported stop bug is resolved. Long-press dim/wake behavior was not separately reconfirmed in this message; keep that behavior as a regression check if further Dual RX code changes are made.
+- Main remains untouched; do not merge unless the user explicitly asks.
