@@ -659,7 +659,9 @@ void drawScreen()
       drawLayoutTEF6686();
       break;
     default:
-      drawLayoutTEF6686();
+      // UI_DEFAULT (index 0) is the original Layout-Default.
+      // TEF6686 is selected explicitly at index 5 and remains the fresh-install default.
+      drawLayoutDefault();
       break;
   }
 
