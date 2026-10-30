@@ -12,11 +12,12 @@ jobs:
   build:
     name: build ${{ matrix.board.artifact-suffix }}-${{ matrix.lang }}
     runs-on: ubuntu-24.04
-    permissions: {}
+    permissions:
+      contents: read
     strategy:
       fail-fast: true
       matrix:
-        lang: [de, en]
+        lang: [de, en, it]
         board:
           - profile: esp32s3-ospi
             fqbn: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=8M,PSRAM=opi,CPUFreq=80,USBMode=hwcdc,FlashMode=qio,PartitionScheme=custom,DebugLevel=none
@@ -48,6 +49,8 @@ jobs:
         run: |
           if [ "${{ matrix.lang }}" = "de" ]; then
             cp ats-mini/Menu_german.cpp.src ats-mini/Menu.cpp
+          elif [ "${{ matrix.lang }}" = "it" ]; then
+            cp ats-mini/Menu_italian.cpp.src ats-mini/Menu.cpp
           else
             cp ats-mini/Menu_english.cpp.src ats-mini/Menu.cpp
           fi
@@ -60,6 +63,23 @@ jobs:
             SLUG=$(git describe --tags --match 'v*' --always --dirty || echo v0.00)
           fi
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+
+      - name: Free disk space for ESP32 toolchain
+        run: |
+          echo "Disk space before cleanup:"
+          df -h /
+          echo "Largest top-level directories:"
+          sudo du -xhd1 /usr/local /opt /usr/share 2>/dev/null | sort -h | tail -n 25 || true
+
+          # These preinstalled toolchains are unrelated to the Arduino ESP32 build.
+          # Keep Python, Node.js, Git, and the GitHub Actions runner intact.
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /usr/local/share/powershell /usr/local/.ghcup /usr/share/swift
+
+          # Remove package-manager caches only; do not remove installed build tools.
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          echo "Disk space after cleanup:"
+          df -h /
 
       - name: Compile firmware
         uses: arduino/compile-sketches@v1
