@@ -241,6 +241,20 @@ void drawLayoutTEF6686()
   spr.setTextColor(COLOR_GREEN);
   spr.drawString(getCurrentBand()->bandName, 16, 3);
 
+  // Compact EiBi download indicator in the free top area, between band and WiFi.
+  // The generic status message is kept out of the main layout while EiBi is loading.
+  extern char statusLines[2][96];
+  if (strcmp(statusLines[0], "Loading EiBi Schedule") == 0 &&
+      strncmp(statusLines[1], "DONE!", 5) != 0 &&
+      strncmp(statusLines[1], "CANCELED!", 9) != 0 &&
+      strncmp(statusLines[1], "Failed", 6) != 0)
+  {
+    spr.setFont(&lgfx::fonts::FreeSans9pt7b);
+    spr.setTextDatum(TL_DATUM);
+    spr.setTextColor(COLOR_CYAN);
+    spr.drawString("Downloading...", 88, 4);
+  }
+
   // 4. Reception mode
   const int modeX = 10;
   const int modeY = 24;
