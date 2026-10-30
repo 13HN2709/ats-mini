@@ -1,4 +1,4 @@
-# ATS Mini Firmware in e Languages  🇩🇪 🇬🇧 🇮🇹 by 13HN2709
+# ATS Mini Firmware in 3 Languages  🇩🇪 🇬🇧 🇮🇹 by 13HN2709
 
 <img src="docs/source/_static/20261023_043409.jpg" alt="ATS Mini V4 by 13HN2709" width="320">
 
